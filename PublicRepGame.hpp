@@ -84,28 +84,19 @@ public:
     // Although analytic expression is available, it is numerically unstable when A is small.
     // Use newton's method instead.
     const double tolerance = 2.0e-3;
-    if (std::abs(a) > tolerance) {
-      double h_star = (-b - std::sqrt(b*b - 4.0*a*c)) / (2.0*a);
-      double h_dot = a*h_star*h_star + b*h_star + c;
-      // IC(h_star, h_dot);
-      assert(h_dot < tolerance);
-      return h_star;
+    double h = (std::abs(a) > tolerance) ? ((-b - std::sqrt(b*b - 4.0*a*c)) / (2.0*a)) : -c / b;
+    // solve f(h) = ah^2 + bh + c = 0 by Newton's method
+    if (h > 1.0) h = 1.0;
+    if (h < 0.0) h = 0.0;
+    double f = a*h*h + b*h + c;
+    double df = 2.0*a*h + b;
+    while (std::abs(f) > 1.0e-12) {
+      h -= f / df;
+      f = a*h*h + b*h + c;
+      df = 2.0*a*h + b;
     }
-    else {
-      // solve f(h) = ah^2 + bh + c = 0 by Newton's method
-      double h = -c / b;
-      if (h > 1.0) h = 1.0;
-      if (h < 0.0) h = 0.0;
-      double f = a*h*h + b*h + c;
-      double df = 2.0*a*h + b;
-      while (std::abs(f) > 1.0e-12) {
-        h -= f / df;
-        f = a*h*h + b*h + c;
-        df = 2.0*a*h + b;
-      }
-      // IC(h,f);
-      return h;
-    }
+    // IC(h,f);
+    return h;
   }
 
   std::array<double,2> ESSBenefitRange() const {  // range of b for which the norm is ESS against possible mutants
