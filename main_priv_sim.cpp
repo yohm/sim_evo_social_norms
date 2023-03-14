@@ -20,7 +20,7 @@ const EvolPrivRepGameAllCAllD GetEvol() {
   else {
     EvolPrivRepGame::SimulationParameters params;
     params.n_init = 1e4;
-    params.n_steps = 4e4;
+    params.n_steps = 1e4;
     p_evol = new EvolPrivRepGameAllCAllD(30, params, 5.0, 1.0);
     return *p_evol;
   }
@@ -77,8 +77,8 @@ int main(int argc, char** argv) {
   using namespace nlohmann;
 
   std::function<void(caravan::Queue&)> on_init = [](caravan::Queue& q) {
-    // const int i_max = 256, j_max = 256;  [TODO] FIXME
-    const int i_max = 60, j_max = 1;
+    const int i_max = 256, j_max = 256; // [TODO] FIXME
+    // const int i_max = 60, j_max = 60;
     for (int i = 0; i < i_max; i++) {
       for (int j = 0; j < j_max; j++) {
         json input = {i, j};
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
         continue;
       }
       double eq_c_level = EqCooperationLevel(norm);
-      double threshold = 0.01;  // [TODO] FIXME
+      double threshold = 0.2;  // [TODO] FIXME
       if (eq_c_level > threshold) {
         output.push_back({norm.ID(), eq_c_level});
       }
@@ -124,13 +124,15 @@ int main(int argc, char** argv) {
   int my_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   if (my_rank == 0) {
+    std::ofstream fout("results.txt");
     // sort results by cooperation level
     std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
     // print top 10 from results
     for (auto result: results) {
       Norm norm = Norm::ConstructFromID(result.first);
-      std::cout << norm.Inspect() << " " << result.second << std::endl;
+      fout << norm.Inspect() << " " << result.second << std::endl;
     }
+    fout.close();
   }
 
 
