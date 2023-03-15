@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
   using namespace nlohmann;
 
   std::function<void(caravan::Queue&)> on_init = [](caravan::Queue& q) {
-    const int i_max = 256, j_max = 256; // [TODO] FIXME
+    const int i_max = 256, j_max = 256;
     // const int i_max = 60, j_max = 60;
     for (int i = 0; i < i_max; i++) {
       for (int j = 0; j < j_max; j++) {
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
         continue;
       }
       double eq_c_level = EqCooperationLevel(norm);
-      double threshold = 0.2;  // [TODO] FIXME
+      double threshold = 0.2;
       if (eq_c_level > threshold) {
         output.push_back({norm.ID(), eq_c_level});
       }
