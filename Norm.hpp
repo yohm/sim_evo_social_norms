@@ -152,7 +152,7 @@ class ActionRule {
       throw std::runtime_error("AssessmentRuleDet: id must be between 0 and 15");
     }
     std::array<double,4> c_probs = {0.0};
-    for (size_t i = 0; i < 8; i++) {
+    for (size_t i = 0; i < c_probs.size(); i++) {
       if ((id >> i) % 2) { c_probs[i] = 1.0; }
       else { c_probs[i] = 0.0; }
     }
