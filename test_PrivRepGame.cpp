@@ -155,6 +155,22 @@ void PrintSelectionMutationEquilibrium(const Norm& norm) {
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
+void PrintCompetition(const Norm& n1, const Norm& n2) {
+  auto start = std::chrono::high_resolution_clock::now();
+
+  EvolPrivRepGame::SimulationParameters params;
+  params.n_init = 1e5;
+  params.n_steps = 1e5;
+  size_t N = 30;
+
+  EvolPrivRepGame evol(N, {n1, n2}, params);
+  IC( evol.FixationProbabilities(5.0, 1.0) );
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
+}
+
 void CompareWithLocalMutants(const Norm& norm) {
   EvolPrivRepGame::SimulationParameters params;
   params.n_init = 1e5;
@@ -178,6 +194,22 @@ void CompareWithLocalMutants(const Norm& norm) {
   }
 }
 
+Norm ParseNorm(const std::string& str) {
+  std::regex re_d(R"(\d+)"); // regex for digits
+  std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
+  if (std::regex_match(str, re_d)) {
+    int id = std::stoi(str);
+    return Norm::ConstructFromID(id);
+  }
+  else if (std::regex_match(str, re_x)) {
+    int id = std::stoi(str, nullptr, 16);
+    return Norm::ConstructFromID(id);
+  }
+  else {
+    return Norm::ConstructFromName(str);
+  }
+}
+
 int main(int argc, char *argv[]) {
 
   if (argc == 1) {
@@ -187,23 +219,13 @@ int main(int argc, char *argv[]) {
     test_SelectionMutationEquilibrium2();
   }
   else if (argc == 2) {
-    std::regex re_d(R"(\d+)"); // regex for digits
-    std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
-    if (std::regex_match(argv[1], re_d)) {
-      int id = std::stoi(argv[1]);
-      Norm n = Norm::ConstructFromID(id);
-      PrintSelectionMutationEquilibrium(n);
-    }
-    else if (std::regex_match(argv[1], re_x)) {
-      int id = std::stoi(argv[1], nullptr, 16);
-      Norm n = Norm::ConstructFromID(id);
-      PrintSelectionMutationEquilibrium(n);
-    }
-    // if second argument is a string and is contained in the second of Norm::NormNames
-    else {
-      Norm n = Norm::ConstructFromName(argv[1]);
-      PrintSelectionMutationEquilibrium(n);
-    }
+    Norm n = ParseNorm(argv[1]);
+    PrintSelectionMutationEquilibrium(n);
+  }
+  else if (argc == 3) {  // if two arguments are given, direct competition between two norms are shown
+    Norm n1 = ParseNorm(argv[1]);
+    Norm n2 = ParseNorm(argv[2]);
+    PrintCompetition(n1, n2);
   }
   else if (argc == 21) {
     std::array<double,20> serialized = {};
