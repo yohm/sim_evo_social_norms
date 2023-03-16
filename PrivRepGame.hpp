@@ -262,7 +262,7 @@ public:
     std::vector<double> pi_i(N);  // pi_i[l]: payoff of resident i when l mutants exist
     std::vector<double> pi_j(N);  // pi_j[l]: payoff of mutant j when l mutants exist
 
-    #pragma omp parallel for schedule(dynamic) shared(pi_i, pi_j)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_i, pi_j, norm_i, norm_j, benefit, beta)
     for (size_t l = 1; l < N; l++) {
       PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed);
       game.Update(param.n_init, param.q, param.mu_percept, false);
@@ -368,7 +368,7 @@ public:
     // payoff when there are i AllC and N-i AllD players
     std::vector<double> pi_allc(N, 0.0), pi_alld(N, 0.0);
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_allc, pi_alld, allc, alld)
     for (size_t i = 1; i < N; i++) {
       // i AllC vs N-i AllD
       PrivateRepGame game({{allc, i}, {alld, N-i}}, param.seed);
@@ -423,7 +423,7 @@ public:
     // pi_x_alld[l] : payoff of X against AllD when there are l AllD and (N-l) residents
     // pi_alld[l]   : payoff of AllD against X when there are l AllD and (N-l) residents
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_x_allc, pi_allc, pi_x_alld, pi_alld, norm, self_coop_level)
     for (size_t i = 0; i < 2*N-1; i++) {
       if (i == 0) {  // monomorphic population of X
         PrivateRepGame game({{norm, N}}, param.seed);
