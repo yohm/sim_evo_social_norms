@@ -133,8 +133,15 @@ void PrintSelectionMutationEquilibrium(const Norm& norm) {
   EvolPrivRepGame::SimulationParameters params;
   params.n_init = 1e5;
   params.n_steps = 1e5;
+  size_t N = 30;
 
-  EvolPrivRepGameAllCAllD evol(50, params, 5.0, 1.0);
+  PrivateRepGame prg({{norm, N}}, params.seed);
+  prg.Update(params.n_init, params.q, params.mu_percept, false);
+  prg.ResetCounts();
+  prg.Update(params.n_steps, params.q, params.mu_percept, true);
+  IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
+
+  EvolPrivRepGameAllCAllD evol(N, params, 5.0, 1.0);
 
   auto selfc_rho_eq = evol.EquilibriumCoopLevelAllCAllD(norm);
   double self_cooperation_level = std::get<0>(selfc_rho_eq);
