@@ -1,8 +1,10 @@
 #include <iostream>
+#include <fstream>
 #include <cassert>
 #include <chrono>
 #include <regex>
 #include <icecream.hpp>
+#include <nlohmann/json.hpp>
 #include "PrivRepGame.hpp"
 
 
@@ -127,21 +129,31 @@ void test_SelectionMutationEquilibrium2() {
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm) {
+struct SimulationParams {
+  size_t n_init;
+  size_t n_steps;
+  size_t N;
+  double q;
+  double mu_percept;
+  double benefit;
+  double beta;
+  uint64_t seed;
+  SimulationParams() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), seed(123456789) {};
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
+};
+
+void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const SimulationParams& params) {
   auto start = std::chrono::high_resolution_clock::now();
 
-  EvolPrivRepGame::SimulationParameters params;
-  params.n_init = 1e5;
-  params.n_steps = 1e5;
-  size_t N = 30;
-
-  PrivateRepGame prg({{norm, N}}, params.seed);
+  PrivateRepGame prg({{norm, params.N}}, params.seed);
   prg.Update(params.n_init, params.q, params.mu_percept, false);
   prg.ResetCounts();
   prg.Update(params.n_steps, params.q, params.mu_percept, true);
   IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
 
-  EvolPrivRepGameAllCAllD evol(N, params, 5.0, 1.0);
+  EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+  EvolPrivRepGameAllCAllD evol(params.N, evo_params, params.benefit, params.beta);
 
   auto selfc_rho_eq = evol.EquilibriumCoopLevelAllCAllD(norm);
   double self_cooperation_level = std::get<0>(selfc_rho_eq);
@@ -155,26 +167,21 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm) {
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void PrintCompetition(const Norm& n1, const Norm& n2) {
+void PrintCompetition(const Norm& n1, const Norm& n2, const SimulationParams& params) {
   auto start = std::chrono::high_resolution_clock::now();
 
-  EvolPrivRepGame::SimulationParameters params;
-  params.n_init = 1e5;
-  params.n_steps = 1e5;
-  size_t N = 30;
+  EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
 
-  EvolPrivRepGame evol(N, {n1, n2}, params);
-  IC( evol.FixationProbabilities(5.0, 1.0) );
+  EvolPrivRepGame evol(params.N, {n1, n2}, evo_params);
+  IC( evol.FixationProbabilities(params.benefit, params.beta) );
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void CompareWithLocalMutants(const Norm& norm) {
-  EvolPrivRepGame::SimulationParameters params;
-  params.n_init = 1e5;
-  params.n_steps = 1e5;
+void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
+  EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
 
   for (int i = 0; i < 20; i++) {
     auto serialized = norm.Serialize();
@@ -187,8 +194,8 @@ void CompareWithLocalMutants(const Norm& norm) {
     }
     Norm mutant = Norm::FromSerialized(serialized);
     std::cout << mutant.Inspect();
-    EvolPrivRepGame evol(50, {norm, mutant}, params);
-    auto rhos = evol.FixationProbabilities(5.0, 1.0);
+    EvolPrivRepGame evol(params.N, {norm, mutant}, evo_params);
+    auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
     auto eq = evol.EquilibriumPopulationLowMut(rhos);
     IC(eq);
   }
@@ -197,6 +204,8 @@ void CompareWithLocalMutants(const Norm& norm) {
 Norm ParseNorm(const std::string& str) {
   std::regex re_d(R"(\d+)"); // regex for digits
   std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
+  // regular expression for 20 floating point numbers separated by space
+  std::regex re_a(R"(^(0|1)(\.\d+)?( (0|1)(\.\d+)?){19}$)");
   if (std::regex_match(str, re_d)) {
     int id = std::stoi(str);
     return Norm::ConstructFromID(id);
@@ -205,6 +214,14 @@ Norm ParseNorm(const std::string& str) {
     int id = std::stoi(str, nullptr, 16);
     return Norm::ConstructFromID(id);
   }
+  else if (std::regex_match(str, re_a)) {
+    std::istringstream iss(str);
+    std::array<double,20> serialized = {};
+    for (int i = 0; i < 20; ++i) {
+      iss >> serialized[i];
+    }
+    return Norm::FromSerialized(serialized);
+  }
   else {
     return Norm::ConstructFromName(str);
   }
@@ -212,30 +229,45 @@ Norm ParseNorm(const std::string& str) {
 
 int main(int argc, char *argv[]) {
 
-  if (argc == 1) {
+  std::vector<std::string> args;
+  nlohmann::json j;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "-j" && i + 1 < argc) {
+      std::ifstream fin(argv[++i]);
+      // check if file exists
+      if (fin) {
+        fin >> j;
+        fin.close();
+      }
+      else {
+        std::istringstream iss(argv[i]);
+        iss >> j;
+      }
+    }
+    else {
+      args.push_back(argv[i]);
+    }
+  }
+
+  if (args.size() == 0) {
     test_RandomNorm();
     test_LeadingEight();
     test_SelectionMutationEquilibrium();
     test_SelectionMutationEquilibrium2();
   }
-  else if (argc == 2) {
-    Norm n = ParseNorm(argv[1]);
-    PrintSelectionMutationEquilibriumAllCAllD(n);
-  }
-  else if (argc == 3) {  // if two arguments are given, direct competition between two norms are shown
-    Norm n1 = ParseNorm(argv[1]);
-    Norm n2 = ParseNorm(argv[2]);
-    PrintCompetition(n1, n2);
-  }
-  else if (argc == 21) {
-    std::array<double,20> serialized = {};
-    for (size_t i = 0; i < 20; i++) {
-      serialized[i] = std::stod(argv[i+1]);
-    }
-    Norm n = Norm::FromSerialized(serialized);
+  else if (args.size() == 1) {
+    Norm n = ParseNorm(args.at(0));
     std::cout << n.Inspect();
-    PrintSelectionMutationEquilibriumAllCAllD(n);
-    CompareWithLocalMutants(n);
+    SimulationParams params = j.get<SimulationParams>();
+    std::cout << nlohmann::json(params).dump(2) << std::endl;
+    PrintSelectionMutationEquilibriumAllCAllD(n, params);
+  }
+  else if (args.size() == 2) {  // if two arguments are given, direct competition between two norms are shown
+    Norm n1 = ParseNorm(args.at(0));
+    Norm n2 = ParseNorm(args.at(1));
+    SimulationParams params = j.get<SimulationParams>();
+    std::cout << nlohmann::json(params).dump(2) << std::endl;
+    PrintCompetition(n1, n2, params);
   }
 
   return 0;

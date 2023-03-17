@@ -28,6 +28,6 @@ add_executable(test_Norm test_Norm.cpp Norm.hpp)
 add_executable(test_PublicRepGame test_PublicRepGame.cpp PublicRepGame.hpp Norm.hpp)
 
 add_executable(test_PrivRepGame test_PrivRepGame.cpp PrivRepGame.hpp Norm.hpp)
-target_link_libraries(test_PrivRepGame OpenMP::OpenMP_CXX Eigen3::Eigen)
+target_link_libraries(test_PrivRepGame OpenMP::OpenMP_CXX Eigen3::Eigen nlohmann_json::nlohmann_json)
 
 add_executable(minimal_benchmark minimal_benchmark.cpp Norm.hpp PrivRepGame.hpp)
