@@ -127,7 +127,7 @@ void test_SelectionMutationEquilibrium2() {
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void PrintSelectionMutationEquilibrium(const Norm& norm) {
+void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm) {
   auto start = std::chrono::high_resolution_clock::now();
 
   EvolPrivRepGame::SimulationParameters params;
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
   }
   else if (argc == 2) {
     Norm n = ParseNorm(argv[1]);
-    PrintSelectionMutationEquilibrium(n);
+    PrintSelectionMutationEquilibriumAllCAllD(n);
   }
   else if (argc == 3) {  // if two arguments are given, direct competition between two norms are shown
     Norm n1 = ParseNorm(argv[1]);
@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
     }
     Norm n = Norm::FromSerialized(serialized);
     std::cout << n.Inspect();
-    PrintSelectionMutationEquilibrium(n);
+    PrintSelectionMutationEquilibriumAllCAllD(n);
     CompareWithLocalMutants(n);
   }
 
