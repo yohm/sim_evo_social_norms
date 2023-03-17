@@ -143,7 +143,10 @@ struct SimulationParams {
   NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
 };
 
-void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const SimulationParams& params) {
+
+void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params);
+
+void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const SimulationParams& params, bool check_local_mutants = false) {
   auto start = std::chrono::high_resolution_clock::now();
 
   PrivateRepGame prg({{norm, params.N}}, params.seed);
@@ -162,6 +165,10 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
 
   IC(self_cooperation_level, rhos, eq);
 
+  if (check_local_mutants) {
+    CompareWithLocalMutants(norm, params);
+  }
+
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
@@ -173,7 +180,9 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const SimulationParams& pa
   EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
 
   EvolPrivRepGame evol(params.N, {n1, n2}, evo_params);
-  IC( evol.FixationProbabilities(params.benefit, params.beta) );
+  auto fixs = evol.FixationProbabilities(params.benefit, params.beta);
+  auto eq = evol.EquilibriumPopulationLowMut(fixs);
+  IC( fixs, eq );
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
@@ -185,8 +194,8 @@ void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
 
   for (int i = 0; i < 20; i++) {
     auto serialized = norm.Serialize();
-    const double delta = 0.1;
-    if (serialized[i] + delta < 1.0) {
+    const double delta = 1.0;
+    if (serialized[i] + delta <= 1.0) {
       serialized[i] += delta;
     }
     else {
@@ -230,6 +239,7 @@ Norm ParseNorm(const std::string& str) {
 int main(int argc, char *argv[]) {
 
   std::vector<std::string> args;
+  bool check_local_mutants = false;
   nlohmann::json j = nlohmann::json::object();
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
@@ -243,6 +253,9 @@ int main(int argc, char *argv[]) {
         std::istringstream iss(argv[i]);
         iss >> j;
       }
+    }
+    else if (std::string(argv[i]) == "-l") {
+      check_local_mutants = true;
     }
     else {
       args.push_back(argv[i]);
@@ -260,7 +273,7 @@ int main(int argc, char *argv[]) {
     std::cout << n.Inspect();
     SimulationParams params = j.get<SimulationParams>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
-    PrintSelectionMutationEquilibriumAllCAllD(n, params);
+    PrintSelectionMutationEquilibriumAllCAllD(n, params, check_local_mutants);
   }
   else if (args.size() == 2) {  // if two arguments are given, direct competition between two norms are shown
     Norm n1 = ParseNorm(args.at(0));

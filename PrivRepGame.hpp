@@ -281,7 +281,6 @@ public:
       pi_j[l] = payoff_j_total / l;
       // IC(l, pi_i[l], pi_j[l]);
     }
-    std::cerr << "============" << std::endl;
 
     double rho_1_inv = 1.0;
     // p_ij = 1 / (1 + sum_{l' != 1}^{N-1}  prod_{l=1}^{l_prime} exp{-beta * (pi_j[l] - pi_i[l]) }
