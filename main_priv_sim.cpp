@@ -4,6 +4,8 @@
 #include <vector>
 #include <random>
 #include <mpi.h>
+#include <omp.h>
+#include <nlohmann/json.hpp>
 #include <caravan.hpp>
 #include "Norm.hpp"
 #include "PrivRepGame.hpp"
@@ -12,18 +14,32 @@
 constexpr Reputation B = Reputation::B, G = Reputation::G;
 constexpr Action C = Action::C, D = Action::D;
 
+struct SimulationParams {
+  size_t n_init;
+  size_t n_steps;
+  size_t N;
+  double q;
+  double mu_percept;
+  double benefit;
+  double beta;
+  uint64_t seed;
+  SimulationParams() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), seed(123456789) {};
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
+};
+
+
 const EvolPrivRepGameAllCAllD* p_evol = nullptr;
+void InitializeEvol(const SimulationParams& params) {
+  EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+  p_evol = new EvolPrivRepGameAllCAllD(params.N, evoparams, params.benefit, params.beta);
+}
+
 const EvolPrivRepGameAllCAllD GetEvol() {
-  if (p_evol) {
-    return *p_evol;
+  if (!p_evol) {
+    throw std::runtime_error("EvolPrivRepGameAllCAllD is not initialized!");
   }
-  else {
-    EvolPrivRepGame::SimulationParameters params;
-    params.n_init = 1e4;
-    params.n_steps = 1e4;
-    p_evol = new EvolPrivRepGameAllCAllD(30, params, 5.0, 1.0);
-    return *p_evol;
-  }
+  return *p_evol;
 }
 
 // return <ID, cooperation level> for a given norm
@@ -35,52 +51,57 @@ double EqCooperationLevel(const Norm& norm) {
   return self_cooperation_level * eq[0] + 1.0 * eq[1];
 }
 
-void ComprehensiveSearchWithoutR2() {
-  EvolPrivRepGameAllCAllD evol = GetEvol();
-
-  std::vector< std::pair<int,double> > results;
-
-  for (int j = 0; j < 256; j++) {
-    std::cerr << "j = " << j << std::endl;
-    AssessmentRule R1 = AssessmentRule::MakeDeterministicRule(j);
-    AssessmentRule R2 = AssessmentRule::KeepRecipient();
-
-    for (int i = 0; i < 16; i++) {
-      ActionRule P = ActionRule::MakeDeterministicRule(i);
-      Norm norm(R1, R2, P);
-      if (norm.ID() < norm.SwapGB().ID()) {
-        continue;
-      }
-
-      double c = EqCooperationLevel(norm);
-      if (c > 0.3) {
-        results.emplace_back(norm.ID(), c);
-      }
-    }
-  }
-
-  // sort results by cooperation level
-  std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
-  // print top 10 from results
-  for (auto result: results) {
-    Norm norm = Norm::ConstructFromID(result.first);
-    std::cout << norm.Inspect() << " " << result.second << std::endl;
-  }
-}
-
 
 int main(int argc, char** argv) {
-  // ComprehensiveSearchWithoutR2();
-
-  MPI_Init(&argc, &argv);
-
   using namespace nlohmann;
 
-  std::function<void(caravan::Queue&)> on_init = [](caravan::Queue& q) {
-    const int i_max = 256, j_max = 256;
-    // const int i_max = 60, j_max = 60;
+  MPI_Init(&argc, &argv);
+  int my_rank = 0, num_procs = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+  std::vector<std::string> args;
+  json j = json::object();
+  bool without_R2 = false;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "-j" && i + 1 < argc) {
+      std::ifstream fin(argv[++i]);
+      // check if file exists
+      if (fin) {
+        fin >> j;
+        fin.close();
+      }
+      else {
+        std::istringstream iss(argv[i]);
+        iss >> j;
+      }
+    }
+    else if (std::string(argv[i]) == "--without-R2") {
+      without_R2 = true;
+    }
+    else {
+      std::cerr << "unknown option: " << argv[i] << std::endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  }
+  SimulationParams params = j.get<SimulationParams>();
+  InitializeEvol(params);
+
+  if (my_rank == 0) {
+    std::cerr << "params: " << json(params).dump(2) << "\n";
+    std::cerr << "without_R2: " << without_R2 << "\n";
+    std::cerr << "num_procs: " << num_procs << "\n";
+    std::cerr << "num_threads: " << omp_get_max_threads() << "\n";
+  }
+
+  std::function<void(caravan::Queue&)> on_init = [without_R2](caravan::Queue& q) {
+    int i_max = 256, j_min = 0, j_max = 256;
+    if (without_R2) {
+      j_min = AssessmentRule::KeepRecipient().ID();
+      j_max = j_min + 1;
+    }
     for (int i = 0; i < i_max; i++) {
-      for (int j = 0; j < j_max; j++) {
+      for (int j = j_min; j < j_max; j++) {
         json input = {i, j};
         q.Push(input);
       }
@@ -121,8 +142,6 @@ int main(int argc, char** argv) {
   opt.dump_log = "dump.log";
   caravan::Start(on_init, on_result_receive, do_task, MPI_COMM_WORLD, opt);
 
-  int my_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   if (my_rank == 0) {
     std::ofstream fout("results.txt");
     // sort results by cooperation level

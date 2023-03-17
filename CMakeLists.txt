@@ -17,7 +17,7 @@ set(SOURCE_FILES Norm.hpp PublicRepGame.hpp)
 add_executable(main_public_rep.out main_public_rep.cpp Norm.hpp PublicRepGame.hpp)
 
 add_executable(main_priv_sim.out main_priv_sim.cpp Norm.hpp PrivRepGame.hpp)
-target_link_libraries(main_priv_sim.out Eigen3::Eigen MPI::MPI_CXX nlohmann_json::nlohmann_json)
+target_link_libraries(main_priv_sim.out Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
 target_include_directories(main_priv_sim.out PRIVATE ${CMAKE_SOURCE_DIR}/caravan-lib)
 
 add_executable(main_optimize_norm main_optimize_norm.cpp Norm.hpp PrivRepGame.hpp)

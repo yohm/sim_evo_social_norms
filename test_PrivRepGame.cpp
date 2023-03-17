@@ -230,7 +230,7 @@ Norm ParseNorm(const std::string& str) {
 int main(int argc, char *argv[]) {
 
   std::vector<std::string> args;
-  nlohmann::json j;
+  nlohmann::json j = nlohmann::json::object();
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
