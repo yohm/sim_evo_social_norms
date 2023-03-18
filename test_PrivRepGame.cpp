@@ -195,11 +195,17 @@ void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   for (int i = 0; i < 20; i++) {
     auto serialized = norm.Serialize();
     const double delta = 1.0;
-    if (serialized[i] + delta <= 1.0) {
+    if (serialized[i] <= 0.5) {
       serialized[i] += delta;
+      if (serialized[i] > 1.0) {
+        serialized[i] = 1.0;
+      }
     }
     else {
       serialized[i] -= delta;
+      if (serialized[i] < 0.0) {
+        serialized[i] = 0.0;
+      }
     }
     Norm mutant = Norm::FromSerialized(serialized);
     std::cout << mutant.Inspect();
