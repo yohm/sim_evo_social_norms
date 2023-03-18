@@ -239,6 +239,26 @@ void test_Norm() {
     assert(b3);
   }
 
+  // test GSCO
+  {
+    Norm gsco = Norm::GenerousScoring(5.0);
+    assert( gsco.IsGenerousScoring() == true );
+    std::string name = gsco.GetName();
+    assert( name == "GSCO-5.0" );
+
+    gsco.Rd.good_probs[0] = 0.5;
+    assert( gsco.IsGenerousScoring() == false );
+
+    gsco = Norm::GenerousScoring(1.5);
+    name = gsco.GetName();
+    assert( name == "GSCO-1.5" );
+
+    Norm n = Norm::ConstructFromName("GSCO-1.5");
+    assert( n.IsGenerousScoring() == true );
+    assert( n.GetName() == "GSCO-1.5" );
+    assert( n.Rd.good_probs[0] > 0.6666 && n.Rd.good_probs[0] < 0.6667 );
+  }
+
   std::cout << "test_Norm passed!" << std::endl;
 }
 

@@ -481,6 +481,26 @@ public:
                 AssessmentRule::KeepRecipient(),
                 {{P_BB, 0, 0, 1}});
   }
+  static Norm GenerousScoring(double benefit = 5.0) {
+    double q = 1.0 / benefit;
+    AssessmentRule gsco(std::array<double,8>{{q, 1.0, q, 1.0, q, 1.0, q, 1.0}});
+    return Norm(gsco,
+                AssessmentRule::KeepRecipient(),
+                ActionRule::DISC());
+  }
+  bool IsGenerousScoring() const {
+    if( Rr != AssessmentRule::KeepRecipient() || P != ActionRule::DISC() ) {
+      return false;
+    }
+    if (Rd.good_probs[1] < 1.0 || Rd.good_probs[3] < 1.0 || Rd.good_probs[5] < 1.0 || Rd.good_probs[7] < 1.0) {
+      return false;
+    }
+    if (Rd.good_probs[0] != Rd.good_probs[2] || Rd.good_probs[0] != Rd.good_probs[4] || Rd.good_probs[0] != Rd.good_probs[6]) {
+      return false;
+    }
+    return true;
+  }
+
   static const std::vector<std::pair<int, std::string> > NormNames;
   std::string GetName() const {
     if (IsDeterministic()) {
@@ -490,6 +510,12 @@ public:
           return p.second;
         }
       }
+    }
+    if (IsGenerousScoring()) {
+      double benefit = 1.0 / Rd.good_probs[0];
+      std::ostringstream oss;
+      oss << "GSCO-" << std::fixed << std::setprecision(1) << benefit;
+      return oss.str();
     }
     std::string s = PR1_Name();
     if (!s.empty()) {
@@ -501,8 +527,16 @@ public:
     auto found = std::find_if(Norm::NormNames.begin(), Norm::NormNames.end(), [&](auto &s) {
       return s.second == name;
     });
+
+    std::regex re_gsco(R"(^GSCO-(\d+(?:\.\d+)?)$)");
+    std::smatch matches;
+
     if (found != Norm::NormNames.end()) {
       return Norm::ConstructFromID(found->first);
+    }
+    else if (std::regex_match(name, matches, re_gsco)) {
+      double benefit = std::stod(matches[1]);
+      return Norm::GenerousScoring(benefit);
     }
     else {
       std::cerr << "Unknown norm: " << name << std::endl;
@@ -510,6 +544,7 @@ public:
       for (auto &n : Norm::NormNames) {
         std::cerr << "\t" << n.second << std::endl;
       }
+      std::cerr << "\t" << "GSCO-benefit" << std::endl;
       throw std::runtime_error("Unknown norm");
     }
   }
