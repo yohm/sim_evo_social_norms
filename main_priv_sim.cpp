@@ -76,7 +76,7 @@ std::vector<Norm> LocalMutants(const Norm& norm) {
   return local_mutants;
 }
 
-double EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationParams& params) {
+std::pair<double,double> EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
   std::vector<Norm> norms = {norm, Norm::AllC(), Norm::AllD()};
   auto local_mutants = LocalMutants(norm);
@@ -90,8 +90,7 @@ double EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationPara
   for (size_t i = 0; i < norms.size(); i++) {
       eq_coop_level += self_coop_levels[i] * eq[i];
   }
-  IC(norm.ID(), eq_coop_level, eq[0], self_coop_levels[0]);
-  return eq_coop_level;
+  return std::make_pair(eq_coop_level, eq[0]);
 }
 
 
@@ -151,11 +150,11 @@ int main(int argc, char** argv) {
     }
   };
 
-  std::vector< std::tuple<int,double,double> > results;
+  std::vector< std::tuple<int,double,double,double> > results;
   std::function<void(int64_t, const json&, const json&, caravan::Queue&)> on_result_receive = [&results](int64_t task_id, const json& input, const json& output, caravan::Queue& q) {
     std::cerr << "task: " << task_id << " has finished: input: " << input << ", output: " << output << "\n";
     for (auto result: output) {
-      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>());
+      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>(), result.at(3).get<double>());
     }
   };
 
@@ -176,8 +175,8 @@ int main(int argc, char** argv) {
       const double threshold = 0.2;
       if (eq_c_level > threshold) {
         // check local mutants as well
-        double eq_c_level_local = EqCooperationLevelWithLocalMutants(norm, params);
-        output.push_back({norm.ID(), eq_c_level, eq_c_level_local});
+        std::pair<double,double> eq_c_level_local_eq0 = EqCooperationLevelWithLocalMutants(norm, params);
+        output.push_back({norm.ID(), eq_c_level, eq_c_level_local_eq0.first, eq_c_level_local_eq0.second});
       }
     }
     return output;
@@ -195,7 +194,7 @@ int main(int argc, char** argv) {
     // print top 10 from results
     for (auto result: results) {
       Norm norm = Norm::ConstructFromID(std::get<0>(result));
-      fout << norm.Inspect() << " " << std::get<1>(result) << " " << std::get<2>(result) << std::endl;
+      fout << norm.Inspect() << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << std::endl;
     }
     fout.close();
   }
