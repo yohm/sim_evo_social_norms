@@ -146,6 +146,31 @@ struct SimulationParams {
 
 void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params);
 
+std::vector<Norm> LocalMutants(const Norm& norm) {
+  std::vector<Norm> local_mutants;
+
+  for (int i = 0; i < 20; i++) {
+    auto serialized = norm.Serialize();
+    const double delta = 1.0;
+    if (serialized[i] <= 0.5) {
+      serialized[i] += delta;
+      if (serialized[i] > 1.0) {
+        serialized[i] = 1.0;
+      }
+    }
+    else {
+      serialized[i] -= delta;
+      if (serialized[i] < 0.0) {
+        serialized[i] = 0.0;
+      }
+    }
+    Norm mutant = Norm::FromSerialized(serialized);
+    local_mutants.push_back(mutant);
+  }
+
+  return local_mutants;
+}
+
 void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const SimulationParams& params, bool check_local_mutants = false) {
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -156,8 +181,34 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
   IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
 
   EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
-  EvolPrivRepGameAllCAllD evol(params.N, evo_params, params.benefit, params.beta);
+  std::vector<Norm> norms = {norm, Norm::AllC(), Norm::AllD()};
+  if (check_local_mutants) {
+    auto local_mutants = LocalMutants(norm);
+    norms.insert(norms.end(), local_mutants.begin(), local_mutants.end());
+  }
+  EvolPrivRepGame evol(params.N, norms, evo_params);
+  // EvolPrivRepGameAllCAllD evol(params.N, evo_params, params.benefit, params.beta);
 
+  auto fixation_probs = evol.FixationProbabilities(params.benefit, params.beta);
+  std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
+  std::vector<double> self_coop_levels = evol.SelfCooperationLevels();
+
+  double eq_coop_level = 0.0;
+  for (size_t i = 0; i < norms.size(); i++) {
+    eq_coop_level += self_coop_levels[i] * eq[i];
+  }
+  IC(eq_coop_level, eq, self_coop_levels);
+
+  // find the index of the highest eq norm
+  size_t max_eq_norm_idx = 0;
+  for (size_t i = 1; i < norms.size(); i++) {
+    if (eq[i] > eq[max_eq_norm_idx]) {
+      max_eq_norm_idx = i;
+    }
+  }
+  IC(max_eq_norm_idx, norms[max_eq_norm_idx].Inspect());
+
+  /*
   auto selfc_rho_eq = evol.EquilibriumCoopLevelAllCAllD(norm);
   double self_cooperation_level = std::get<0>(selfc_rho_eq);
   auto rhos = std::get<1>(selfc_rho_eq);
@@ -168,6 +219,7 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
   if (check_local_mutants) {
     CompareWithLocalMutants(norm, params);
   }
+   */
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
