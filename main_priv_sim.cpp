@@ -90,6 +90,7 @@ double EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationPara
   for (size_t i = 0; i < norms.size(); i++) {
       eq_coop_level += self_coop_levels[i] * eq[i];
   }
+  IC(norm.ID(), eq_coop_level, eq[0], self_coop_levels[0]);
   return eq_coop_level;
 }
 
@@ -175,14 +176,15 @@ int main(int argc, char** argv) {
         continue;
       }
       double eq_c_level = 0.0;
+      double threshold = 0.2;
       if (local_mutants) {
         eq_c_level = EqCooperationLevelWithLocalMutants(norm, params);
-        IC(norm.ID(), eq_c_level);
+        threshold = 0.2;
       }
       else {
         eq_c_level = EqCooperationLevel(norm);
+        threshold = 0.1;
       }
-      double threshold = 0.2;
       if (eq_c_level > threshold) {
         output.push_back({norm.ID(), eq_c_level});
       }

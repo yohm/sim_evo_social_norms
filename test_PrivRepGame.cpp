@@ -247,6 +247,8 @@ int main(int argc, char *argv[]) {
   std::vector<std::string> args;
   bool check_local_mutants = false;
   nlohmann::json j = nlohmann::json::object();
+  // -j param.json : set parameters used for evolutionary simulation by json file
+  // -l : check local mutants
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -264,11 +266,11 @@ int main(int argc, char *argv[]) {
       check_local_mutants = true;
     }
     else {
-      args.push_back(argv[i]);
+      args.emplace_back(argv[i]);
     }
   }
 
-  if (args.size() == 0) {
+  if (args.empty()) {
     test_RandomNorm();
     test_LeadingEight();
     test_SelectionMutationEquilibrium();
