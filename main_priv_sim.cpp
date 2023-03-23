@@ -106,7 +106,6 @@ int main(int argc, char** argv) {
   std::vector<std::string> args;
   json j = json::object();
   bool without_R2 = false;
-  bool local_mutants = false;
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -122,9 +121,6 @@ int main(int argc, char** argv) {
     }
     else if (std::string(argv[i]) == "--without-R2") {
       without_R2 = true;
-    }
-    else if (std::string(argv[i]) == "--local-mutants") {
-      local_mutants = true;
     }
     else {
       std::cerr << "unknown option: " << argv[i] << std::endl;
@@ -155,15 +151,15 @@ int main(int argc, char** argv) {
     }
   };
 
-  std::vector< std::pair<int,double> > results;
+  std::vector< std::tuple<int,double,double> > results;
   std::function<void(int64_t, const json&, const json&, caravan::Queue&)> on_result_receive = [&results](int64_t task_id, const json& input, const json& output, caravan::Queue& q) {
     std::cerr << "task: " << task_id << " has finished: input: " << input << ", output: " << output << "\n";
     for (auto result: output) {
-      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>());
+      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>());
     }
   };
 
-  std::function<json(const json& input)> do_task = [local_mutants,params](const json& input) {
+  std::function<json(const json& input)> do_task = [&params](const json& input) {
     json output = json::array();
     int R1_id = input.at(0).get<int>();
     int R2_id = input.at(1).get<int>();
@@ -175,18 +171,13 @@ int main(int argc, char** argv) {
       if (norm.ID() < norm.SwapGB().ID()) {
         continue;
       }
-      double eq_c_level = 0.0;
-      double threshold = 0.2;
-      if (local_mutants) {
-        eq_c_level = EqCooperationLevelWithLocalMutants(norm, params);
-        threshold = 0.2;
-      }
-      else {
-        eq_c_level = EqCooperationLevel(norm);
-        threshold = 0.1;
-      }
+
+      double eq_c_level = EqCooperationLevel(norm);
+      const double threshold = 0.2;
       if (eq_c_level > threshold) {
-        output.push_back({norm.ID(), eq_c_level});
+        // check local mutants as well
+        double eq_c_level_local = EqCooperationLevelWithLocalMutants(norm, params);
+        output.push_back({norm.ID(), eq_c_level, eq_c_level_local});
       }
     }
     return output;
@@ -200,15 +191,14 @@ int main(int argc, char** argv) {
   if (my_rank == 0) {
     std::ofstream fout("results.txt");
     // sort results by cooperation level
-    std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
+    std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) { return std::get<1>(a) > std::get<1>(b); });
     // print top 10 from results
     for (auto result: results) {
-      Norm norm = Norm::ConstructFromID(result.first);
-      fout << norm.Inspect() << " " << result.second << std::endl;
+      Norm norm = Norm::ConstructFromID(std::get<0>(result));
+      fout << norm.Inspect() << " " << std::get<1>(result) << " " << std::get<2>(result) << std::endl;
     }
     fout.close();
   }
-
 
   MPI_Finalize();
 
