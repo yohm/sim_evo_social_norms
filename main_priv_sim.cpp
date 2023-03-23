@@ -51,6 +51,48 @@ double EqCooperationLevel(const Norm& norm) {
   return self_cooperation_level * eq[0] + 1.0 * eq[1];
 }
 
+std::vector<Norm> LocalMutants(const Norm& norm) {
+  std::vector<Norm> local_mutants;
+
+  for (int i = 0; i < 20; i++) {
+    auto serialized = norm.Serialize();
+    const double delta = 1.0;
+    if (serialized[i] <= 0.5) {
+      serialized[i] += delta;
+      if (serialized[i] > 1.0) {
+        serialized[i] = 1.0;
+      }
+    }
+    else {
+      serialized[i] -= delta;
+      if (serialized[i] < 0.0) {
+        serialized[i] = 0.0;
+      }
+    }
+    Norm mutant = Norm::FromSerialized(serialized);
+    local_mutants.push_back(mutant);
+  }
+
+  return local_mutants;
+}
+
+double EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationParams& params) {
+  EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+  std::vector<Norm> norms = {norm, Norm::AllC(), Norm::AllD()};
+  auto local_mutants = LocalMutants(norm);
+  norms.insert(norms.end(), local_mutants.begin(), local_mutants.end());
+  EvolPrivRepGame evol(params.N, norms, evoparams);
+  auto fixation_probs = evol.FixationProbabilities(params.benefit, params.beta);
+  std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
+  std::vector<double> self_coop_levels = evol.SelfCooperationLevels();
+
+  double eq_coop_level = 0.0;
+  for (size_t i = 0; i < norms.size(); i++) {
+      eq_coop_level += self_coop_levels[i] * eq[i];
+  }
+  return eq_coop_level;
+}
+
 
 int main(int argc, char** argv) {
   using namespace nlohmann;
@@ -63,6 +105,7 @@ int main(int argc, char** argv) {
   std::vector<std::string> args;
   json j = json::object();
   bool without_R2 = false;
+  bool local_mutants = false;
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -78,6 +121,9 @@ int main(int argc, char** argv) {
     }
     else if (std::string(argv[i]) == "--without-R2") {
       without_R2 = true;
+    }
+    else if (std::string(argv[i]) == "--local-mutants") {
+      local_mutants = true;
     }
     else {
       std::cerr << "unknown option: " << argv[i] << std::endl;
@@ -116,7 +162,7 @@ int main(int argc, char** argv) {
     }
   };
 
-  std::function<json(const json& input)> do_task = [](const json& input) {
+  std::function<json(const json& input)> do_task = [local_mutants,params](const json& input) {
     json output = json::array();
     int R1_id = input.at(0).get<int>();
     int R2_id = input.at(1).get<int>();
@@ -128,7 +174,14 @@ int main(int argc, char** argv) {
       if (norm.ID() < norm.SwapGB().ID()) {
         continue;
       }
-      double eq_c_level = EqCooperationLevel(norm);
+      double eq_c_level = 0.0;
+      if (local_mutants) {
+        eq_c_level = EqCooperationLevelWithLocalMutants(norm, params);
+        IC(norm.ID(), eq_c_level);
+      }
+      else {
+        eq_c_level = EqCooperationLevel(norm);
+      }
       double threshold = 0.2;
       if (eq_c_level > threshold) {
         output.push_back({norm.ID(), eq_c_level});

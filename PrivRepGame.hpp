@@ -254,6 +254,23 @@ public:
     return rho;
   }
 
+  // return array of self cooperation levels
+  std::vector<double> SelfCooperationLevels() const {
+    size_t num_norms = norms.size();
+    std::vector<double> c_levels(num_norms, 0.0);
+
+    for (size_t i = 0; i < num_norms; i++) {
+      PrivateRepGame game({{norms[i], N}}, param.seed);
+      game.Update(param.n_init, param.q, param.mu_percept, false);
+      game.ResetCounts();
+      game.Update(param.n_steps, param.q, param.mu_percept, false);
+      double self_coop_level = game.NormCooperationLevels()[0][0];
+      c_levels[i] = self_coop_level;
+    }
+
+    return c_levels;
+  }
+
   // first: fixation probability of resident j against resident i
   //        i.e., the probability to change from i to j
   // second: fixation probability of resident i against resident j
