@@ -197,7 +197,7 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
   for (size_t i = 0; i < norms.size(); i++) {
     eq_coop_level += self_coop_levels[i] * eq[i];
   }
-  IC(eq_coop_level, eq, self_coop_levels);
+  IC(eq_coop_level, eq[0], self_coop_levels[0], fixation_probs[0]);
 
   // find the index of the highest eq norm
   size_t max_eq_norm_idx = 0;

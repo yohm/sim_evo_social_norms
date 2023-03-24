@@ -191,10 +191,8 @@ int main(int argc, char** argv) {
     std::ofstream fout("results.txt");
     // sort results by cooperation level
     std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) { return std::get<1>(a) > std::get<1>(b); });
-    // print top 10 from results
     for (auto result: results) {
-      Norm norm = Norm::ConstructFromID(std::get<0>(result));
-      fout << norm.Inspect() << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << std::endl;
+      fout << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << std::endl;
     }
     fout.close();
   }
