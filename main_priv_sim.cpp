@@ -76,6 +76,25 @@ std::vector<Norm> LocalMutants(const Norm& norm) {
   return local_mutants;
 }
 
+std::pair<double,Norm> MostRiskyLocalMutant(const Norm& norm, const SimulationParams& params) {
+  EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+
+  double min_eq_population = 1.0;
+  Norm most_risky_mutant = Norm::AllC();
+  auto local_mutants = LocalMutants(norm);
+  for (const auto& mutant : local_mutants) {
+    EvolPrivRepGame evol(params.N, {norm, mutant}, evoparams);
+    auto fixation_probs = evol.FixationProbabilities(params.benefit, params.beta);
+    std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
+    if (eq[0] < min_eq_population) {
+      min_eq_population = eq[0];
+      most_risky_mutant = mutant;
+    }
+  }
+
+  return std::make_pair(min_eq_population, most_risky_mutant);
+}
+
 std::pair<double,double> EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
   std::vector<Norm> norms = {norm, Norm::AllC(), Norm::AllD()};
@@ -150,13 +169,13 @@ int main(int argc, char** argv) {
     }
   };
 
-  std::vector< std::tuple<int,double,double,double> > results;
+  std::vector< std::tuple<int,double,double,size_t> > results;
   std::function<void(int64_t, const json&, const json&, caravan::Queue&)> on_result_receive = [&results](int64_t task_id, const json& input, const json& output, caravan::Queue& q) {
     if (task_id % 1000 == 0) {
       std::cerr << "task: " << task_id << " has finished: input: " << input << ", output: " << output << "\n";
     }
     for (auto result: output) {
-      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>(), result.at(3).get<double>());
+      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>(), result.at(3).get<size_t>());
     }
   };
 
@@ -177,8 +196,9 @@ int main(int argc, char** argv) {
       const double threshold = 0.2;
       if (eq_c_level > threshold) {
         // check local mutants as well
-        std::pair<double,double> eq_c_level_local_eq0 = EqCooperationLevelWithLocalMutants(norm, params);
-        output.push_back({norm.ID(), eq_c_level, eq_c_level_local_eq0.first, eq_c_level_local_eq0.second});
+        auto p = MostRiskyLocalMutant(norm, params);
+        // std::pair<double,double> eq_c_level_local_eq0 = EqCooperationLevelWithLocalMutants(norm, params);
+        output.push_back({norm.ID(), eq_c_level, p.first, p.second.ID()});
       }
     }
     return output;
