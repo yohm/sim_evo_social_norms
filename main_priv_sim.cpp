@@ -152,7 +152,9 @@ int main(int argc, char** argv) {
 
   std::vector< std::tuple<int,double,double,double> > results;
   std::function<void(int64_t, const json&, const json&, caravan::Queue&)> on_result_receive = [&results](int64_t task_id, const json& input, const json& output, caravan::Queue& q) {
-    std::cerr << "task: " << task_id << " has finished: input: " << input << ", output: " << output << "\n";
+    if (task_id % 1000 == 0) {
+      std::cerr << "task: " << task_id << " has finished: input: " << input << ", output: " << output << "\n";
+    }
     for (auto result: output) {
       results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>(), result.at(3).get<double>());
     }
