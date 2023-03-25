@@ -281,7 +281,7 @@ public:
 
     #pragma omp parallel for schedule(dynamic) default(none), shared(pi_i, pi_j, norm_i, norm_j, benefit, beta)
     for (size_t l = 1; l < N; l++) {
-      PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed);
+      PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed + i);
       game.Update(param.n_init, param.q, param.mu_percept, false);
       game.ResetCounts();
       game.Update(param.n_steps, param.q, param.mu_percept, false);
