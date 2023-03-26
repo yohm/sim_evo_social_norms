@@ -96,12 +96,24 @@ void PrintESSRange(const Norm& norm) {
 
 
 int main(int argc, char* argv[]) {
-  if (argc == 1) {
+
+  std::vector<std::string> args;
+  bool swap_gb = false;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "-s") {
+      swap_gb = true;
+    }
+    else {
+      args.emplace_back(argv[i]);
+    }
+  }
+
+  if (args.empty()) {
     test_L8();
     test_ImageScoring();
   }
-  else if (argc == 2) {
-    Norm n = Norm::ParseNormString(argv[1]);
+  else if (args.size() == 1) {
+    Norm n = Norm::ParseNormString(argv[1], swap_gb);
     PrintESSRange(n);
   }
   else {

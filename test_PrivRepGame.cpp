@@ -270,15 +270,15 @@ int main(int argc, char *argv[]) {
     test_SelectionMutationEquilibrium2();
   }
   else if (args.size() == 1) {
-    Norm n = Norm::ParseNorm(args.at(0), swap_gb);
+    Norm n = Norm::ParseNormString(args.at(0), swap_gb);
     std::cout << n.Inspect();
     SimulationParams params = j.get<SimulationParams>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
     PrintSelectionMutationEquilibriumAllCAllD(n, params, check_local_mutants);
   }
   else if (args.size() == 2) {  // if two arguments are given, direct competition between two norms are shown
-    Norm n1 = Norm::ParseNorm(args.at(0), swap_gb);
-    Norm n2 = Norm::ParseNorm(args.at(1), swap_gb);
+    Norm n1 = Norm::ParseNormString(args.at(0), swap_gb);
+    Norm n2 = Norm::ParseNormString(args.at(1), swap_gb);
     SimulationParams params = j.get<SimulationParams>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
     PrintCompetition(n1, n2, params);
