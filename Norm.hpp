@@ -601,6 +601,37 @@ public:
     }
     return "";
   }
+
+  static Norm ParseNormString(const std::string& str, bool swap_gb = false) {
+    std::regex re_d(R"(\d+)"); // regex for digits
+    std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
+    // regular expression for 20 floating point numbers separated by space
+    std::regex re_a(R"(^(0|1)(\.\d+)?( (0|1)(\.\d+)?){19}$)");
+    Norm norm = Norm::AllC();
+    if (std::regex_match(str, re_d)) {
+      int id = std::stoi(str);
+      norm = Norm::ConstructFromID(id);
+    }
+    else if (std::regex_match(str, re_x)) {
+      int id = std::stoi(str, nullptr, 16);
+      norm = Norm::ConstructFromID(id);
+    }
+    else if (std::regex_match(str, re_a)) {
+      std::istringstream iss(str);
+      std::array<double,20> serialized = {};
+      for (int i = 0; i < 20; ++i) {
+        iss >> serialized[i];
+      }
+      norm = Norm::FromSerialized(serialized);
+    }
+    else {
+      norm = Norm::ConstructFromName(str);
+    }
+    if (swap_gb) {
+      norm = norm.SwapGB();
+    }
+    return norm;
+  }
 };
 
 const std::vector<std::pair<int,std::string> > Norm::NormNames = {{

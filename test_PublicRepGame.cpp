@@ -101,30 +101,7 @@ int main(int argc, char* argv[]) {
     test_ImageScoring();
   }
   else if (argc == 2) {
-    std::regex re_d(R"(\d+)"); // regex for digits
-    std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
-    if (std::regex_match(argv[1], re_d)) {
-      int id = std::stoi(argv[1]);
-      Norm n = Norm::ConstructFromID(id);
-      PrintESSRange(n);
-    }
-    else if (std::regex_match(argv[1], re_x)) {
-      int id = std::stoi(argv[1], nullptr, 16);
-      Norm n = Norm::ConstructFromID(id);
-      PrintESSRange(n);
-    }
-    // if second argument is a string and is contained in the second of Norm::NormNames
-    else {
-      Norm n = Norm::ConstructFromName(argv[1]);
-      PrintESSRange(n);
-    }
-  }
-  else if (argc == 21) {
-    std::array<double,20> serialized;
-    for (size_t i = 0; i < 20; i++) {
-      serialized[i] = std::stod(argv[i+1]);
-    }
-    Norm n = Norm::FromSerialized(serialized);
+    Norm n = Norm::ParseNormString(argv[1]);
     PrintESSRange(n);
   }
   else {
