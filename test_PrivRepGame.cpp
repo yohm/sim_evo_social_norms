@@ -226,7 +226,8 @@ void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
       min_eq = eq[0];
       min_eq_norm = mutant;
     }
-    std::cerr << std::hex << "0x" << mutant.ID() << std::dec << " " << eq[0] << std::endl;
+    std::cerr << "0x" << std::setfill('0') << std::setw(5) << std::hex << mutant.ID() << std::resetiosflags(std::ios_base::fmtflags(-1))
+              << " " << eq[0] << std::endl;
   }
   std::cerr << "Most risky mutant:" << std::endl << min_eq_norm.Inspect() << min_eq << std::endl;
 }
