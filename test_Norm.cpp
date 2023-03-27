@@ -307,10 +307,13 @@ int main(int argc, char** argv) {
     Norm n = Norm::ParseNormString(args[0], swap_gb);
     std::cout << n.Inspect();
   }
-  else if (args.size() == 2) {
-    Norm n1 = Norm::ParseNormString(args[0], swap_gb);
-    Norm n2 = Norm::ParseNormString(args[1], swap_gb);
-    std::cout << n1.InspectComparison(n2);
+  else if (args.size() >= 2) {
+    Norm n = Norm::ParseNormString(args[0], swap_gb);
+    // loop over the other norms
+    for (size_t i = 1; i < args.size(); ++i) {
+      Norm n2 = Norm::ParseNormString(args[i], swap_gb);
+      std::cout << n.InspectComparison(n2);
+    }
   }
   else {
     std::cout << "Usage: " << argv[0] << " [norm_str]" << std::endl
