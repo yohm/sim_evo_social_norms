@@ -214,10 +214,12 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const SimulationParams& pa
 void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
 
+  std::vector<Norm> mutants = {Norm::AllC(), Norm::AllD()};
   auto local_mutants = LocalMutants(norm);
+  mutants.insert(mutants.end(), local_mutants.begin(), local_mutants.end());
   double min_eq = 1.0;
   Norm min_eq_norm = Norm::AllC();
-  for (const auto& mutant : local_mutants) {
+  for (const auto& mutant : mutants) {
     // std::cout << mutant.Inspect();
     EvolPrivRepGame evol(params.N, {norm, mutant}, evo_params);
     auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
