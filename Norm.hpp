@@ -318,6 +318,7 @@ public:
     std::stringstream ss;
     if (IsDeterministic()) {
       ss << "Norm: 0x" << std::setfill('0') << std::setw(5) << std::hex << ID() << " : " << GetName() << std::endl;
+      ss << std::resetiosflags(std::ios_base::fmtflags(-1));
       for (int i = 3; i >= 0; i--) {
         Reputation X = static_cast<Reputation>(i / 2);
         Reputation Y = static_cast<Reputation>(i % 2);
@@ -342,9 +343,58 @@ public:
       double gr_prob_c = Rr.GProb(X, Y, Action::C);
       ss << std::setprecision(3) << std::fixed;
       ss << "(" << X << "->" << Y << "): "
-         << "c_prob:" << c_prob << " : "
-         << "donor_gprob (c:" << gd_prob_c << ",d:" << gd_prob_d << ") : "
-         << "recip_gprob (c:" << gr_prob_c << ",d:" << gr_prob_d << ")\n";
+         << "P:" << c_prob << " : "
+         << "R1 (c:" << gd_prob_c << ",d:" << gd_prob_d << ") : "
+         << "R2 (c:" << gr_prob_c << ",d:" << gr_prob_d << ")\n";
+    }
+    return ss.str();
+  }
+  std::string InspectComparison(const Norm& other) const {
+    // compare this norm and `other` norm and highlight the differences
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(5) << std::hex;
+    ss << "Norm: 0x" << ID() << " : " << GetName() << std::endl;
+    ss << "Norm: 0x" << other.ID() << " : " << other.GetName() << std::endl;
+    ss << std::resetiosflags(std::ios_base::fmtflags(-1));
+
+    for (int i = 3; i >= 0; i--) {
+      auto X = static_cast<Reputation>(i / 2);
+      auto Y = static_cast<Reputation>(i % 2);
+      double c_prob1 = P.CProb(X, Y);
+      double gd_prob_d1 = Rd.GProb(X, Y, Action::D);
+      double gd_prob_c1 = Rd.GProb(X, Y, Action::C);
+      double gr_prob_d1 = Rr.GProb(X, Y, Action::D);
+      double gr_prob_c1 = Rr.GProb(X, Y, Action::C);
+
+      double c_prob2 = other.P.CProb(X, Y);
+      double gd_prob_d2 = other.Rd.GProb(X, Y, Action::D);
+      double gd_prob_c2 = other.Rd.GProb(X, Y, Action::C);
+      double gr_prob_d2 = other.Rr.GProb(X, Y, Action::D);
+      double gr_prob_c2 = other.Rr.GProb(X, Y, Action::C);
+      ss << std::setprecision(2) << std::fixed;
+      ss << "(" << X << "->" << Y << "): ";
+      ss << "P:";
+      auto highlight_diff = [&ss](double a, double b) {
+        if (a != b) {
+          ss << "\033[1;31m";
+          ss << a << " != " << b;
+          ss << "\033[0m";
+        } else {
+          ss << a << "        ";
+        }
+      };
+      highlight_diff(c_prob1, c_prob2);
+      ss << " : ";
+      ss << "R1 (c:";
+      highlight_diff(gd_prob_c1, gd_prob_c2);
+      ss << ",d:";
+      highlight_diff(gd_prob_d1, gd_prob_d2);
+      ss << ") : ";
+      ss << "R2 (c:";
+      highlight_diff(gr_prob_c1, gr_prob_c2);
+      ss << ",d:";
+      highlight_diff(gr_prob_d1, gr_prob_d2);
+      ss << ")\n";
     }
     return ss.str();
   }

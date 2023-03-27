@@ -304,8 +304,13 @@ int main(int argc, char** argv) {
     test_ParseNormString();
   }
   else if (args.size() == 1) {
-    Norm n = Norm::ParseNormString(argv[1], swap_gb);
+    Norm n = Norm::ParseNormString(args[0], swap_gb);
     std::cout << n.Inspect();
+  }
+  else if (args.size() == 2) {
+    Norm n1 = Norm::ParseNormString(args[0], swap_gb);
+    Norm n2 = Norm::ParseNormString(args[1], swap_gb);
+    std::cout << n1.InspectComparison(n2);
   }
   else {
     std::cout << "Usage: " << argv[0] << " [norm_str]" << std::endl
