@@ -28,6 +28,13 @@ struct SimulationParams {
   NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
 };
 
+double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
+  PrivateRepGame prg({{norm, params.N}}, params.seed);
+  prg.Update(params.n_init, params.q, params.mu_percept, false);
+  prg.ResetCounts();
+  prg.Update(params.n_steps, params.q, params.mu_percept, true);
+  return prg.NormCooperationLevels()[0][0];
+}
 
 const EvolPrivRepGameAllCAllD* p_evol = nullptr;
 void InitializeEvol(const SimulationParams& params) {
@@ -76,25 +83,6 @@ std::vector<Norm> LocalMutants(const Norm& norm) {
   return local_mutants;
 }
 
-std::pair<double,Norm> MostRiskyLocalMutant(const Norm& norm, const SimulationParams& params) {
-  EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
-
-  double min_eq_population = 1.0;
-  Norm most_risky_mutant = Norm::AllC();
-  auto local_mutants = LocalMutants(norm);
-  for (const auto& mutant : local_mutants) {
-    EvolPrivRepGame evol(params.N, {norm, mutant}, evoparams);
-    auto fixation_probs = evol.FixationProbabilities(params.benefit, params.beta);
-    std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
-    if (eq[0] < min_eq_population) {
-      min_eq_population = eq[0];
-      most_risky_mutant = mutant;
-    }
-  }
-
-  return std::make_pair(min_eq_population, most_risky_mutant);
-}
-
 std::pair<double,double> EqCooperationLevelWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
   std::vector<Norm> norms = {norm, Norm::AllC(), Norm::AllD()};
@@ -107,9 +95,33 @@ std::pair<double,double> EqCooperationLevelWithLocalMutants(const Norm& norm, co
 
   double eq_coop_level = 0.0;
   for (size_t i = 0; i < norms.size(); i++) {
-      eq_coop_level += self_coop_levels[i] * eq[i];
+    eq_coop_level += self_coop_levels[i] * eq[i];
   }
   return std::make_pair(eq_coop_level, eq[0]);
+}
+
+std::pair<double,Norm> MostRiskyMutant(const Norm& norm, const SimulationParams& params) {
+  EvolPrivRepGame::SimulationParameters evoparams(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+
+  double min_eq_population = 1.0;
+  Norm most_risky_mutant = Norm::AllC();
+  std::vector<Norm> mutants = {Norm::AllC(), Norm::AllD()};
+  auto local_mutants = LocalMutants(norm);
+  mutants.insert(mutants.end(), local_mutants.begin(), local_mutants.end());
+  for (const auto& mutant : mutants) {
+    EvolPrivRepGame evol(params.N, {norm, mutant}, evoparams);
+    auto fixation_probs = evol.FixationProbabilities(params.benefit, params.beta);
+    std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
+    if (eq[0] < min_eq_population) {
+      min_eq_population = eq[0];
+      most_risky_mutant = mutant;
+    }
+    if (min_eq_population < 1.0e-2) {
+      break;
+    }
+  }
+
+  return std::make_pair(min_eq_population, most_risky_mutant);
 }
 
 
@@ -169,11 +181,11 @@ int main(int argc, char** argv) {
     }
   };
 
-  std::vector< std::tuple<int,double,double,size_t> > results;
+  std::vector< std::tuple<int,double,double> > results;
   std::function<void(int64_t, const json&, const json&, caravan::Queue&)> on_result_receive = [&results](int64_t task_id, const json& input, const json& output, caravan::Queue& q) {
     std::cerr << "task: " << task_id << " has finished: input: " << input << ", output: " << output << "\n";
     for (auto result: output) {
-      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>(), result.at(3).get<size_t>());
+      results.emplace_back(result.at(0).get<int>(), result.at(1).get<double>(), result.at(2).get<double>());
     }
   };
 
@@ -190,14 +202,20 @@ int main(int argc, char** argv) {
         continue;
       }
 
+      double self_coop_level = SelfCoopLevel(norm, params);
+      auto p = MostRiskyMutant(norm, params);
+      output.emplace_back(json::array({norm.ID(), self_coop_level, p.first}));
+
+      /*
       double eq_c_level = EqCooperationLevel(norm);
       const double threshold = 0.2;
       if (eq_c_level > threshold) {
         // check local mutants as well
-        auto p = MostRiskyLocalMutant(norm, params);
+        auto p = MostRiskyMutant(norm, params);
         // std::pair<double,double> eq_c_level_local_eq0 = EqCooperationLevelWithLocalMutants(norm, params);
         output.push_back({norm.ID(), eq_c_level, p.first, p.second.ID()});
       }
+      */
     }
     return output;
   };
@@ -210,9 +228,11 @@ int main(int argc, char** argv) {
   if (my_rank == 0) {
     std::ofstream fout("results.txt");
     // sort results by cooperation level
-    std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) { return std::get<1>(a) > std::get<1>(b); });
+    std::sort(results.begin(), results.end(), [](const auto& a, const auto& b) {
+      return std::get<1>(a) + std::get<2>(a) > std::get<1>(b) + std::get<2>(b);
+    });
     for (auto result: results) {
-      fout << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << std::endl;
+      fout << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << std::endl;
     }
     fout.close();
   }
