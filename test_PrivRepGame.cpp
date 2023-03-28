@@ -181,45 +181,15 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
   IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
 
   EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
-  std::vector<Norm> norms = {norm, Norm::AllC(), Norm::AllD()};
-  if (check_local_mutants) {
-    auto local_mutants = LocalMutants(norm);
-    norms.insert(norms.end(), local_mutants.begin(), local_mutants.end());
-  }
-  EvolPrivRepGame evol(params.N, norms, evo_params);
-  // EvolPrivRepGameAllCAllD evol(params.N, evo_params, params.benefit, params.beta);
-
-  auto fixation_probs = evol.FixationProbabilities(params.benefit, params.beta);
-  std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
-  std::vector<double> self_coop_levels = evol.SelfCooperationLevels();
-
-  double eq_coop_level = 0.0;
-  for (size_t i = 0; i < norms.size(); i++) {
-    eq_coop_level += self_coop_levels[i] * eq[i];
-  }
-  IC(eq_coop_level, eq[0], self_coop_levels[0], fixation_probs[0]);
-
-  // find the index of the highest eq norm
-  size_t max_eq_norm_idx = 0;
-  for (size_t i = 1; i < norms.size(); i++) {
-    if (eq[i] > eq[max_eq_norm_idx]) {
-      max_eq_norm_idx = i;
-    }
-  }
-  IC(max_eq_norm_idx, norms[max_eq_norm_idx].Inspect());
-
-  /*
-  auto selfc_rho_eq = evol.EquilibriumCoopLevelAllCAllD(norm);
-  double self_cooperation_level = std::get<0>(selfc_rho_eq);
-  auto rhos = std::get<1>(selfc_rho_eq);
-  auto eq = std::get<2>(selfc_rho_eq);
-
-  IC(self_cooperation_level, rhos, eq);
+  EvolPrivRepGameAllCAllD evol(params.N, evo_params, params.benefit, params.beta);
+  auto res = evol.EquilibriumCoopLevelAllCAllD(norm);
+  auto rho = std::get<1>(res);
+  auto eq = std::get<2>(res);
+  IC(rho, eq);
 
   if (check_local_mutants) {
     CompareWithLocalMutants(norm, params);
   }
-   */
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
@@ -244,60 +214,32 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const SimulationParams& pa
 void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
 
-  for (int i = 0; i < 20; i++) {
-    auto serialized = norm.Serialize();
-    const double delta = 1.0;
-    if (serialized[i] <= 0.5) {
-      serialized[i] += delta;
-      if (serialized[i] > 1.0) {
-        serialized[i] = 1.0;
-      }
-    }
-    else {
-      serialized[i] -= delta;
-      if (serialized[i] < 0.0) {
-        serialized[i] = 0.0;
-      }
-    }
-    Norm mutant = Norm::FromSerialized(serialized);
-    std::cout << mutant.Inspect();
+  std::vector<Norm> mutants = {Norm::AllC(), Norm::AllD()};
+  auto local_mutants = LocalMutants(norm);
+  mutants.insert(mutants.end(), local_mutants.begin(), local_mutants.end());
+  double min_eq = 1.0;
+  Norm min_eq_norm = Norm::AllC();
+  for (const auto& mutant : mutants) {
+    // std::cout << mutant.Inspect();
     EvolPrivRepGame evol(params.N, {norm, mutant}, evo_params);
     auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
     auto eq = evol.EquilibriumPopulationLowMut(rhos);
-    IC(eq);
-  }
-}
-
-Norm ParseNorm(const std::string& str) {
-  std::regex re_d(R"(\d+)"); // regex for digits
-  std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
-  // regular expression for 20 floating point numbers separated by space
-  std::regex re_a(R"(^(0|1)(\.\d+)?( (0|1)(\.\d+)?){19}$)");
-  if (std::regex_match(str, re_d)) {
-    int id = std::stoi(str);
-    return Norm::ConstructFromID(id);
-  }
-  else if (std::regex_match(str, re_x)) {
-    int id = std::stoi(str, nullptr, 16);
-    return Norm::ConstructFromID(id);
-  }
-  else if (std::regex_match(str, re_a)) {
-    std::istringstream iss(str);
-    std::array<double,20> serialized = {};
-    for (int i = 0; i < 20; ++i) {
-      iss >> serialized[i];
+    if (eq[0] < min_eq) {
+      min_eq = eq[0];
+      min_eq_norm = mutant;
     }
-    return Norm::FromSerialized(serialized);
+    std::cerr << "0x" << std::setfill('0') << std::setw(5) << std::hex << mutant.ID() << std::resetiosflags(std::ios_base::fmtflags(-1))
+              << " " << eq[0] << std::endl;
   }
-  else {
-    return Norm::ConstructFromName(str);
-  }
+  std::cerr << "Most risky mutant:" << min_eq << std::endl;
+  std::cerr << norm.InspectComparison(min_eq_norm);
 }
 
 int main(int argc, char *argv[]) {
 
   std::vector<std::string> args;
   bool check_local_mutants = false;
+  bool swap_gb = false;
   nlohmann::json j = nlohmann::json::object();
   // -j param.json : set parameters used for evolutionary simulation by json file
   // -l : check local mutants
@@ -317,6 +259,9 @@ int main(int argc, char *argv[]) {
     else if (std::string(argv[i]) == "-l") {
       check_local_mutants = true;
     }
+    else if (std::string(argv[i]) == "-s") {
+      swap_gb = true;
+    }
     else {
       args.emplace_back(argv[i]);
     }
@@ -329,15 +274,15 @@ int main(int argc, char *argv[]) {
     test_SelectionMutationEquilibrium2();
   }
   else if (args.size() == 1) {
-    Norm n = ParseNorm(args.at(0));
+    Norm n = Norm::ParseNormString(args.at(0), swap_gb);
     std::cout << n.Inspect();
     SimulationParams params = j.get<SimulationParams>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
     PrintSelectionMutationEquilibriumAllCAllD(n, params, check_local_mutants);
   }
   else if (args.size() == 2) {  // if two arguments are given, direct competition between two norms are shown
-    Norm n1 = ParseNorm(args.at(0));
-    Norm n2 = ParseNorm(args.at(1));
+    Norm n1 = Norm::ParseNormString(args.at(0), swap_gb);
+    Norm n2 = Norm::ParseNormString(args.at(1), swap_gb);
     SimulationParams params = j.get<SimulationParams>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
     PrintCompetition(n1, n2, params);

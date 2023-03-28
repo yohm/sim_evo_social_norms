@@ -262,42 +262,62 @@ void test_Norm() {
   std::cout << "test_Norm passed!" << std::endl;
 }
 
+void test_ParseNormString() {
+  assert( Norm::ParseNormString("L1").GetName() == "L1" );
+  assert( Norm::ParseNormString("S16").GetName() == "S16" );
+  assert( Norm::ParseNormString("GSCO-1.5").GetName() == "GSCO-1.5" );
+
+  assert( Norm::ParseNormString("857181").ID() == 857181 );
+  assert( Norm::ParseNormString("0xd145d").ID() == 857181 );
+  assert( Norm::ParseNormString("857181", true).ID() == 0xb8aeb );
+
+  const std::string s = "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.0 1.0 0 1";
+  Norm n = Norm::ParseNormString(s);
+  assert( n.CProb(G, G) == 1.0 );
+  assert( n.CProb(G, B) == 0.0 );
+  assert( n.CProb(B, G) == 1.0 );
+  assert( n.CProb(B, B) == 0.0 );
+  assert( n.GProbDonor(G, G, C) == 0.8 );
+  assert( n.GProbDonor(B, B, D) == 0.1 );
+  assert( n.GProbRecip(G, G, C) == 0.1 );
+  assert( n.GProbRecip(B, B, D) == 0.8 );
+}
+
 
 int main(int argc, char** argv) {
-  if (argc == 1) {
+
+  std::vector<std::string> args;
+  bool swap_gb = false;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "-s") {
+      swap_gb = true;
+    }
+    else {
+      args.emplace_back(argv[i]);
+    }
+  }
+
+  if (args.empty()) {
     test_ActionRule();
     test_AssessmentRule();
     test_Norm();
+    test_ParseNormString();
   }
-  else if (argc == 2) {
-    std::regex re_d(R"(\d+)"); // regex for digits in decimal
-    std::regex re_x(R"(^0x[0-9a-fA-F]+$)");  // regex for digits in hexadecimal
-    if (std::regex_match(argv[1], re_d)) {
-      int id = std::stoi(argv[1]);
-      Norm n = Norm::ConstructFromID(id);
-      std::cout << n.Inspect();
-    }
-    else if (std::regex_match(argv[1], re_x)) {
-      int id = std::stoi(argv[1], nullptr, 16);
-      Norm n = Norm::ConstructFromID(id);
-      std::cout << n.Inspect();
-    }
-    // if second argument is a string and is contained in the second of Norm::NormNames
-    else {
-      Norm n = Norm::ConstructFromName(argv[1]);
-      std::cout << n.Inspect();
-    }
-  }
-  else if (argc == 21) {
-    std::array<double,20> serialized;
-    for (size_t i = 0; i < 20; i++) {
-      serialized[i] = std::stod(argv[i+1]);
-    }
-    Norm n = Norm::FromSerialized(serialized);
+  else if (args.size() == 1) {
+    Norm n = Norm::ParseNormString(args[0], swap_gb);
     std::cout << n.Inspect();
   }
+  else if (args.size() >= 2) {
+    Norm n = Norm::ParseNormString(args[0], swap_gb);
+    // loop over the other norms
+    for (size_t i = 1; i < args.size(); ++i) {
+      Norm n2 = Norm::ParseNormString(args[i], swap_gb);
+      std::cout << n.InspectComparison(n2);
+    }
+  }
   else {
-    std::cout << "Usage: " << argv[0] << " [id] [c1 c2 c3 c4 g1 g2 g3 g4 g5 g6 g7 g8 r1 r2 r3 r4]" << std::endl;
+    std::cout << "Usage: " << argv[0] << " [norm_str]" << std::endl
+              << "  format: [Norm name] or [ID] or [c1 c2 c3 c4 g1 g2 g3 g4 g5 g6 g7 g8 r1 r2 r3 r4]" << std::endl;
   }
 
   return 0;
