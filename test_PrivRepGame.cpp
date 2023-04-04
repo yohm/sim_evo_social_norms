@@ -141,9 +141,11 @@ void test_SelectionMutationEquilibriumFiniteMu() {
   params.n_init = 1e4;
   params.n_steps = 1e4;
 
-  EvolPrivRepGameFiniteMutationRateAllCAllD evol(3, Norm::L1(), params);
-  auto result = evol.CalculateEquilibrium(5.0, 1.0, 0.01);
-  IC( result.OverallCooperationLevel(), result.OverallAbundances() );
+  EvolPrivRepGameFiniteMutationRateAllCAllD evol(30, Norm::L1(), params);
+  for (double benefit: std::vector<double>{1.5, 2.5, 3, 5}) {
+    auto result = evol.CalculateEquilibrium(benefit, 1.0, 1.0e-2);
+    IC(benefit, result.OverallCooperationLevel(), result.OverallAbundances() );
+  }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;

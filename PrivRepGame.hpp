@@ -562,11 +562,20 @@ public:
   using SimulationParameters = EvolPrivRepGame::SimulationParameters;
 
   EvolPrivRepGameFiniteMutationRateAllCAllD(size_t N, const Norm &norm, const SimulationParameters &sim_param) :
-      N(N), norm(norm), param(sim_param) {};
+      N(N), norm(norm), param(sim_param) {
+    games.resize(N+1);
+    for (size_t nf = 0; nf <= N; nf++) {
+      if (nf % 5 == 0) { std::cerr << "simulating games at nf=" << nf << std::endl; }
+      for (size_t nc = 0; nc <= N-nf; nc++) {
+        games[nf].push_back(RunSimulationAt(nf, nc));
+      }
+    }
+  };
 
   const size_t N;
   const Norm norm;
   SimulationParameters param;
+  std::vector<std::vector<PrivateRepGame>> games;
 
   struct EquilibriumState {
     std::vector<std::vector<double>> frequency;
@@ -628,7 +637,7 @@ public:
     for (size_t nf = 0; nf <= N; nf++) {
       for (size_t nc = 0; nc <= N - nf; nc++) {
         size_t nd = N - nf - nc;
-        const PrivateRepGame g = RunSimulationAt(nf, nc);
+        const PrivateRepGame g = games.at(nf).at(nc);
         equilibrium_state.cooperation_level[nf][nc] = g.SystemWideCooperationLevel();
         auto [w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c] = CalculateTransitionProbabilitiesFromGame(benefit, beta, mu, g);
         if (nf > 0) {
@@ -669,8 +678,6 @@ public:
       auto [nf, nc] = index2pair[i];
       equilibrium_state.frequency[nf][nc] = ans[i];
     }
-
-    IC(equilibrium_state.cooperation_level, equilibrium_state.frequency);
 
     return equilibrium_state;
   }
@@ -795,7 +802,6 @@ private:
       }
     }
 
-    IC(nf, nc, nd, pi_f, pi_c, pi_d, w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c);
     return {w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c};
   }
 };
