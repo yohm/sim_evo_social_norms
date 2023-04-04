@@ -37,12 +37,13 @@ void test_SelfCooperationLevel(const Norm& norm, double expected_c_level, double
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
+  std::cerr << __func__ <<" passed" << std::endl;
 }
 
 void test_RandomNorm() {
   // random norm
   test_SelfCooperationLevel(Norm::Random(), 0.5, 0.5);
-  std::cerr << "test_RandomNorm passed" << std::endl;
+  std::cerr << __func__ <<" passed" << std::endl;
 }
 
 
@@ -72,6 +73,8 @@ void test_LeadingEight() {
 
   test_SelfCooperationLevel(Norm::L8(), 0.0, 0.0);
   std::cerr << "test L8 passed" << std::endl;
+
+  std::cerr << __func__ <<" passed" << std::endl;
 }
 
 void test_SelectionMutationEquilibrium() {
@@ -93,11 +96,11 @@ void test_SelectionMutationEquilibrium() {
   IC(eq);
   assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
 
-  std::cerr << "test_SelectionMutationEquilibrium passed" << std::endl;
-
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
+
+  std::cerr << __func__ <<" passed" << std::endl;
 }
 
 void test_SelectionMutationEquilibrium2() {
@@ -127,6 +130,26 @@ void test_SelectionMutationEquilibrium2() {
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
+
+  std::cerr << __func__ <<" passed" << std::endl;
+}
+
+void test_SelectionMutationEquilibriumFiniteMu() {
+  auto start = std::chrono::high_resolution_clock::now();
+
+  EvolPrivRepGame::SimulationParameters params;
+  params.n_init = 1e4;
+  params.n_steps = 1e4;
+
+  EvolPrivRepGameFiniteMutationRateAllCAllD evol(3, Norm::L1(), params);
+  auto result = evol.CalculateEquilibrium(5.0, 1.0, 0.01);
+  IC( result.OverallCooperationLevel(), result.OverallAbundances() );
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
+
+  std::cerr << __func__ <<" passed" << std::endl;
 }
 
 struct SimulationParams {
@@ -268,10 +291,11 @@ int main(int argc, char *argv[]) {
   }
 
   if (args.empty()) {
-    test_RandomNorm();
-    test_LeadingEight();
-    test_SelectionMutationEquilibrium();
-    test_SelectionMutationEquilibrium2();
+    // test_RandomNorm();
+    // test_LeadingEight();
+    // test_SelectionMutationEquilibrium();
+    // test_SelectionMutationEquilibrium2();
+    test_SelectionMutationEquilibriumFiniteMu();
   }
   else if (args.size() == 1) {
     Norm n = Norm::ParseNormString(args.at(0), swap_gb);

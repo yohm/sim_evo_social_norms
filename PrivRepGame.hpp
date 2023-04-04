@@ -204,6 +204,10 @@ public:
     }
   }
 
+  population_t Population() const {
+    return population;
+  }
+
 private:
   const population_t population;
   size_t N;
@@ -550,4 +554,248 @@ public:
 
     return std::make_tuple(self_coop_level, rho, eq);
   };
+};
+
+
+class EvolPrivRepGameFiniteMutationRateAllCAllD {
+public:
+  using SimulationParameters = EvolPrivRepGame::SimulationParameters;
+
+  EvolPrivRepGameFiniteMutationRateAllCAllD(size_t N, const Norm &norm, const SimulationParameters &sim_param) :
+      N(N), norm(norm), param(sim_param) {};
+
+  const size_t N;
+  const Norm norm;
+  SimulationParameters param;
+
+  struct EquilibriumState {
+    std::vector<std::vector<double>> frequency;
+    std::vector<std::vector<double>> cooperation_level;  // cooperation level at state[nf][nc]
+    const size_t N;
+    EquilibriumState(size_t _N) : N(_N) {
+      frequency.resize(N+1);
+      cooperation_level.resize(N+1);
+      for (size_t i = 0; i <= N; i++) {
+        frequency[i].resize(N+1-i, 0.0);
+        cooperation_level[i].resize(N+1-i, 0.0);
+      }
+    }
+    double OverallCooperationLevel() const {
+      double total = 0.0;
+      for (size_t nf = 0; nf < frequency.size(); nf++) {
+        for (size_t nc = 0; nc < frequency[nf].size(); nc++) {
+          total += frequency[nf][nc] * cooperation_level[nf][nc];
+        }
+      }
+      return total;
+    }
+    std::array<double,3> OverallAbundances() const {
+      std::array<double,3> abundances = {0.0, 0.0, 0.0};
+      for (size_t nf = 0; nf < frequency.size(); nf++) {
+        for (size_t nc = 0; nc < frequency[nf].size(); nc++) {
+          size_t nd = N - nf - nc;
+          abundances[0] += frequency[nf][nc] * nf / (double)N;
+          abundances[1] += frequency[nf][nc] * nc / (double)N;
+          abundances[2] += frequency[nf][nc] * nd / (double)N;
+        }
+      }
+      return abundances;
+    }
+  };
+
+  EquilibriumState CalculateEquilibrium(double benefit, double beta, double mu) const {
+    // [TODO] ideally, we should calculate the average of transition probabilities, not payoffs
+
+    // index of (nf, nc) in the one-dimensional vector
+    std::vector<std::vector<size_t>> pair2index;
+    std::vector<std::pair<size_t,size_t>> index2pair;
+    for (size_t nf = 0; nf <= N; nf++) {
+      pair2index.emplace_back();
+      for (size_t nc = 0; nc <= N-nf; nc++) {
+        index2pair.emplace_back(nf, nc);
+        pair2index[nf].emplace_back(index2pair.size()-1);
+      }
+    }
+    // IC(pair2index, index2pair);
+
+    EquilibriumState equilibrium_state(N);
+
+    size_t num_states = index2pair.size();
+    Eigen::MatrixXd W(num_states, num_states);
+    W.setZero();
+
+    // calculate the transition probabilities
+    for (size_t nf = 0; nf <= N; nf++) {
+      for (size_t nc = 0; nc <= N - nf; nc++) {
+        size_t nd = N - nf - nc;
+        const PrivateRepGame g = RunSimulationAt(nf, nc);
+        equilibrium_state.cooperation_level[nf][nc] = g.SystemWideCooperationLevel();
+        auto [w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c] = CalculateTransitionProbabilitiesFromGame(benefit, beta, mu, g);
+        if (nf > 0) {
+          W(pair2index[nf-1][nc+1], pair2index[nf][nc]) = w_f_c;
+          W(pair2index[nf-1][nc]  , pair2index[nf][nc]) = w_f_d;
+        }
+        if (nc > 0) {
+          W(pair2index[nf+1][nc-1], pair2index[nf][nc]) = w_c_f;
+          W(pair2index[nf][nc-1]  , pair2index[nf][nc]) = w_c_d;
+        }
+        if (nd > 0) {
+          W(pair2index[nf+1][nc]  , pair2index[nf][nc]) = w_d_f;
+          W(pair2index[nf][nc+1]  , pair2index[nf][nc]) = w_d_c;
+        }
+        W(pair2index[nf][nc], pair2index[nf][nc]) = - w_f_c - w_f_d - w_c_f - w_c_d - w_d_f - w_d_c;
+        // W(i,i) = 1.0 - sum; but we subtract I to calculate stationary distribution
+      }
+    }
+    for (size_t i = 0; i < num_states; i++) {
+      W(num_states-1, i) += 1.0;
+      // normalization condition of the answer
+    }
+
+    Eigen::VectorXd b(num_states);
+    b.setZero();
+    b(num_states-1) = 1.0;
+
+    // solve (W-I)x = 0
+    Eigen::VectorXd x = W.colPivHouseholderQr().solve(b);
+
+    std::vector<double> ans(num_states, 0.0);
+    for (int i = 0; i < num_states; i++) {
+      ans[i] = x(i);
+    }
+
+    // calculate the equilibrium state
+    for (size_t i = 0; i < num_states; i++) {
+      auto [nf, nc] = index2pair[i];
+      equilibrium_state.frequency[nf][nc] = ans[i];
+    }
+
+    IC(equilibrium_state.cooperation_level, equilibrium_state.frequency);
+
+    return equilibrium_state;
+  }
+
+private:
+  // run simulation at [nf, nc, N-nf-nc] and return the game
+  PrivateRepGame RunSimulationAt(size_t nf, size_t nc) const {
+    PrivateRepGame game({{norm, nf}, {Norm::AllC(), nc}, {Norm::AllD(), N-nf-nc}}, param.seed);
+    game.Update(param.n_init, param.q, param.mu_percept, false);
+    game.ResetCounts();
+    game.Update(param.n_steps, param.q, param.mu_percept, true);
+    return game;
+  }
+
+  // calculate payoffs <pi_f, pi_c, pi_d>
+  std::array<double,3> CalculatePayoffsFromGame(double benefit, const PrivateRepGame& game) const {
+    auto coop_levels = game.IndividualCooperationLevels();
+    auto pop = game.Population();
+    size_t nf = pop.at(0).second;  // number of the focal norm players
+    size_t nc = pop.at(1).second;  // number of AllC players
+    size_t nd = pop.at(2).second;  // number of AllD players
+
+    double pi_f = std::numeric_limits<double>::signaling_NaN();
+    double pi_c = std::numeric_limits<double>::signaling_NaN();
+    double pi_d = std::numeric_limits<double>::signaling_NaN();
+    if (nf > 0) {
+      pi_f = 0.0;
+      for (size_t i = 0; i < nf; i++) {
+        pi_f += benefit * coop_levels[i].first - coop_levels[i].second;
+      }
+      pi_f /= nf;
+    }
+    if (nc > 0) {
+      pi_c = 0.0;
+      for (size_t i = nf; i < nf+nc; i++) {
+        pi_c += benefit * coop_levels[i].first - coop_levels[i].second;
+      }
+      pi_c /= nc;
+    }
+    if (nd > 0) {
+      pi_d = 0.0;
+      for (size_t i = nf+nc; i < N; i++) {
+        pi_d += benefit * coop_levels[i].first - coop_levels[i].second;
+      }
+      pi_d /= nd;
+    }
+    return {pi_f, pi_c, pi_d};
+  }
+
+  // calculate the transition probabilities at [nf, nc, N-nf-nc]
+  // return: [w(f->c), w(f->d), w(c->f), w(c->d), w(d->f), w(d->c)]
+  std::array<double,6> CalculateTransitionProbabilitiesFromGame(double benefit, double beta, double mu, const PrivateRepGame& game) const {
+    auto [pi_f, pi_c, pi_d] = CalculatePayoffsFromGame(benefit, game);
+
+    auto pop = game.Population();
+    size_t nf = pop.at(0).second;  // number of the focal norm players
+    size_t nc = pop.at(1).second;  // number of AllC players
+    size_t nd = pop.at(2).second;  // number of AllD players
+
+    double rho_f = nf / (double) N;
+    double rho_c = nc / (double) N;
+    double rho_d = nd / (double) N;
+
+    // transition probability from f to c
+    // rho_f * { mu/(2) + (1-mu) * rho_c * [1 + exp(-beta * (pi_c - pi_f)) ]^-1 }
+    double w_f_c = 0.0;
+    if (nf > 0) {
+      w_f_c = rho_f * mu * 0.5;  // flow f->c via mutation
+      if (nc > 0) {  // flow f->c via imitation
+        double P_f_c = 1.0 / (1.0 + exp(-beta * (pi_c - pi_f)));
+        w_f_c += rho_f * (1.0 - mu) * (nc/(double)(N-1)) * P_f_c;
+      }
+    }
+
+    // transition probability from f to d
+    double w_f_d = 0.0;
+    if (nf > 0) {
+      w_f_d = rho_f * mu * 0.5;  // flow f->d via mutation
+      if (nd > 0) {  // flow f->d via imitation
+        double P_f_d = 1.0 / (1.0 + exp(-beta * (pi_d - pi_f)));
+        w_f_d += rho_f * (1.0 - mu) * (nd/(double)(N-1)) * P_f_d;
+      }
+    }
+
+    // transition probability from c to f
+    double w_c_f = 0.0;
+    if (nc > 0) {
+      w_c_f = rho_c * mu * 0.5;  // flow c->f via mutation
+      if (nf > 0) {  // flow c->f via imitation
+        double P_c_f = 1.0 / (1.0 + exp(-beta * (pi_f - pi_c)));
+        w_c_f += rho_c * (1.0 - mu) * (nf/(double)(N-1)) * P_c_f;
+      }
+    }
+
+    // transition probability from c to d
+    double w_c_d = 0.0;
+    if (nc > 0) {
+      w_c_d = rho_c * mu * 0.5;  // flow c->d via mutation
+      if (nd > 0) {  // flow c->d via imitation
+        double P_c_d = 1.0 / (1.0 + exp(-beta * (pi_d - pi_c)));
+        w_c_d += rho_c * (1.0 - mu) * (nd/(double)(N-1)) * P_c_d;
+      }
+    }
+
+    // transition probability from d to f
+    double w_d_f = 0.0;
+    if (nd > 0) {
+      w_d_f = rho_d * mu * 0.5;  // flow d->f via mutation
+      if (nf > 0) {  // flow d->f via imitation
+        double P_d_f = 1.0 / (1.0 + exp(-beta * (pi_f - pi_d)));
+        w_d_f += rho_d * (1.0 - mu) * (nf/(double)(N-1)) * P_d_f;
+      }
+    }
+
+    // transition probability from d to c
+    double w_d_c = 0.0;
+    if (nd > 0) {
+      w_d_c = rho_d * mu * 0.5;  // flow d->c via mutation
+      if (nc > 0) {  // flow d->c via imitation
+        double P_d_c = 1.0 / (1.0 + exp(-beta * (pi_c - pi_d)));
+        w_d_c += rho_d * (1.0 - mu) * (nc/(double)(N-1)) * P_d_c;
+      }
+    }
+
+    IC(nf, nc, nd, pi_f, pi_c, pi_d, w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c);
+    return {w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c};
+  }
 };
