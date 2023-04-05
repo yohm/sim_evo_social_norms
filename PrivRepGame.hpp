@@ -564,6 +564,7 @@ public:
   EvolPrivRepGameFiniteMutationRateAllCAllD(size_t N, const Norm &norm, const SimulationParameters &sim_param) :
       N(N), norm(norm), param(sim_param) {
     games.resize(N+1);
+    #pragma omp parallel for schedule(dynamic,1) shared(games)
     for (size_t nf = 0; nf <= N; nf++) {
       if (nf % 5 == 0) { std::cerr << "simulating games at nf=" << nf << std::endl; }
       for (size_t nc = 0; nc <= N-nf; nc++) {
