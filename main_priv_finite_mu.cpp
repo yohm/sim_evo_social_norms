@@ -85,5 +85,11 @@ int main(int argc, char** argv) {
   std::chrono::duration<double> elapsed = end - start;
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 
+  for (size_t nf = 0; nf <= result.N; nf++) {
+    for (size_t nc = 0; nc <= result.N - nf; nc++) {
+      std::cout << nf << ' ' << nc << ' ' << result.frequency[nf][nc] << ' ' << result.cooperation_level[nf][nc] << std::endl;
+    }
+  }
+
   return 0;
 }

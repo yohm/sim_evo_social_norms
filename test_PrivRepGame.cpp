@@ -142,14 +142,14 @@ void test_SelectionMutationEquilibriumFiniteMu() {
   params.n_steps = 1e4;
 
   Norm L1star = Norm::ConstructFromID(765643);
-  EvolPrivRepGameFiniteMutationRateAllCAllD evol(50, Norm::L1(), params);
-  for (double mu: {1.0e-4,3.0e-4,1.e-3,3.e-3,1.e-2,3.e-2,1.e-1,3.e-1,1.}) {
+  EvolPrivRepGameFiniteMutationRateAllCAllD evol(50, L1star, params);
+  // for (double mu: {1.0e-4,3.0e-4,1.e-3,3.e-3,1.e-2,3.e-2,1.e-1,3.e-1,1.}) {
   // for (double benefit: std::vector<double>{1.5, 2.5, 3, 5}) {
-  // double mu = 1.0e-2;
+    double mu = 1.0e-2;
     double benefit = 5.0;
     auto result = evol.CalculateEquilibrium(benefit, 1.0, mu);
-    IC(benefit, result.OverallCooperationLevel(), result.OverallAbundances() );
-  }
+    IC(mu, benefit, result.OverallCooperationLevel(), result.OverallAbundances() );
+  // }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
