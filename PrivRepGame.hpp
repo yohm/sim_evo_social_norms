@@ -19,9 +19,10 @@ public:
     }
     N = norms.size();
     M.assign(N, std::vector<Reputation>(N, Reputation::G));
-    coop_count.resize(N, std::vector<size_t>(N, 0));
-    game_count.resize(N, std::vector<size_t>(N, 0));
-    good_count.resize(N, std::vector<size_t>(N, 0));
+    // initialize coop_count with NxN matrix of 0
+    coop_count.assign(N*N, 0);
+    game_count.assign(N*N, 0);
+    good_count.assign(N*N, 0);
   }
 
   // t_max : number of steps
@@ -38,9 +39,9 @@ public:
       Action A = (c_prob == 1.0 || R01() < c_prob) ? Action::C : Action::D;
 
       if (A == Action::C) {
-        coop_count[donor][recip]++;
+        coop_count[donor*N+recip]++;
       }
-      game_count[donor][recip]++;
+      game_count[donor*N+recip]++;
 
       // updating the images from observers' viewpoint
       for (size_t obs = 0; obs < N; obs++) {
@@ -81,7 +82,7 @@ public:
         for (size_t i = 0; i < N; i++) {
           for (size_t j = 0; j < N; j++) {
             if (M[i][j] == Reputation::G) {
-              good_count[i][j]++;
+              good_count[i*N+j]++;
             }
           }
         }
@@ -91,7 +92,7 @@ public:
     }
   }
 
-  using count_t = std::vector<std::vector<size_t>>;
+  using count_t = std::vector<size_t>;
 
   // number of C between i-donor and j-recipient
   count_t CoopCount() const { return coop_count; }
@@ -105,8 +106,8 @@ public:
     double total = 0.0;
     for (size_t i = 0; i < N; i++) {
       for (size_t j = 0; j < N; j++) {
-        coop += coop_count[i][j];
-        total += game_count[i][j];
+        coop += coop_count[i*N+j];
+        total += game_count[i*N+j];
       }
     }
     return coop / total;
@@ -123,16 +124,16 @@ public:
         if (i == j) {
           continue;
         }
-        coop_total_out += coop_count[i][j];
-        game_total_out += game_count[i][j];
+        coop_total_out += coop_count[i*N+j];
+        game_total_out += game_count[i*N+j];
       }
       double coop_total_in = 0.0, game_total_in = 0.0;
       for (size_t j = 0; j < N; j++) {
         if (i == j) {
           continue;
         }
-        coop_total_in += coop_count[j][i];
-        game_total_in += game_count[j][i];
+        coop_total_in += coop_count[j*N+i];
+        game_total_in += game_count[j*N+i];
       }
       coop_rates[i] = std::make_pair(coop_total_in / game_total_in, coop_total_out / game_total_out);
     }
@@ -150,8 +151,8 @@ public:
       for (size_t j = 0; j < N; j++) {
         size_t i_norm = norm_index[i];
         size_t j_norm = norm_index[j];
-        coop_by_norm[i_norm][j_norm] += coop_count[i][j];
-        total_by_norm[i_norm][j_norm] += game_count[i][j];
+        coop_by_norm[i_norm][j_norm] += coop_count[i*N+j];
+        total_by_norm[i_norm][j_norm] += game_count[i*N+j];
       }
     }
     std::vector<std::vector<double>> c_levels(n_norms, std::vector<double>(n_norms, 0.0));
@@ -174,7 +175,7 @@ public:
       for (size_t j = 0; j < N; j++) {
         size_t i_norm = norm_index[i];
         size_t j_norm = norm_index[j];
-        avg_rep[i_norm][j_norm] += good_count[i][j];
+        avg_rep[i_norm][j_norm] += good_count[i*N+j];
       }
     }
 
@@ -189,13 +190,10 @@ public:
   }
 
   void ResetCounts() {
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < N; j++) {
-        coop_count[i][j] = 0;
-        game_count[i][j] = 0;
-        good_count[i][j] = 0;
-      }
-    }
+    // reset coop_count and fill with 0
+    std::fill(coop_count.begin(), coop_count.end(), 0);
+    std::fill(game_count.begin(), game_count.end(), 0);
+    std::fill(good_count.begin(), good_count.end(), 0);
     total_update = 0;
   }
 
