@@ -18,7 +18,7 @@ public:
       }
     }
     N = norms.size();
-    M.assign(N, std::vector<Reputation>(N, Reputation::G));
+    M.assign(N*N, Reputation::G);
     // initialize coop_count with NxN matrix of 0
     coop_count.assign(N*N, 0);
     game_count.assign(N*N, 0);
@@ -35,7 +35,7 @@ public:
       size_t recip = (donor + static_cast<size_t>(R01() * (N-1)) + 1) % N;
       assert(donor != recip);
 
-      double c_prob = norms[donor].P.CProb(M[donor][donor], M[donor][recip]);
+      double c_prob = norms[donor].P.CProb(M[donor*N+donor], M[donor*N+recip]);
       Action A = (c_prob == 1.0 || R01() < c_prob) ? Action::C : Action::D;
 
       if (A == Action::C) {
@@ -52,27 +52,27 @@ public:
           }
 
           // update donor's reputation
-          double g_prob_donor = norms[obs].Rd.GProb(M[obs][donor], M[obs][recip], a_obs);
+          double g_prob_donor = norms[obs].Rd.GProb(M[obs*N+donor], M[obs*N+recip], a_obs);
           if (g_prob_donor == 1.0) {
-            M[obs][donor] = Reputation::G;
+            M[obs*N+donor] = Reputation::G;
           }
           else if (g_prob_donor == 0.0) {
-            M[obs][donor] = Reputation::B;
+            M[obs*N+donor] = Reputation::B;
           }
           else {
-            M[obs][donor] = (R01() < g_prob_donor) ? Reputation::G : Reputation::B;
+            M[obs*N+donor] = (R01() < g_prob_donor) ? Reputation::G : Reputation::B;
           }
 
           // update recipient's reputation
-          double g_prob_recip = norms[obs].Rr.GProb(M[obs][donor], M[obs][recip], a_obs);
+          double g_prob_recip = norms[obs].Rr.GProb(M[obs*N+donor], M[obs*N+recip], a_obs);
           if (g_prob_recip == 1.0) {
-            M[obs][recip] = Reputation::G;
+            M[obs*N+recip] = Reputation::G;
           }
           else if (g_prob_recip == 0.0) {
-            M[obs][recip] = Reputation::B;
+            M[obs*N+recip] = Reputation::B;
           }
           else {
-            M[obs][recip] = (R01() < g_prob_recip) ? Reputation::G : Reputation::B;
+            M[obs*N+recip] = (R01() < g_prob_recip) ? Reputation::G : Reputation::B;
           }
         }
       }
@@ -81,7 +81,7 @@ public:
       if (count_good) {
         for (size_t i = 0; i < N; i++) {
           for (size_t j = 0; j < N; j++) {
-            if (M[i][j] == Reputation::G) {
+            if (M[i*N+j] == Reputation::G) {
               good_count[i*N+j]++;
             }
           }
@@ -201,7 +201,7 @@ public:
   void PrintImage(std::ostream& out) const {
     for (size_t i = 0; i < N; i++) {
       for (size_t j = 0; j < N; j++) {
-        out << ((M[i][j]==Reputation::G)?'.':'x');
+        out << ((M[i*N+j]==Reputation::G)?'.':'x');
       }
       out << "\n";
     }
@@ -218,7 +218,7 @@ private:
   std::uniform_real_distribution<double> uni;
   std::vector<Norm> norms;
   std::vector<size_t> norm_index;  // [0,0,...,0, 1,1,....,1, 2,2,......,2]
-  std::vector<std::vector<Reputation> > M;
+  std::vector<Reputation> M;
   count_t coop_count;  // number of C between i-donor and j-recipient
   count_t game_count;  // number of games between i-donor and j-recipient
   count_t good_count;  // number of good reputations
