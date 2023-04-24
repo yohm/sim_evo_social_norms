@@ -19,7 +19,9 @@ public:
     }
     N = norms.size();
     M.assign(N, std::vector<Reputation>(N, Reputation::G));
-    ResetCounts();
+    coop_count.resize(N, std::vector<size_t>(N, 0));
+    game_count.resize(N, std::vector<size_t>(N, 0));
+    good_count.resize(N, std::vector<size_t>(N, 0));
   }
 
   // t_max : number of steps
@@ -186,11 +188,14 @@ public:
     return avg_rep;
   }
 
-
   void ResetCounts() {
-    coop_count.assign(N, std::vector<size_t>(N, 0));
-    game_count.assign(N, std::vector<size_t>(N, 0));
-    good_count.assign(N, std::vector<size_t>(N, 0));
+    for (size_t i = 0; i < N; i++) {
+      for (size_t j = 0; j < N; j++) {
+        coop_count[i][j] = 0;
+        game_count[i][j] = 0;
+        good_count[i][j] = 0;
+      }
+    }
     total_update = 0;
   }
 
