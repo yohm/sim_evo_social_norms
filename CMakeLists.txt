@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.7)
 project(sim_indirect_stochastic_privrep)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 
 #set(CMAKE_VERBOSE_MAKEFILE 1)
 
@@ -27,7 +28,7 @@ add_executable(main_optimize_norm main_optimize_norm.cpp Norm.hpp PrivRepGame.hp
 target_link_libraries(main_optimize_norm OpenMP::OpenMP_CXX Eigen3::Eigen MPI::MPI_CXX Pagmo::pagmo)
 
 add_executable(main_grouped_evolution main_grouped_evolution.cpp Norm.hpp PrivRepGame.hpp)
-target_link_libraries(main_grouped_evolution Eigen3::Eigen OpenMP::OpenMP_CXX nlohmann_json::nlohmann_json)
+target_link_libraries(main_grouped_evolution Eigen3::Eigen nlohmann_json::nlohmann_json)
 
 add_executable(test_Norm test_Norm.cpp Norm.hpp)
 

@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <array>
 #include <thread>
 #include <chrono>
 #include <functional>
@@ -33,50 +35,85 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   return prg.NormCooperationLevels()[0][0];
 }
 
-void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vector<double>>& p_fix, std::vector<double>& self_coop_levels) {
+void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vector<double>> & p_fix, std::vector<double> & self_coop_levels) {
+  auto idx = [] (const Norm& n) { return (n.Rd.ID() << 4) + n.P.ID(); };
 
   // loop over Norm
-  auto for_each_unique_strategy = [] (std::function<void(const Norm&)> f) {
-    for (int j = 0; j < 256; j++) {
-      AssessmentRule R1 = AssessmentRule::MakeDeterministicRule(j);
-      AssessmentRule R2 = AssessmentRule::KeepRecipient();
+  constexpr size_t N_NORMS = 4096;
+  assert(p_fix.size() == N_NORMS);
+  assert(self_coop_levels.size() == N_NORMS);
 
-      for (int i = 0; i < 16; i++) {
-        ActionRule P = ActionRule::MakeDeterministicRule(i);
-        Norm norm(R1, R2, P);
-        if ( norm.ID() < norm.SwapGB().ID() ) {
+  std::vector<Norm> unique_norms;
+  std::vector<size_t> norm_index(N_NORMS, 0);
+  for (int j = 0; j < 256; j++) {
+    AssessmentRule R1 = AssessmentRule::MakeDeterministicRule(j);
+    AssessmentRule R2 = AssessmentRule::KeepRecipient();
+
+    for (int i = 0; i < 16; i++) {
+      ActionRule P = ActionRule::MakeDeterministicRule(i);
+      Norm norm(R1, R2, P);
+
+      // special rules for AllC and AllD
+      if (P == ActionRule::ALLC()) {
+        if (norm == Norm::AllC()) {
+          norm_index[idx(norm)] = idx(norm);
+          unique_norms.push_back(norm);
+        } else {
+          norm_index[idx(norm)] = idx(Norm::AllC());
           continue;
         }
-        if (P == ActionRule::ALLC() && norm != Norm::AllC()) {
-          continue;  // it is equivalent to AllC
+      }
+      else if (P == ActionRule::ALLD()) {
+        if (norm == Norm::AllD()) {
+          norm_index[idx(norm)] = idx(norm);
+          unique_norms.push_back(norm);
+        } else {
+          norm_index[idx(norm)] = idx(Norm::AllD());
+          continue;
         }
-        if (P == ActionRule::ALLD() && norm != Norm::AllD()) {
-          continue;  // it is equivalent to AllD
-        }
-        f(norm);
+      }
+
+      // if not AllC or AllD
+      if ( norm.ID() < norm.SwapGB().ID() ) {
+        norm_index[idx(norm)] = idx(norm.SwapGB());
+        continue;
+      }
+      else {
+        norm_index[idx(norm)] = idx(norm);
+        unique_norms.push_back(norm);
       }
     }
-  };
+  }
 
   EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
 
-  auto idx = [] (const Norm& n) { return (n.Rd.ID() << 4) + n.P.ID(); };
-
-  for_each_unique_strategy([&] (const Norm& n1) {
-
+  IC(unique_norms.size());
+  for (size_t i = 0; i < unique_norms.size(); i++) {
+    const Norm& n1 = unique_norms[i];
+    std::cerr << "norm: " << idx(n1) << std::endl;
     double pc = SelfCoopLevel(n1, params);
     self_coop_levels[idx(n1)] = pc;
 
-    for_each_unique_strategy([&] (const Norm& n2) {
-      if (n1.ID() >= n2.ID()) return;  // avoid double counting
-      std::cerr << idx(n1) << " -> " << idx(n2) << std::endl;
+    for (size_t j = i+1; j < unique_norms.size(); j++) {
+      const Norm& n2 = unique_norms[j];
+      // std::cerr << i << ' ' << idx(n1) << " -> " << j << ' ' << idx(n2) << std::endl;
       // calculate fixation probability
-      EvolPrivRepGame evol(params.N, {n1, n2}, evoparams);
+      EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
       auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
       p_fix[idx(n1)][idx(n2)] = rhos[0][1];
       p_fix[idx(n2)][idx(n1)] = rhos[1][0];
-    });
-  });
+    }
+  }
+
+  // calculate non-unique-norms
+  for (size_t i = 0; i < N_NORMS; i++) {
+    size_t ni = norm_index[i];
+    self_coop_levels[i] = self_coop_levels[ni];
+    for (size_t j = 0; j < N_NORMS; j++) {
+      size_t nj = norm_index[j];
+      p_fix[i][j] = p_fix[ni][nj];
+    }
+  }
 }
 
 
@@ -109,16 +146,17 @@ int main(int argc, char* argv[]) {
   SimulationParams params = j.get<SimulationParams>();
 
   // calculate intra-group fixation probabilities
-  size_t num_norms = 4096;
-  std::vector<std::vector<double>> p_fix(num_norms, std::vector<double>(params.N, 0.0));
-  std::vector<double> self_coop_levels(num_norms, 0.0);
+  constexpr size_t N_NORMS = 4096;
+  std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
+  std::vector<double> self_coop_levels(N_NORMS, 0.0);
+
   CalculateFixationProbs(params, p_fix, self_coop_levels);
 
   // print fixation probabilities and cooperation levels
   std::ofstream fout("fixation_probs.dat");
-  for (size_t i = 0; i < num_norms; i++) {
+  for (size_t i = 0; i < N_NORMS; i++) {
     fout << self_coop_levels[i] << " ";
-    for (size_t j = 0; j < num_norms; j++) {
+    for (size_t j = 0; j < N_NORMS; j++) {
       fout << p_fix[i][j] << " ";
     }
     fout << std::endl;
