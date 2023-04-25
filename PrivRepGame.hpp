@@ -338,7 +338,6 @@ public:
     // construct transition matrix
     Eigen::MatrixXd T(num_norms, num_norms);
 
-    // std::vector<std::vector<double>> T(N_NORMS, std::vector<double>(N_NORMS, 0.0));
     for (size_t i = 0; i < num_norms; i++) {
       double sum = 0.0;
       for (size_t j = 0; j < num_norms; j++) {
