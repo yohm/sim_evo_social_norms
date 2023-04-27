@@ -448,6 +448,15 @@ public:
     id += P.ID();
     return id;
   }
+  int IDwithoutR2() const {
+    if (!IsDeterministic() || !IsRecipKeep() ) {
+      return -1;
+    }
+    int id = 0;
+    id += Rd.ID() << 4;
+    id += P.ID();
+    return id;
+  }
   static Norm ConstructFromID(int id) {
     if (id < 0 || id >= (1 << 20)) {
       throw std::runtime_error("Norm: id must be between 0 and 2^20-1");
@@ -457,6 +466,16 @@ public:
     int P_id = id & 0xF;
     return Norm(AssessmentRule::MakeDeterministicRule(Rd_id),
                 AssessmentRule::MakeDeterministicRule(Rr_id),
+                ActionRule::MakeDeterministicRule(P_id));
+  }
+  static Norm ConstructFromIDwithoutR2(int id) {
+    if (id < 0 || id >= (1 << 12)) {
+      throw std::runtime_error("Norm: id must be between 0 and 2^12-1");
+    }
+    int Rd_id = (id >> 4) & 0xFF;
+    int P_id = id & 0xF;
+    return Norm(AssessmentRule::MakeDeterministicRule(Rd_id),
+                AssessmentRule::KeepRecipient(),
                 ActionRule::MakeDeterministicRule(P_id));
   }
   static Norm AllC() {

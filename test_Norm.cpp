@@ -149,6 +149,7 @@ void test_Norm() {
     assert( is.IsDeterministic() );
     assert( is.IsSecondOrder() );
     assert( is.ID() == 0b10101010'11001100'1010);
+    assert( is.IDwithoutR2() == 0b10101010'1010);
   }
 
   // test leading eight
@@ -158,6 +159,10 @@ void test_Norm() {
     std::array<int, 8> l8_ids =
         {0b10111010'11001100'1011, 0b10011010'11001100'1011, 0b10111011'11001100'1010, 0b10111001'11001100'1010,
          0b10011011'11001100'1010, 0b10011001'11001100'1010, 0b10111000'11001100'1010, 0b10011000'11001100'1010
+        };
+    std::array<int, 8> l8_ids_withoutR2 =
+        {0b10111010'1011, 0b10011010'1011, 0b10111011'1010, 0b10111001'1010,
+         0b10011011'1010, 0b10011001'1010, 0b10111000'1010, 0b10011000'1010
         };
     for (size_t i = 0; i < 8; i++) {
       auto l = leading_eight[i];
@@ -172,7 +177,9 @@ void test_Norm() {
       // std::cout << std::bitset<20>(l.ID()) << std::endl;
       assert(l.GetName() == "L" + std::to_string(i + 1));
       assert(l.ID() == l8_ids[i]);
+      assert(l.IDwithoutR2() == l8_ids_withoutR2[i]);
       assert(Norm::ConstructFromID(l.ID()) == l);
+      assert(Norm::ConstructFromIDwithoutR2(l.IDwithoutR2()) == l);
 
       assert(l.CProb(Reputation::G, Reputation::G) == 1.0);
       assert(l.CProb(Reputation::G, Reputation::B) == 0.0);
