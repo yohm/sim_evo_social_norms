@@ -59,22 +59,31 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
 
   EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
 
+  #pragma omp parallel for schedule(static)
   for (size_t i = 0; i < unique_norms.size(); i++) {
     const Norm& n1 = unique_norms[i];
-    std::cerr << "norm: " << i << ' ' << idx(n1) << std::endl;
     double pc = SelfCoopLevel(n1, params);
     self_coop_levels[idx(n1)] = pc;
     p_fix[idx(n1)][idx(n1)] = 1.0 / params.N;
+  }
 
+  std::vector<std::array<size_t,2>> ij_pairs{};
+  for (size_t i = 0; i < unique_norms.size(); i++) {
     for (size_t j = i+1; j < unique_norms.size(); j++) {
-      const Norm& n2 = unique_norms[j];
-      // std::cerr << i << ' ' << idx(n1) << " -> " << j << ' ' << idx(n2) << std::endl;
-      // calculate fixation probability
-      EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
-      auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
-      p_fix[idx(n1)][idx(n2)] = rhos[0][1];
-      p_fix[idx(n2)][idx(n1)] = rhos[1][0];
+      ij_pairs.push_back({i, j});
     }
+  }
+
+  // loop over ij_pairs
+  #pragma omp parallel for schedule(static)
+  for (const auto& [i,j] : ij_pairs) {
+    // std::cerr << "i, j: " << i << ", " << j << std::endl;
+    const Norm& n1 = unique_norms[i];
+    const Norm& n2 = unique_norms[j];
+    EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
+    auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
+    p_fix[idx(n1)][idx(n2)] = rhos[0][1];
+    p_fix[idx(n2)][idx(n1)] = rhos[1][0];
   }
 
   // calculate non-unique-norms
