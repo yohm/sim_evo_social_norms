@@ -122,7 +122,13 @@ int main(int argc, char* argv[]) {
   std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
   std::vector<double> self_coop_levels(N_NORMS, 0.0);
 
+  // measure elapsed time
+  auto start = std::chrono::system_clock::now();
+
   CalculateFixationProbs(params, p_fix, self_coop_levels);
+  auto end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
   // print fixation probabilities and cooperation levels
   std::ofstream fout("fixation_probs.dat");
