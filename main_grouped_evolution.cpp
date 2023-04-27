@@ -76,8 +76,13 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
 
   // loop over ij_pairs
   #pragma omp parallel for schedule(static)
-  for (const auto& [i,j] : ij_pairs) {
-    // std::cerr << "i, j: " << i << ", " << j << std::endl;
+  for (size_t t=0; t < ij_pairs.size(); t++) {
+    size_t i = ij_pairs[t][0];
+    size_t j = ij_pairs[t][1];
+    if (t % 10'000 == 0) {
+      std::cerr << "t / t_max: " << t << " / " << ij_pairs.size() << std::endl;
+    }
+    //for (const auto& [i,j] : ij_pairs) {
     const Norm& n1 = unique_norms[i];
     const Norm& n2 = unique_norms[j];
     EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
