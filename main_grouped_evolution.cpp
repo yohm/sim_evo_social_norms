@@ -27,6 +27,21 @@ struct SimulationParams {
   NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
 };
 
+template <typename T>
+class TwodimVector {
+public:
+  TwodimVector(size_t n_rows, size_t n_cols, T init) : _data(n_rows*n_cols, init), n_rows(n_rows), n_cols(n_cols) {};
+  T& operator()(size_t i, size_t j) { return _data[i*n_cols+j]; }
+  const T& operator()(size_t i, size_t j) const { return _data[i*n_cols+j]; }
+  size_t Rows() const { return n_rows; }
+  size_t Cols() const { return n_cols; }
+  size_t size() const { return _data.size(); }
+  T* data() { return _data.data(); }
+  std::vector<T> _data;
+  size_t n_rows;
+  size_t n_cols;
+};
+
 double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   PrivateRepGame prg({{norm, params.N}}, params.seed);
   prg.Update(params.n_init, params.q, params.mu_percept, false);
@@ -35,12 +50,12 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   return prg.NormCooperationLevels()[0][0];
 }
 
-void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vector<double>> & p_fix, std::vector<double> & self_coop_levels) {
+void CalculateFixationProbs(const SimulationParams& params, TwodimVector<double> & p_fix, std::vector<double> & self_coop_levels) {
   auto idx = [] (const Norm& n) { return n.IDwithoutR2(); };
 
   // loop over Norm
   constexpr size_t N_NORMS = 4096;
-  assert(p_fix.size() == N_NORMS);
+  assert(p_fix.size() == N_NORMS * N_NORMS);
   assert(self_coop_levels.size() == N_NORMS);
 
   std::vector<Norm> unique_norms;
@@ -64,7 +79,7 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
     const Norm& n1 = unique_norms[i];
     double pc = SelfCoopLevel(n1, params);
     self_coop_levels[idx(n1)] = pc;
-    p_fix[idx(n1)][idx(n1)] = 1.0 / params.N;
+    p_fix(idx(n1),idx(n1)) = 1.0 / params.N;
   }
 
   std::vector<std::array<size_t,2>> ij_pairs{};
@@ -87,8 +102,8 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
     const Norm& n2 = unique_norms[j];
     EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
     auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
-    p_fix[idx(n1)][idx(n2)] = rhos[0][1];
-    p_fix[idx(n2)][idx(n1)] = rhos[1][0];
+    p_fix(idx(n1),idx(n2)) = rhos[0][1];
+    p_fix(idx(n2),idx(n1)) = rhos[1][0];
   }
 
   // calculate non-unique-norms
@@ -97,7 +112,7 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
     self_coop_levels[i] = self_coop_levels[ni];
     for (size_t j = 0; j < N_NORMS; j++) {
       size_t nj = norm_index[j];
-      p_fix[i][j] = p_fix[ni][nj];
+      p_fix(i,j) = p_fix(ni,nj);
     }
   }
 }
@@ -133,7 +148,8 @@ int main(int argc, char* argv[]) {
 
   // calculate intra-group fixation probabilities
   constexpr size_t N_NORMS = 4096;
-  std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
+  TwodimVector<double> p_fix(N_NORMS, N_NORMS, 0.0);
+  // std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
   std::vector<double> self_coop_levels(N_NORMS, 0.0);
 
   // measure elapsed time
@@ -149,7 +165,7 @@ int main(int argc, char* argv[]) {
   for (size_t i = 0; i < N_NORMS; i++) {
     fout << self_coop_levels[i] << " ";
     for (size_t j = 0; j < N_NORMS; j++) {
-      fout << p_fix[i][j] << " ";
+      fout << p_fix(i,j) << " ";
     }
     fout << std::endl;
   }
