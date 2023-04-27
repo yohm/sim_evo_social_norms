@@ -47,34 +47,14 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
   std::vector<size_t> norm_index(N_NORMS, 0);
   for (int i = 0; i < N_NORMS; i++) {
     Norm norm = Norm::ConstructFromIDwithoutR2(i);
-    if ( norm.ID() < norm.SwapGB().ID() ) {
-      norm_index[idx(norm)] = idx(norm.SwapGB());
-      continue;
+
+    if ( i < idx(norm.SwapGB()) ) {
+      norm_index[i] = idx(norm.SwapGB());
     }
     else {
-      norm_index[idx(norm)] = idx(norm);
+      norm_index[i] = i;
       unique_norms.push_back(norm);
     }
-
-    // special rules for AllC and AllD
-    // if (P == ActionRule::ALLC()) {
-    //   if (norm == Norm::AllC()) {
-    //     norm_index[idx(norm)] = idx(norm);
-    //     unique_norms.push_back(norm);
-    //   } else {
-    //     norm_index[idx(norm)] = idx(Norm::AllC());
-    //     continue;
-    //   }
-    // }
-    // else if (P == ActionRule::ALLD()) {
-    //   if (norm == Norm::AllD()) {
-    //     norm_index[idx(norm)] = idx(norm);
-    //     unique_norms.push_back(norm);
-    //   } else {
-    //     norm_index[idx(norm)] = idx(Norm::AllD());
-    //     continue;
-    //   }
-    // }
   }
 
   EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
@@ -84,6 +64,7 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
     std::cerr << "norm: " << i << ' ' << idx(n1) << std::endl;
     double pc = SelfCoopLevel(n1, params);
     self_coop_levels[idx(n1)] = pc;
+    p_fix[idx(n1)][idx(n1)] = 1.0 / params.N;
 
     for (size_t j = i+1; j < unique_norms.size(); j++) {
       const Norm& n2 = unique_norms[j];
