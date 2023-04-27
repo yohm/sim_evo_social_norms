@@ -36,7 +36,7 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
 }
 
 void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vector<double>> & p_fix, std::vector<double> & self_coop_levels) {
-  auto idx = [] (const Norm& n) { return (n.Rd.ID() << 4) + n.P.ID(); };
+  auto idx = [] (const Norm& n) { return n.IDwithoutR2(); };
 
   // loop over Norm
   constexpr size_t N_NORMS = 4096;
@@ -45,52 +45,43 @@ void CalculateFixationProbs(const SimulationParams& params, std::vector<std::vec
 
   std::vector<Norm> unique_norms;
   std::vector<size_t> norm_index(N_NORMS, 0);
-  for (int j = 0; j < 256; j++) {
-    AssessmentRule R1 = AssessmentRule::MakeDeterministicRule(j);
-    AssessmentRule R2 = AssessmentRule::KeepRecipient();
-
-    for (int i = 0; i < 16; i++) {
-      ActionRule P = ActionRule::MakeDeterministicRule(i);
-      Norm norm(R1, R2, P);
-
-      // special rules for AllC and AllD
-      if (P == ActionRule::ALLC()) {
-        if (norm == Norm::AllC()) {
-          norm_index[idx(norm)] = idx(norm);
-          unique_norms.push_back(norm);
-        } else {
-          norm_index[idx(norm)] = idx(Norm::AllC());
-          continue;
-        }
-      }
-      else if (P == ActionRule::ALLD()) {
-        if (norm == Norm::AllD()) {
-          norm_index[idx(norm)] = idx(norm);
-          unique_norms.push_back(norm);
-        } else {
-          norm_index[idx(norm)] = idx(Norm::AllD());
-          continue;
-        }
-      }
-
-      // if not AllC or AllD
-      if ( norm.ID() < norm.SwapGB().ID() ) {
-        norm_index[idx(norm)] = idx(norm.SwapGB());
-        continue;
-      }
-      else {
-        norm_index[idx(norm)] = idx(norm);
-        unique_norms.push_back(norm);
-      }
+  for (int i = 0; i < N_NORMS; i++) {
+    Norm norm = Norm::ConstructFromIDwithoutR2(i);
+    if ( norm.ID() < norm.SwapGB().ID() ) {
+      norm_index[idx(norm)] = idx(norm.SwapGB());
+      continue;
     }
+    else {
+      norm_index[idx(norm)] = idx(norm);
+      unique_norms.push_back(norm);
+    }
+
+    // special rules for AllC and AllD
+    // if (P == ActionRule::ALLC()) {
+    //   if (norm == Norm::AllC()) {
+    //     norm_index[idx(norm)] = idx(norm);
+    //     unique_norms.push_back(norm);
+    //   } else {
+    //     norm_index[idx(norm)] = idx(Norm::AllC());
+    //     continue;
+    //   }
+    // }
+    // else if (P == ActionRule::ALLD()) {
+    //   if (norm == Norm::AllD()) {
+    //     norm_index[idx(norm)] = idx(norm);
+    //     unique_norms.push_back(norm);
+    //   } else {
+    //     norm_index[idx(norm)] = idx(Norm::AllD());
+    //     continue;
+    //   }
+    // }
   }
 
   EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
 
-  IC(unique_norms.size());
   for (size_t i = 0; i < unique_norms.size(); i++) {
     const Norm& n1 = unique_norms[i];
-    std::cerr << "norm: " << idx(n1) << std::endl;
+    std::cerr << "norm: " << i << ' ' << idx(n1) << std::endl;
     double pc = SelfCoopLevel(n1, params);
     self_coop_levels[idx(n1)] = pc;
 
