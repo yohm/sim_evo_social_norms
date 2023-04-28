@@ -176,16 +176,27 @@ int main(int argc, char* argv[]) {
     std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
   }
 
-  // print fixation probabilities and cooperation levels
   if (my_rank == 0) {
-    std::ofstream fout("fixation_probs.dat");
-    for (size_t i = 0; i < N_NORMS; i++) {
-      fout << self_coop_levels[i] << " ";
-      for (size_t j = 0; j < N_NORMS; j++) {
-        fout << p_fix(i, j) << " ";
-      }
-      fout << std::endl;
-    }
+    // convert to json
+    json j_out = json::object();
+    j_out["params"] = params;
+    j_out["p_fix"] = p_fix._data;
+    j_out["self_coop_levels"] = self_coop_levels;
+    // write a messagepack into a binary file using json-library
+    std::ofstream ofs("fixation_probs.msgpack", std::ios::binary);
+    std::vector<std::uint8_t> v = json::to_msgpack(j_out);
+    IC(v.size(), j_out["p_fix"].size());
+    ofs.write(reinterpret_cast<const char*>(v.data()), v.size());
+    ofs.close();
+
+    // std::ofstream fout("fixation_probs.dat");
+    // for (size_t i = 0; i < N_NORMS; i++) {
+    //   fout << self_coop_levels[i] << " ";
+    //   for (size_t j = 0; j < N_NORMS; j++) {
+    //     fout << p_fix(i, j) << " ";
+    //   }
+    //   fout << std::endl;
+    // }
   }
 
   MPI_Finalize();
