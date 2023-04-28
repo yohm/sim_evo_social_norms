@@ -27,8 +27,8 @@ target_link_libraries(main_priv_finite_mu Eigen3::Eigen OpenMP::OpenMP_CXX nlohm
 add_executable(main_optimize_norm main_optimize_norm.cpp Norm.hpp PrivRepGame.hpp)
 target_link_libraries(main_optimize_norm OpenMP::OpenMP_CXX Eigen3::Eigen MPI::MPI_CXX Pagmo::pagmo)
 
-add_executable(main_grouped_evolution main_grouped_evolution.cpp Norm.hpp PrivRepGame.hpp)
-target_link_libraries(main_grouped_evolution Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
+add_executable(main_calc_fixation_probs main_calc_fixation_probs.cpp Norm.hpp PrivRepGame.hpp)
+target_link_libraries(main_calc_fixation_probs Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
 
 add_executable(test_Norm test_Norm.cpp Norm.hpp)
 

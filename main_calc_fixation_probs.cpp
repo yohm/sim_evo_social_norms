@@ -185,7 +185,6 @@ int main(int argc, char* argv[]) {
     // write a messagepack into a binary file using json-library
     std::ofstream ofs("fixation_probs.msgpack", std::ios::binary);
     std::vector<std::uint8_t> v = json::to_msgpack(j_out);
-    IC(v.size(), j_out["p_fix"].size());
     ofs.write(reinterpret_cast<const char*>(v.data()), v.size());
     ofs.close();
 
