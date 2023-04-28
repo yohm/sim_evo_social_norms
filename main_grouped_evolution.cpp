@@ -5,6 +5,7 @@
 #include <thread>
 #include <chrono>
 #include <functional>
+#include <mpi.h>
 #include <nlohmann/json.hpp>
 #include "Norm.hpp"
 #include "PrivRepGame.hpp"
@@ -74,8 +75,12 @@ void CalculateFixationProbs(const SimulationParams& params, TwodimVector<double>
 
   EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
 
-  #pragma omp parallel for schedule(static)
+  int my_rank = 0, num_procs = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
   for (size_t i = 0; i < unique_norms.size(); i++) {
+    if (i % num_procs != my_rank) continue;
     const Norm& n1 = unique_norms[i];
     double pc = SelfCoopLevel(n1, params);
     self_coop_levels[idx(n1)] = pc;
@@ -90,8 +95,8 @@ void CalculateFixationProbs(const SimulationParams& params, TwodimVector<double>
   }
 
   // loop over ij_pairs
-  #pragma omp parallel for schedule(static)
   for (size_t t=0; t < ij_pairs.size(); t++) {
+    if (t % num_procs != my_rank) continue;
     size_t i = ij_pairs[t][0];
     size_t j = ij_pairs[t][1];
     if (t % 10'000 == 0) {
@@ -105,6 +110,10 @@ void CalculateFixationProbs(const SimulationParams& params, TwodimVector<double>
     p_fix(idx(n1),idx(n2)) = rhos[0][1];
     p_fix(idx(n2),idx(n1)) = rhos[1][0];
   }
+
+  // take the sum of p_fix using MPI
+  MPI_Allreduce(MPI_IN_PLACE, self_coop_levels.data(), self_coop_levels.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, p_fix.data(), p_fix.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   // calculate non-unique-norms
   for (size_t i = 0; i < N_NORMS; i++) {
@@ -121,6 +130,11 @@ void CalculateFixationProbs(const SimulationParams& params, TwodimVector<double>
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
   // strategy space: deterministic strategies without R2 (~ 2000 strategies)
+
+  MPI_Init(&argc, &argv);
+
+  int my_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   using namespace nlohmann;
 
@@ -158,21 +172,23 @@ int main(int argc, char* argv[]) {
   CalculateFixationProbs(params, p_fix, self_coop_levels);
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
-  std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
-
-  // print fixation probabilities and cooperation levels
-  std::ofstream fout("fixation_probs.dat");
-  for (size_t i = 0; i < N_NORMS; i++) {
-    fout << self_coop_levels[i] << " ";
-    for (size_t j = 0; j < N_NORMS; j++) {
-      fout << p_fix(i,j) << " ";
-    }
-    fout << std::endl;
+  if (my_rank == 0) {
+    std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
   }
 
-  // run evolutionary simulation in group-structured population
-  // [TODO] implement me
+  // print fixation probabilities and cooperation levels
+  if (my_rank == 0) {
+    std::ofstream fout("fixation_probs.dat");
+    for (size_t i = 0; i < N_NORMS; i++) {
+      fout << self_coop_levels[i] << " ";
+      for (size_t j = 0; j < N_NORMS; j++) {
+        fout << p_fix(i, j) << " ";
+      }
+      fout << std::endl;
+    }
+  }
 
+  MPI_Finalize();
   return 0;
 }
 
