@@ -2,9 +2,8 @@
 #include <fstream>
 #include <vector>
 #include <array>
-#include <thread>
+#include <tuple>
 #include <chrono>
-#include <functional>
 #include <mpi.h>
 #include <nlohmann/json.hpp>
 #include "Norm.hpp"
@@ -51,18 +50,21 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   return prg.NormCooperationLevels()[0][0];
 }
 
-void CalculateFixationProbs(const SimulationParams& params, vector2d<double> & p_fix, std::vector<double> & self_coop_levels) {
-  auto idx = [] (const Norm& n) { return n.IDwithoutR2(); };
+std::tuple<std::vector<int>, std::vector<double>, vector2d<double>> CalculateFixationProbsThirdOrderWithoutR2(const SimulationParams& params) {
 
   // loop over Norm
   constexpr size_t N_NORMS = 4096;
-  assert(p_fix.size() == N_NORMS * N_NORMS);
-  assert(self_coop_levels.size() == N_NORMS);
+  std::vector<int> norm_ids(N_NORMS, 0);
+  std::vector<double> self_coop_levels(N_NORMS, 0.0);
+  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
+
+  auto idx = [] (const Norm& n) { return n.IDwithoutR2(); };
 
   std::vector<Norm> unique_norms;
   std::vector<size_t> norm_index(N_NORMS, 0);
   for (int i = 0; i < N_NORMS; i++) {
     Norm norm = Norm::ConstructFromIDwithoutR2(i);
+    norm_ids[i] = norm.ID();
 
     if ( i < idx(norm.SwapGB()) ) {
       norm_index[i] = idx(norm.SwapGB());
@@ -124,6 +126,8 @@ void CalculateFixationProbs(const SimulationParams& params, vector2d<double> & p
       p_fix(i,j) = p_fix(ni,nj);
     }
   }
+
+  return std::make_tuple(norm_ids, self_coop_levels, p_fix);
 }
 
 void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
@@ -139,8 +143,9 @@ void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, c
   ofs.close();
 }
 
-void PrintFixationProbsInText(std::ofstream& out, const vector2d<double>& p_fix) {
+void PrintFixationProbsInText(std::ofstream& out, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
   for (size_t i = 0; i < p_fix.Rows(); i++) {
+    out << self_coop_levels[i] << " ";
     for (size_t j = 0; j < p_fix.Cols(); j++) {
       out << p_fix(i,j) << " ";
     }
@@ -181,26 +186,20 @@ int main(int argc, char* argv[]) {
   }
   SimulationParams params = j.get<SimulationParams>();
 
-  // calculate intra-group fixation probabilities
-  constexpr size_t N_NORMS = 4096;
-  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
-  // std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
-  std::vector<double> self_coop_levels(N_NORMS, 0.0);
-
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
-
-  CalculateFixationProbs(params, p_fix, self_coop_levels);
+  auto result = CalculateFixationProbsThirdOrderWithoutR2(params);
+  std::vector<int> norm_ids = std::get<0>(result);
+  std::vector<double> self_coop_levels = std::get<1>(result);
+  vector2d<double> p_fix = std::get<2>(result);
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
   if (my_rank == 0) {
     std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
-  }
 
-  if (my_rank == 0) {
     WriteInMsgpack("fixation_probs.msgpack", j, self_coop_levels, p_fix);
-    // std::ofstream fout("fixation_probs.txt");
-    // PrintFixationProbsInText(fout, p_fix);
+    std::ofstream fout("fixation_probs.dat");
+    PrintFixationProbsInText(fout, self_coop_levels, p_fix);
   }
 
   MPI_Finalize();
