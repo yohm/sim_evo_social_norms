@@ -130,6 +130,89 @@ std::tuple<std::vector<int>, std::vector<double>, vector2d<double>> CalculateFix
   return std::make_tuple(norm_ids, self_coop_levels, p_fix);
 }
 
+std::tuple<std::vector<int>, std::vector<double>, vector2d<double>> CalculateFixationProbs(const SimulationParams& params, const std::vector<Norm>& norms) {
+
+  auto idx = [&norms] (const Norm& n)->int {
+    return std::distance(norms.begin(), std::find(norms.begin(), norms.end(), n));
+  };
+
+  const size_t N_NORMS = norms.size();
+  std::vector<int> norm_ids(N_NORMS, 0);
+  std::vector<double> self_coop_levels(N_NORMS, 0.0);
+  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
+
+  std::vector<Norm> unique_norms;
+  std::vector<size_t> norm_index(N_NORMS, 0);
+  for (int i = 0; i < N_NORMS; i++) {
+    Norm norm = norms[i];
+    norm_ids[i] = norm.ID();
+
+    Norm swapped = norm.SwapGB();
+    if ( i < idx(norm.SwapGB()) ) {
+      norm_index[i] = idx(norm.SwapGB());
+    }
+    else {
+      norm_index[i] = i;
+      unique_norms.push_back(norm);
+    }
+  }
+
+  EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
+
+  int my_rank = 0, num_procs = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+  for (size_t i = 0; i < unique_norms.size(); i++) {
+    if (i % num_procs != my_rank) continue;
+    const Norm& n1 = unique_norms[i];
+    double pc = SelfCoopLevel(n1, params);
+    self_coop_levels[idx(n1)] = pc;
+    p_fix(idx(n1),idx(n1)) = 1.0 / params.N;
+  }
+
+  std::vector<std::array<size_t,2>> ij_pairs{};
+  for (size_t i = 0; i < unique_norms.size(); i++) {
+    for (size_t j = i+1; j < unique_norms.size(); j++) {
+      ij_pairs.push_back({i, j});
+    }
+  }
+
+  // loop over ij_pairs
+  for (size_t t=0; t < ij_pairs.size(); t++) {
+    if (t % num_procs != my_rank) continue;
+    size_t i = ij_pairs[t][0];
+    size_t j = ij_pairs[t][1];
+    if (t % 10'000 == 0) {
+      std::cerr << "t / t_max: " << t << " / " << ij_pairs.size() << std::endl;
+    }
+    //for (const auto& [i,j] : ij_pairs) {
+    const Norm& n1 = unique_norms[i];
+    const Norm& n2 = unique_norms[j];
+    EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
+    auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
+    p_fix(idx(n1),idx(n2)) = rhos[0][1];
+    p_fix(idx(n2),idx(n1)) = rhos[1][0];
+  }
+
+  // take the sum of p_fix using MPI
+  MPI_Allreduce(MPI_IN_PLACE, self_coop_levels.data(), self_coop_levels.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, p_fix.data(), p_fix.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  // calculate non-unique-norms
+  for (size_t i = 0; i < N_NORMS; i++) {
+    size_t ni = norm_index[i];
+    self_coop_levels[i] = self_coop_levels[ni];
+    for (size_t j = 0; j < N_NORMS; j++) {
+      size_t nj = norm_index[j];
+      p_fix(i,j) = p_fix(ni,nj);
+    }
+  }
+
+  return std::make_tuple(norm_ids, self_coop_levels, p_fix);
+}
+
+
 void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
@@ -189,10 +272,21 @@ int main(int argc, char* argv[]) {
 
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
-  auto result = CalculateFixationProbsThirdOrderWithoutR2(params);
+
+  std::vector<Norm> norms;
+  for (size_t i = 0; i < 4096; i++) {
+    Norm norm = Norm::ConstructFromIDwithoutR2(i);
+    if (norm.IsSecondOrder()) {
+      norms.push_back(norm);
+    }
+  }
+  const auto result = CalculateFixationProbs(params, norms);
+  // auto result = CalculateFixationProbsThirdOrderWithoutR2(params);
+
   std::vector<int> norm_ids = std::get<0>(result);
   std::vector<double> self_coop_levels = std::get<1>(result);
   vector2d<double> p_fix = std::get<2>(result);
+
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;
   if (my_rank == 0) {
