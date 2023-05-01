@@ -227,9 +227,9 @@ void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, c
   ofs.close();
 }
 
-void PrintFixationProbsInText(std::ofstream& out, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
+void PrintFixationProbsInText(std::ofstream& out, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
   for (size_t i = 0; i < p_fix.Rows(); i++) {
-    out << self_coop_levels[i] << " ";
+    out << norm_ids[i] << " " << self_coop_levels[i] << " ";
     for (size_t j = 0; j < p_fix.Cols(); j++) {
       out << p_fix(i,j) << " ";
     }
@@ -294,7 +294,7 @@ int main(int argc, char* argv[]) {
 
     WriteInMsgpack("fixation_probs.msgpack", j, norm_ids, self_coop_levels, p_fix);
     std::ofstream fout("fixation_probs.dat");
-    PrintFixationProbsInText(fout, self_coop_levels, p_fix);
+    PrintFixationProbsInText(fout, norm_ids, self_coop_levels, p_fix);
   }
 
   MPI_Finalize();
