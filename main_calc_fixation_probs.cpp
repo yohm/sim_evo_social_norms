@@ -130,12 +130,13 @@ std::tuple<std::vector<int>, std::vector<double>, vector2d<double>> CalculateFix
   return std::make_tuple(norm_ids, self_coop_levels, p_fix);
 }
 
-void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
-  j_out["p_fix"] = p_fix._data;
+  j_out["norm_ids"] = norm_ids;
   j_out["self_coop_levels"] = self_coop_levels;
+  j_out["p_fix"] = p_fix._data;
   // write a messagepack into a binary file using json-library
   std::ofstream ofs(filepath, std::ios::binary);
   std::vector<std::uint8_t> v = nlohmann::json::to_msgpack(j_out);
@@ -197,7 +198,7 @@ int main(int argc, char* argv[]) {
   if (my_rank == 0) {
     std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
-    WriteInMsgpack("fixation_probs.msgpack", j, self_coop_levels, p_fix);
+    WriteInMsgpack("fixation_probs.msgpack", j, norm_ids, self_coop_levels, p_fix);
     std::ofstream fout("fixation_probs.dat");
     PrintFixationProbsInText(fout, self_coop_levels, p_fix);
   }
