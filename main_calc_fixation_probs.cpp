@@ -270,6 +270,7 @@ int main(int argc, char* argv[]) {
     }
   }
   SimulationParams params = j.get<SimulationParams>();
+  if (my_rank == 0) std::cerr << "params: " << nlohmann::json(params) << std::endl;
 
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
