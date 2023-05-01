@@ -148,8 +148,9 @@ std::tuple<std::vector<int>, std::vector<double>, vector2d<double>> CalculateFix
     norm_ids[i] = norm.ID();
 
     Norm swapped = norm.SwapGB();
-    if ( i < idx(norm.SwapGB()) ) {
-      norm_index[i] = idx(norm.SwapGB());
+    int swap_idx = idx(swapped);
+    if ( i < swap_idx && swap_idx < N_NORMS ) {
+      norm_index[i] = swap_idx;
     }
     else {
       norm_index[i] = i;
@@ -273,13 +274,18 @@ int main(int argc, char* argv[]) {
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
 
-  std::vector<Norm> norms;
-  for (size_t i = 0; i < 4096; i++) {
-    Norm norm = Norm::ConstructFromIDwithoutR2(i);
-    if (norm.IsSecondOrder()) {
-      norms.push_back(norm);
-    }
-  }
+  // second-order norms
+  // std::vector<Norm> norms;
+  // for (size_t i = 0; i < 4096; i++) {
+  //   Norm norm = Norm::ConstructFromIDwithoutR2(i);
+  //   if (norm.IsSecondOrder()) {
+  //     norms.push_back(norm);
+  //   }
+  // }
+
+  // three-species systems
+  std::vector<Norm> norms = {Norm::L1(), Norm::AllC(), Norm::AllD()};
+
   const auto result = CalculateFixationProbs(params, norms);
   // auto result = CalculateFixationProbsThirdOrderWithoutR2(params);
 
