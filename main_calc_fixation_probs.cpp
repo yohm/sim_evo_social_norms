@@ -29,9 +29,9 @@ struct SimulationParams {
 };
 
 template <typename T>
-class TwodimVector {
+class vector2d {
 public:
-  TwodimVector(size_t n_rows, size_t n_cols, T init) : _data(n_rows*n_cols, init), n_rows(n_rows), n_cols(n_cols) {};
+  vector2d(size_t n_rows, size_t n_cols, T init) : _data(n_rows*n_cols, init), n_rows(n_rows), n_cols(n_cols) {};
   T& operator()(size_t i, size_t j) { return _data[i*n_cols+j]; }
   const T& operator()(size_t i, size_t j) const { return _data[i*n_cols+j]; }
   size_t Rows() const { return n_rows; }
@@ -51,7 +51,7 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   return prg.NormCooperationLevels()[0][0];
 }
 
-void CalculateFixationProbs(const SimulationParams& params, TwodimVector<double> & p_fix, std::vector<double> & self_coop_levels) {
+void CalculateFixationProbs(const SimulationParams& params, vector2d<double> & p_fix, std::vector<double> & self_coop_levels) {
   auto idx = [] (const Norm& n) { return n.IDwithoutR2(); };
 
   // loop over Norm
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
 
   // calculate intra-group fixation probabilities
   constexpr size_t N_NORMS = 4096;
-  TwodimVector<double> p_fix(N_NORMS, N_NORMS, 0.0);
+  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
   // std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
   std::vector<double> self_coop_levels(N_NORMS, 0.0);
 
