@@ -126,6 +126,27 @@ void CalculateFixationProbs(const SimulationParams& params, vector2d<double> & p
   }
 }
 
+void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
+  // convert to json
+  nlohmann::json j_out = nlohmann::json::object();
+  j_out["params"] = params;
+  j_out["p_fix"] = p_fix._data;
+  j_out["self_coop_levels"] = self_coop_levels;
+  // write a messagepack into a binary file using json-library
+  std::ofstream ofs(filepath, std::ios::binary);
+  std::vector<std::uint8_t> v = nlohmann::json::to_msgpack(j_out);
+  ofs.write(reinterpret_cast<const char*>(v.data()), v.size());
+  ofs.close();
+}
+
+void PrintFixationProbsInText(std::ofstream& out, const vector2d<double>& p_fix) {
+  for (size_t i = 0; i < p_fix.Rows(); i++) {
+    for (size_t j = 0; j < p_fix.Cols(); j++) {
+      out << p_fix(i,j) << " ";
+    }
+    out << std::endl;
+  }
+}
 
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
@@ -177,25 +198,9 @@ int main(int argc, char* argv[]) {
   }
 
   if (my_rank == 0) {
-    // convert to json
-    json j_out = json::object();
-    j_out["params"] = params;
-    j_out["p_fix"] = p_fix._data;
-    j_out["self_coop_levels"] = self_coop_levels;
-    // write a messagepack into a binary file using json-library
-    std::ofstream ofs("fixation_probs.msgpack", std::ios::binary);
-    std::vector<std::uint8_t> v = json::to_msgpack(j_out);
-    ofs.write(reinterpret_cast<const char*>(v.data()), v.size());
-    ofs.close();
-
-    // std::ofstream fout("fixation_probs.dat");
-    // for (size_t i = 0; i < N_NORMS; i++) {
-    //   fout << self_coop_levels[i] << " ";
-    //   for (size_t j = 0; j < N_NORMS; j++) {
-    //     fout << p_fix(i, j) << " ";
-    //   }
-    //   fout << std::endl;
-    // }
+    WriteInMsgpack("fixation_probs.msgpack", j, self_coop_levels, p_fix);
+    // std::ofstream fout("fixation_probs.txt");
+    // PrintFixationProbsInText(fout, p_fix);
   }
 
   MPI_Finalize();
