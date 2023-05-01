@@ -214,7 +214,7 @@ std::tuple<std::vector<int>, std::vector<double>, vector2d<double>> CalculateFix
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const nlohmann::json& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const SimulationParams& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
@@ -298,7 +298,7 @@ int main(int argc, char* argv[]) {
   if (my_rank == 0) {
     std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
-    WriteInMsgpack("fixation_probs.msgpack", j, norm_ids, self_coop_levels, p_fix);
+    WriteInMsgpack("fixation_probs.msgpack", params, norm_ids, self_coop_levels, p_fix);
     std::ofstream fout("fixation_probs.dat");
     PrintFixationProbsInText(fout, norm_ids, self_coop_levels, p_fix);
   }
