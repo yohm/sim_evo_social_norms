@@ -66,6 +66,7 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
 
   size_t count = 0;
   double overall_c_prob = 0.0;
+  std::vector<double> histo(norms.size(), 0.0);
 
   for (size_t t = 0; t < T_init+T_measure; t++) {
     size_t mut = (resident + 1 + static_cast<size_t>(r01() * (norms.size()-1))) % norms.size();
@@ -81,11 +82,18 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
 
     if (t > T_init) {
       overall_c_prob += self_coop_levels[resident];
+      histo[resident] += 1.0;
       count++;
     }
   }
 
-  IC(overall_c_prob/count);
+  // normalize cooperation_level & histogram
+  overall_c_prob /= count;
+  for (size_t i = 0; i < histo.size(); ++i) {
+      histo[i] /= count;
+  }
+
+  IC(overall_c_prob, histo);
 }
 
 int main(int argc, char* argv[]) {
