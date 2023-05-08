@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 #include <chrono>
+#include <random>
 #include <nlohmann/json.hpp>
 #include "Norm.hpp"
 #include "PrivRepGame.hpp"
@@ -51,15 +52,39 @@ nlohmann::json LoadMsgpackFile(const std::string& path) {
   return j;
 }
 
+void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<double>& p_fix,
+                                 const std::vector<double>& self_coop_levels, uint64_t seed,
+                                 size_t T_init, size_t T_measure) {
+
+  // initialize random number generator
+  std::mt19937_64 rng(seed);
+  std::uniform_real_distribution<double> uni(0.0, 1.0);
+  auto r01 = [&uni, &rng] { return uni(rng); };
+
+  // initialize population
+  size_t resident = r01() * norms.size();
+
+  for (size_t t = 0; t < T_init; t++) {
+    size_t mut = (resident + 1 + static_cast<size_t>(r01() * (norms.size()-1))) % norms.size();
+    assert(resident != mut);
+    if (r01() < p_fix(resident, mut)) {
+      resident = mut;
+    }
+
+    constexpr size_t interval = 100ul;
+    if (t % interval == 0) {
+      std::cerr << t << ' ' << resident << ' ' << self_coop_levels[resident] << std::endl;
+    }
+  }
+}
 
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
 
   using namespace nlohmann;
 
-  size_t M = 1; // number of groups
-  size_t t_init = 1e4;
-  size_t t_measure = 1e4;
+  size_t T_init = 1e4;
+  size_t T_measure = 1e4;
   uint64_t seed = 123456789ull;
 
   // load fixation probabilities from the input file
@@ -84,6 +109,8 @@ int main(int argc, char* argv[]) {
     self_coop_levels[i] = j_in["self_coop_levels"][i].get<double>();
   }
   IC(p_fix._data, self_coop_levels);
+
+  SimulateWellMixedPopulation(norms, p_fix, self_coop_levels, seed, T_init, T_measure);
 
   return 0;
 }
