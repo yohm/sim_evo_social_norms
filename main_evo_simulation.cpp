@@ -40,17 +40,14 @@ nlohmann::json LoadMsgpackFile(const std::string& path) {
   fin.seekg(0, fin.beg);
 
   // reserve space in vector for bytes
-  // bytes.reserve(length);
   bytes.resize(length);
 
   // read bytes into vector
-  char* buffer = new char[length];
   fin.read(bytes.data(), length);
 
     // unpack msgpack
   nlohmann::json j = nlohmann::json::from_msgpack(bytes);
 
-  std::cerr << j;
   return j;
 }
 
@@ -66,12 +63,27 @@ int main(int argc, char* argv[]) {
   uint64_t seed = 123456789ull;
 
   // load fixation probabilities from the input file
-  json j_in = LoadMsgpackFile("fixation_probs.msgpack");
+  json j_in = LoadMsgpackFile("fixation_probs_3species.msgpack");
+  std::cerr << j_in << std::endl;
 
-  // calculate intra-group fixation probabilities
-  // constexpr size_t N_NORMS = 4096;
-  // vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
-  // std::vector<double> self_coop_levels(N_NORMS, 0.0);
+  std::vector<Norm> norms;
+  for (auto& norm_id_j : j_in["norm_ids"]) {
+    int id = norm_id_j.get<int>();
+    Norm n = Norm::ConstructFromID(id);
+    norms.emplace_back(n);
+  }
+
+  const size_t N_NORMS = norms.size();
+  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
+  std::vector<double> self_coop_levels(N_NORMS, 0.0);
+  std::cerr << j_in["p_fix"][0].get<double>() << std::endl;
+  for (size_t i = 0; i < p_fix.size(); ++i) {
+    p_fix._data[i] = j_in["p_fix"][i].get<double>();
+  }
+  for (size_t i = 0; i < self_coop_levels.size(); ++i) {
+    self_coop_levels[i] = j_in["self_coop_levels"][i].get<double>();
+  }
+  IC(p_fix._data, self_coop_levels);
 
   return 0;
 }
