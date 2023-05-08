@@ -92,12 +92,35 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
   for (size_t i = 0; i < histo.size(); ++i) {
       histo[i] /= count;
   }
+  // sort histo in descending order with its index
+  std::vector<std::pair<double, size_t>> histo_sorted;
+  for (size_t i = 0; i < histo.size(); ++i) {
+      histo_sorted.emplace_back(std::make_pair(histo[i], i));
+  }
+  std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<std::pair<double, size_t>>());
 
-  IC(overall_c_prob, histo);
+  std::cout << "overall_c_prob: " << overall_c_prob << std::endl;
+  std::cout << "histo: ";
+  for (size_t i = 0; i < histo_sorted.size(); ++i) {
+    size_t idx = histo_sorted[i].second;
+    int nid = norms[idx].ID();
+    std::string type = "other";
+    if (norms[idx].P.ID() == 0) { type = "AllD"; }
+    else if (norms[idx].P.ID() == 15) { type = "AllC"; }
+    std::cout << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
+    if (histo_sorted[i].first < 0.01) {
+      break;
+    }
+  }
 }
 
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
+
+  if (argc != 2) {
+    std::cerr << "Usage: " << argv[0] << " <input_msgpack_file>" << std::endl;
+    exit(1);
+  }
 
   using namespace nlohmann;
 
@@ -106,8 +129,8 @@ int main(int argc, char* argv[]) {
   uint64_t seed = 123456789ull;
 
   // load fixation probabilities from the input file
-  json j_in = LoadMsgpackFile("fixation_probs_3species.msgpack");
-  std::cerr << j_in << std::endl;
+  json j_in = LoadMsgpackFile(argv[1]);
+  // std::cerr << j_in << std::endl;
 
   std::vector<Norm> norms;
   for (auto& norm_id_j : j_in["norm_ids"]) {
@@ -126,7 +149,7 @@ int main(int argc, char* argv[]) {
   for (size_t i = 0; i < self_coop_levels.size(); ++i) {
     self_coop_levels[i] = j_in["self_coop_levels"][i].get<double>();
   }
-  IC(p_fix._data, self_coop_levels);
+  // IC(p_fix._data, self_coop_levels);
 
   SimulateWellMixedPopulation(norms, p_fix, self_coop_levels, seed, T_init, T_measure);
 
