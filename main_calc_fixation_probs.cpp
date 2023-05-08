@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 #include <tuple>
+#include <map>
 #include <chrono>
 #include <mpi.h>
 #include <nlohmann/json.hpp>
