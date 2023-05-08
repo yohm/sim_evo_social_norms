@@ -64,7 +64,10 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
   // initialize population
   size_t resident = r01() * norms.size();
 
-  for (size_t t = 0; t < T_init; t++) {
+  size_t count = 0;
+  double overall_c_prob = 0.0;
+
+  for (size_t t = 0; t < T_init+T_measure; t++) {
     size_t mut = (resident + 1 + static_cast<size_t>(r01() * (norms.size()-1))) % norms.size();
     assert(resident != mut);
     if (r01() < p_fix(resident, mut)) {
@@ -75,7 +78,14 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
     if (t % interval == 0) {
       std::cerr << t << ' ' << resident << ' ' << self_coop_levels[resident] << std::endl;
     }
+
+    if (t > T_init) {
+      overall_c_prob += self_coop_levels[resident];
+      count++;
+    }
   }
+
+  IC(overall_c_prob/count);
 }
 
 int main(int argc, char* argv[]) {
