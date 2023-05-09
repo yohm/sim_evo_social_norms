@@ -15,6 +15,7 @@ constexpr Action C = Action::C, D = Action::D;
 template <typename T>
 class vector2d {
 public:
+  vector2d() : _data(), n_rows(0), n_cols(0) {};
   vector2d(size_t n_rows, size_t n_cols, T init) : _data(n_rows*n_cols, init), n_rows(n_rows), n_cols(n_cols) {};
   T& operator()(size_t i, size_t j) { return _data[i*n_cols+j]; }
   const T& operator()(size_t i, size_t j) const { return _data[i*n_cols+j]; }
@@ -52,69 +53,119 @@ nlohmann::json LoadMsgpackFile(const std::string& path) {
   return j;
 }
 
-void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<double>& p_fix,
-                                 const std::vector<double>& self_coop_levels, uint64_t seed,
-                                 size_t T_init, size_t T_measure) {
+class GroupedEvoGame {
+public:
+  class Parameters {
+    public:
+    Parameters() : M(1), T_init(1e6), T_measure(1e6), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(1) {}
+    size_t M;   // number of groups
+    size_t T_init;
+    size_t T_measure;
+    uint64_t seed;
+    double benefit;
+    double sigma_out;
+    double mut_r;   // relative mutation rate
+  };
 
-  // initialize random number generator
-  std::mt19937_64 rng(seed);
-  std::uniform_real_distribution<double> uni(0.0, 1.0);
-  std::uniform_int_distribution<size_t> uni_int(0, norms.size()-2);
-  auto r01 = [&uni, &rng] { return uni(rng); };
-
-  // initialize population
-  size_t resident = r01() * norms.size();
-
-  size_t count = 0;
-  double overall_c_prob = 0.0;
-  std::vector<double> histo(norms.size(), 0.0);
-
-  for (size_t t = 0; t < T_init+T_measure; t++) {
-    size_t mut = (resident + 1 + uni_int(rng)) % norms.size();
-    assert(resident != mut);
-    if (r01() < p_fix(resident, mut)) {
-      resident = mut;
+  explicit GroupedEvoGame(const Parameters& _prm, const std::vector<Norm>& _norms) :
+    prm(_prm), norms(_norms)
+  {
+    if (_norms.empty()) {
+      throw std::runtime_error("norms is empty");
     }
-
-    const size_t interval = T_measure / 100;
-    if (t % interval == 0) {
-      std::cerr << t << ' ' << resident << ' ' << self_coop_levels[resident] << std::endl;
+    rng.seed(prm.seed);
+    std::uniform_int_distribution<size_t> uni_int(0, norms.size()-1);
+    species.reserve(prm.M);
+    for (size_t i = 0; i < prm.M; i++) {
+      species.emplace_back( uni_int(rng) );
     }
-
-    if (t > T_init) {
-      overall_c_prob += self_coop_levels[resident];
-      histo[resident] += 1.0;
-      count++;
-    }
+    histogram.resize(norms.size(), 0);
   }
+  Parameters prm;
+  std::vector<size_t> species;   //  species[i] : species index at group i
+  std::vector<Norm> norms;
+  std::mt19937_64 rng;
+  vector2d<double> fixation_prob_cache;
+  std::vector<double> self_coop_level_cache;
+  std::vector<size_t> histogram;  // histogram of species during evolution
 
-  // normalize cooperation_level & histogram
-  overall_c_prob /= count;
-  for (size_t i = 0; i < histo.size(); ++i) {
-      histo[i] /= count;
+  void SetFixationProbsCache(const vector2d<double>& fixation_probs) {
+    fixation_prob_cache = fixation_probs;
   }
-  // sort histo in descending order with its index
-  std::vector<std::pair<double, size_t>> histo_sorted;
-  for (size_t i = 0; i < histo.size(); ++i) {
-      histo_sorted.emplace_back(std::make_pair(histo[i], i));
+  void SetSelfCoopLevelCache(const std::vector<double>& self_c_probs) {
+    self_coop_level_cache = self_c_probs;
   }
-  std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<std::pair<double, size_t>>());
-
-  std::cout << "overall_c_prob: " << overall_c_prob << std::endl;
-  std::cout << "histo: " << std::endl;
-  for (size_t i = 0; i < histo_sorted.size(); ++i) {
-    size_t idx = histo_sorted[i].second;
-    int nid = norms[idx].ID();
-    std::string type = "other";
-    if (norms[idx].P.ID() == 0) { type = "AllD"; }
-    else if (norms[idx].P.ID() == 15) { type = "AllC"; }
-    else if (!norms[idx].GetName().empty()) { type = norms[idx].GetName(); }
-    std::cout << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
-    if (histo_sorted[i].first < 0.01 && i > 20) {
-      break;
+  void Update() {
+    // one Monte Carlo sweep
+    for (int t = 0; t < prm.M; t++) {
+      std::uniform_int_distribution<size_t> d0(0, prm.M-1);
+      size_t res_index = d0(rng);
+      UpdateGroup(res_index);
     }
   }
-}
+  void UpdateGroup(size_t res_index) {
+    // focal species : species[g]
+    std::uniform_real_distribution<double> uni(0.0, 1.0);
+    size_t resident = species[res_index];
+
+    if (uni(rng) < prm.mut_r) {
+      // mutation
+      std::uniform_int_distribution<size_t> d1(1, norms.size()-1);
+      size_t mutant = (resident + d1(rng)) % norms.size();
+      double f = IntraGroupFixationProb(mutant, resident);
+      if (uni(rng) < f) {
+        species[res_index] = mutant;
+      }
+    }
+    else {
+      std::uniform_int_distribution<size_t> d1(1, prm.M-1);
+      size_t mig_index = static_cast<size_t>(res_index + d1(rng)) % prm.M;
+      size_t immigrant = species[mig_index];
+      double p = InterGroupImitationProb(immigrant, resident);
+      double f = IntraGroupFixationProb(immigrant, resident);
+      double prob = p*f;
+      if (uni(rng) < prob) {
+        species[res_index] = immigrant;
+      }
+    }
+  }
+  double IntraGroupFixationProb(size_t mutant, size_t resident) {
+    return fixation_prob_cache(resident, mutant);
+  }
+  double InterGroupImitationProb(size_t immigrant, size_t resident) {
+    double pi_resident  = (prm.benefit - 1.0) * self_coop_level_cache[resident];
+    double pi_immigrant = (prm.benefit - 1.0) * self_coop_level_cache[immigrant];
+    // f_{A\to B} = { 1 + \exp[ \sigma_out (s_A - s_B) ] }^{-1}
+    return 1.0 / (1.0 + std::exp(prm.sigma_out * (pi_resident - pi_immigrant) ));
+  }
+  void TakeHistogram() {
+    for (size_t i = 0; i < species.size(); i++) {
+      histogram[species[i]] += 1;
+    }
+  }
+  void ResetHistogram() {
+    std::fill(histogram.begin(), histogram.end(), 0);
+  }
+  std::vector<double> NormalizedHistogram() const {
+    std::vector<double> normed(histogram.size(), 0.0);
+    double sum = 0.0;
+    for (size_t i = 0; i < histogram.size(); i++) {
+      sum += histogram[i];
+    }
+    for (size_t i = 0; i < histogram.size(); i++) {
+      normed[i] = histogram[i] / sum;
+    }
+    return normed;
+  }
+  double AverageCoopLevel() const {
+    std::vector<double> n_histo = NormalizedHistogram();
+    double sum = 0.0;
+    for (size_t i = 0; i < n_histo.size(); i++) {
+      sum += n_histo[i] * self_coop_level_cache[i];
+    }
+    return sum;
+  }
+};
 
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
@@ -126,13 +177,9 @@ int main(int argc, char* argv[]) {
 
   using namespace nlohmann;
 
-  size_t T_init = 1e6;
-  size_t T_measure = 1e8;
-  uint64_t seed = 123456789ull;
-
   // load fixation probabilities from the input file
   json j_in = LoadMsgpackFile(argv[1]);
-  // std::cerr << j_in << std::endl;
+  std::cerr << "json loaded" << std::endl;
 
   std::vector<Norm> norms;
   for (auto& norm_id_j : j_in["norm_ids"]) {
@@ -153,7 +200,46 @@ int main(int argc, char* argv[]) {
   }
   // IC(p_fix._data, self_coop_levels);
 
-  SimulateWellMixedPopulation(norms, p_fix, self_coop_levels, seed, T_init, T_measure);
+  // SimulateWellMixedPopulation(norms, p_fix, self_coop_levels, seed, T_init, T_measure);
+
+  GroupedEvoGame::Parameters params;
+  GroupedEvoGame evo(params, norms);
+  evo.SetFixationProbsCache(p_fix);
+  evo.SetSelfCoopLevelCache(self_coop_levels);
+  for (size_t t = 0; t < params.T_init; t++) {
+    evo.Update();
+  }
+  for (size_t t = 0; t < params.T_measure; t++) {
+    evo.Update();
+    evo.TakeHistogram();
+  }
+  auto n_histo = evo.NormalizedHistogram();
+  // Print n_histo
+  for (size_t i = 0; i < n_histo.size(); ++i) {
+    std::cout << i << ' ' << norms[i].ID() << ' ' << n_histo[i] << ' ' << self_coop_levels[i] << std::endl;
+  }
+  // print average cooperation level
+  std::cout << "overall_c_prob: " << evo.AverageCoopLevel() << std::endl;
+  std::cout << "histo: " << std::endl;
+
+  // sort histo in descending order with its index
+  std::vector<std::pair<double, size_t>> histo_sorted;
+  for (size_t i = 0; i < n_histo.size(); ++i) {
+    histo_sorted.emplace_back(std::make_pair(n_histo[i], i));
+  }
+  std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<std::pair<double, size_t>>());
+  for (size_t i = 0; i < histo_sorted.size(); ++i) {
+    size_t idx = histo_sorted[i].second;
+    int nid = norms[idx].ID();
+    std::string type = "other";
+    if (norms[idx].P.ID() == 0) { type = "AllD"; }
+    else if (norms[idx].P.ID() == 15) { type = "AllC"; }
+    else if (!norms[idx].GetName().empty()) { type = norms[idx].GetName(); }
+    std::cout << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
+    if (histo_sorted[i].first < 0.01 && i > 20) {
+      break;
+    }
+  }
 
   return 0;
 }
