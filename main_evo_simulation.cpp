@@ -59,7 +59,7 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
   // initialize random number generator
   std::mt19937_64 rng(seed);
   std::uniform_real_distribution<double> uni(0.0, 1.0);
-  std::uniform_int_distribution<size_t> uni_int(0, norms.size()-1);
+  std::uniform_int_distribution<size_t> uni_int(0, norms.size()-2);
   auto r01 = [&uni, &rng] { return uni(rng); };
 
   // initialize population
