@@ -59,6 +59,7 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
   // initialize random number generator
   std::mt19937_64 rng(seed);
   std::uniform_real_distribution<double> uni(0.0, 1.0);
+  std::uniform_int_distribution<size_t> uni_int(0, norms.size()-1);
   auto r01 = [&uni, &rng] { return uni(rng); };
 
   // initialize population
@@ -69,13 +70,13 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
   std::vector<double> histo(norms.size(), 0.0);
 
   for (size_t t = 0; t < T_init+T_measure; t++) {
-    size_t mut = (resident + 1 + static_cast<size_t>(r01() * (norms.size()-1))) % norms.size();
+    size_t mut = (resident + 1 + uni_int(rng)) % norms.size();
     assert(resident != mut);
     if (r01() < p_fix(resident, mut)) {
       resident = mut;
     }
 
-    constexpr size_t interval = 100ul;
+    const size_t interval = T_measure / 100;
     if (t % interval == 0) {
       std::cerr << t << ' ' << resident << ' ' << self_coop_levels[resident] << std::endl;
     }
@@ -100,15 +101,16 @@ void SimulateWellMixedPopulation(const std::vector<Norm>& norms, const vector2d<
   std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<std::pair<double, size_t>>());
 
   std::cout << "overall_c_prob: " << overall_c_prob << std::endl;
-  std::cout << "histo: ";
+  std::cout << "histo: " << std::endl;
   for (size_t i = 0; i < histo_sorted.size(); ++i) {
     size_t idx = histo_sorted[i].second;
     int nid = norms[idx].ID();
     std::string type = "other";
     if (norms[idx].P.ID() == 0) { type = "AllD"; }
     else if (norms[idx].P.ID() == 15) { type = "AllC"; }
+    else if (!norms[idx].GetName().empty()) { type = norms[idx].GetName(); }
     std::cout << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
-    if (histo_sorted[i].first < 0.01) {
+    if (histo_sorted[i].first < 0.01 && i > 20) {
       break;
     }
   }
@@ -124,8 +126,8 @@ int main(int argc, char* argv[]) {
 
   using namespace nlohmann;
 
-  size_t T_init = 1e4;
-  size_t T_measure = 1e4;
+  size_t T_init = 1e6;
+  size_t T_measure = 1e8;
   uint64_t seed = 123456789ull;
 
   // load fixation probabilities from the input file
