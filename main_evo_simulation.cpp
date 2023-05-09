@@ -57,7 +57,7 @@ class GroupedEvoGame {
 public:
   class Parameters {
     public:
-    Parameters() : M(1), T_init(1e6), T_measure(1e6), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(1) {}
+    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(0.3) {}
     size_t M;   // number of groups
     size_t T_init;
     size_t T_measure;
@@ -210,6 +210,10 @@ int main(int argc, char* argv[]) {
     evo.Update();
   }
   for (size_t t = 0; t < params.T_measure; t++) {
+    size_t interval = params.T_measure / 100;
+    if (t % interval == 0) {
+      std::cerr << "t = " << t << std::endl;
+    }
     evo.Update();
     evo.TakeHistogram();
   }
