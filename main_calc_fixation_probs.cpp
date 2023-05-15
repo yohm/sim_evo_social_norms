@@ -7,6 +7,7 @@
 #include <chrono>
 #include <mpi.h>
 #include <nlohmann/json.hpp>
+#include "Vector2d.hpp"
 #include "Norm.hpp"
 #include "PrivRepGame.hpp"
 
@@ -28,21 +29,6 @@ struct SimulationParams {
   NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
 };
 
-template <typename T>
-class vector2d {
-public:
-  vector2d(size_t n_rows, size_t n_cols, T init) : _data(n_rows*n_cols, init), n_rows(n_rows), n_cols(n_cols) {};
-  T& operator()(size_t i, size_t j) { return _data[i*n_cols+j]; }
-  const T& operator()(size_t i, size_t j) const { return _data[i*n_cols+j]; }
-  size_t Rows() const { return n_rows; }
-  size_t Cols() const { return n_cols; }
-  size_t size() const { return _data.size(); }
-  T* data() { return _data.data(); }
-  std::vector<T> _data;
-  size_t n_rows;
-  size_t n_cols;
-};
-
 double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   PrivateRepGame prg({{norm, params.N}}, params.seed);
   prg.Update(params.n_init, params.q, params.mu_percept, false);
@@ -51,7 +37,7 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   return prg.NormCooperationLevels()[0][0];
 }
 
-std::pair<std::vector<double>, vector2d<double>> CalculateFixationProbs(const SimulationParams& params, const std::vector<Norm>& norms) {
+std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const SimulationParams& params, const std::vector<Norm>& norms) {
 
   std::map<int, int> normid_idx;
   for (int i = 0; i < norms.size(); i++) {
@@ -64,7 +50,7 @@ std::pair<std::vector<double>, vector2d<double>> CalculateFixationProbs(const Si
 
   const size_t N_NORMS = norms.size();
   std::vector<double> self_coop_levels(N_NORMS, 0.0);
-  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
+  Vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
 
   std::vector<Norm> unique_norms;
   std::vector<size_t> norm_index(N_NORMS, 0);
@@ -135,7 +121,7 @@ std::pair<std::vector<double>, vector2d<double>> CalculateFixationProbs(const Si
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const SimulationParams& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const SimulationParams& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
@@ -149,7 +135,7 @@ void WriteInMsgpack(const std::string& filepath, const SimulationParams& params,
   ofs.close();
 }
 
-void PrintFixationProbsInText(std::ofstream& out, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const vector2d<double>& p_fix) {
+void PrintFixationProbsInText(std::ofstream& out, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   for (size_t i = 0; i < p_fix.Rows(); i++) {
     out << norm_ids[i] << " " << self_coop_levels[i] << " ";
     for (size_t j = 0; j < p_fix.Cols(); j++) {
@@ -220,7 +206,7 @@ int main(int argc, char* argv[]) {
     norm_ids.emplace_back(n.ID());
   }
   std::vector<double> self_coop_levels = result.first;
-  vector2d<double> p_fix = result.second;
+  Vector2d<double> p_fix = result.second;
 
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end-start;

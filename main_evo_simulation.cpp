@@ -5,28 +5,13 @@
 #include <chrono>
 #include <random>
 #include <nlohmann/json.hpp>
+#include "Vector2d.hpp"
 #include "Norm.hpp"
 #include "PrivRepGame.hpp"
 
 
 constexpr Reputation B = Reputation::B, G = Reputation::G;
 constexpr Action C = Action::C, D = Action::D;
-
-template <typename T>
-class vector2d {
-public:
-  vector2d() : _data(), n_rows(0), n_cols(0) {};
-  vector2d(size_t n_rows, size_t n_cols, T init) : _data(n_rows*n_cols, init), n_rows(n_rows), n_cols(n_cols) {};
-  T& operator()(size_t i, size_t j) { return _data[i*n_cols+j]; }
-  const T& operator()(size_t i, size_t j) const { return _data[i*n_cols+j]; }
-  size_t Rows() const { return n_rows; }
-  size_t Cols() const { return n_cols; }
-  size_t size() const { return _data.size(); }
-  T* data() { return _data.data(); }
-  std::vector<T> _data;
-  size_t n_rows;
-  size_t n_cols;
-};
 
 nlohmann::json LoadMsgpackFile(const std::string& path) {
   std::ifstream fin(path, std::ios::binary);
@@ -57,7 +42,7 @@ class GroupedEvoGame {
 public:
   class Parameters {
     public:
-    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(0.3) {}
+    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(0.1) {}
     size_t M;   // number of groups
     size_t T_init;
     size_t T_measure;
@@ -85,11 +70,11 @@ public:
   std::vector<size_t> species;   //  species[i] : species index at group i
   std::vector<Norm> norms;
   std::mt19937_64 rng;
-  vector2d<double> fixation_prob_cache;
+  Vector2d<double> fixation_prob_cache;
   std::vector<double> self_coop_level_cache;
   std::vector<size_t> histogram;  // histogram of species during evolution
 
-  void SetFixationProbsCache(const vector2d<double>& fixation_probs) {
+  void SetFixationProbsCache(const Vector2d<double>& fixation_probs) {
     fixation_prob_cache = fixation_probs;
   }
   void SetSelfCoopLevelCache(const std::vector<double>& self_c_probs) {
@@ -189,9 +174,8 @@ int main(int argc, char* argv[]) {
   }
 
   const size_t N_NORMS = norms.size();
-  vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
+  Vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
   std::vector<double> self_coop_levels(N_NORMS, 0.0);
-  std::cerr << j_in["p_fix"][0].get<double>() << std::endl;
   for (size_t i = 0; i < p_fix.size(); ++i) {
     p_fix._data[i] = j_in["p_fix"][i].get<double>();
   }
