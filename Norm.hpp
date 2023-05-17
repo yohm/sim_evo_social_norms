@@ -569,6 +569,26 @@ public:
     }
     return true;
   }
+  static std::vector<Norm> Deterministic3rdOrderWithoutR2Norms() {
+    std::vector<Norm> norms;
+    for (int i = 0; i < 4096; i++) {
+      const Norm n = Norm::ConstructFromIDwithoutR2(i);
+      if (n.IDwithoutR2() >= n.SwapGB().IDwithoutR2()) {
+        norms.push_back(n);
+      }
+    }
+    return norms;
+  }
+  static std::vector<Norm> Deterministic2ndOrderWithoutR2Norms() {
+    std::vector<Norm> norms;
+    for (int i = 0; i < 4096; i++) {
+      const Norm n = Norm::ConstructFromIDwithoutR2(i);
+      if (n.IsSecondOrder() && n.IDwithoutR2() >= n.SwapGB().IDwithoutR2()) {
+        norms.push_back(n);
+      }
+    }
+    return norms;
+  }
 
   static const std::vector<std::pair<int, std::string> > NormNames;
   std::string GetName() const {

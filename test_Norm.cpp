@@ -3,6 +3,8 @@
 #include <icecream.hpp>
 #include <bitset>
 #include <regex>
+#include <vector>
+#include <set>
 #include "Norm.hpp"
 
 
@@ -264,6 +266,32 @@ void test_Norm() {
     assert( n.IsGenerousScoring() == true );
     assert( n.GetName() == "GSCO-1.5" );
     assert( n.Rd.good_probs[0] > 0.6666 && n.Rd.good_probs[0] < 0.6667 );
+  }
+
+  // Deterministic 2nd-order norms
+  {
+    std::vector<Norm> norms = Norm::Deterministic2ndOrderWithoutR2Norms();
+    std::set<int> ids;
+    for (const Norm& n: norms) {
+      assert( n.IsDeterministic() == true );
+      assert( n.IsRecipKeep() == true );
+      assert( n.IsSecondOrder() == true );
+      ids.insert(n.ID());
+    }
+    assert( norms.size() == 36 );
+    assert( ids.size() == 36 );
+  }
+  // Deterministic 3rd-order norms
+  {
+    std::vector<Norm> norms = Norm::Deterministic3rdOrderWithoutR2Norms();
+    std::set<int> ids;
+    for (const Norm& n: norms) {
+      assert( n.IsDeterministic() == true );
+      assert( n.IsRecipKeep() == true );
+      ids.insert(n.ID());
+    }
+    assert( norms.size() == 2080 );
+    assert( ids.size() == 2080 );
   }
 
   std::cout << "test_Norm passed!" << std::endl;
