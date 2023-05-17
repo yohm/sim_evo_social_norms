@@ -39,31 +39,9 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
 
 std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const SimulationParams& params, const std::vector<Norm>& norms) {
 
-  std::map<int, int> normid_idx;
-  for (int i = 0; i < norms.size(); i++) {
-    normid_idx.insert({norms[i].ID(), i});
-  }
-
-  auto idx = [&normid_idx] (const Norm& n)->int {
-    return normid_idx.at(n.ID());
-  };
-
-  const size_t N_NORMS = norms.size();
-  std::vector<double> self_coop_levels(N_NORMS, 0.0);
-  Vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
-
-  std::vector<Norm> unique_norms;
-  std::vector<size_t> norm_index(N_NORMS, 0);
-  for (int i = 0; i < N_NORMS; i++) {
-    Norm swapped = norms[i].SwapGB();
-    auto found = normid_idx.find(swapped.ID());
-    if (found != normid_idx.end() && i < found->second) {
-      norm_index[i] = found->second;
-    } else {
-      norm_index[i] = i;
-      unique_norms.push_back(norms[i]);
-    }
-  }
+  const size_t NN = norms.size();   // number of norms
+  std::vector<double> self_coop_levels(NN, 0.0);
+  Vector2d<double> p_fix(NN, NN, 0.0);
 
   EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
 
@@ -71,51 +49,41 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Si
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-  for (size_t i = 0; i < unique_norms.size(); i++) {
+  // calculate self-cooperation levels
+  for (size_t i = 0; i < NN; i++) {
     if (i % num_procs != my_rank) continue;
-    const Norm& n1 = unique_norms[i];
+    const Norm& n1 = norms[i];
     double pc = SelfCoopLevel(n1, params);
-    self_coop_levels[idx(n1)] = pc;
-    p_fix(idx(n1),idx(n1)) = 1.0 / params.N;
+    self_coop_levels[i] = pc;
+    p_fix(i, i) = 1.0 / params.N;
   }
 
   std::vector<std::array<size_t,2>> ij_pairs{};
-  for (size_t i = 0; i < unique_norms.size(); i++) {
-    for (size_t j = i+1; j < unique_norms.size(); j++) {
+  for (size_t i = 0; i < NN; i++) {
+    for (size_t j = i+1; j < NN; j++) {
       ij_pairs.push_back({i, j});
     }
   }
 
   // loop over ij_pairs
-  for (size_t t=0; t < ij_pairs.size(); t++) {
-    if (t % num_procs != my_rank) continue;
-    size_t i = ij_pairs[t][0];
-    size_t j = ij_pairs[t][1];
-    if (t % 10'000 == 0) {
-      std::cerr << "t / t_max: " << t << " / " << ij_pairs.size() << std::endl;
+  for (size_t ij=0; ij < ij_pairs.size(); ij++) {
+    if (ij % num_procs != my_rank) continue;
+    size_t i = ij_pairs[ij][0];
+    size_t j = ij_pairs[ij][1];
+    if (ij % 10'000 == 0) {
+      std::cerr << "ij / ij_max: " << ij << " / " << ij_pairs.size() << std::endl;
     }
-    //for (const auto& [i,j] : ij_pairs) {
-    const Norm& n1 = unique_norms[i];
-    const Norm& n2 = unique_norms[j];
+    const Norm& n1 = norms[i];
+    const Norm& n2 = norms[j];
     EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
     auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
-    p_fix(idx(n1),idx(n2)) = rhos[0][1];
-    p_fix(idx(n2),idx(n1)) = rhos[1][0];
+    p_fix(i,j) = rhos[0][1];
+    p_fix(j,i) = rhos[1][0];
   }
 
   // take the sum of p_fix using MPI
   MPI_Allreduce(MPI_IN_PLACE, self_coop_levels.data(), self_coop_levels.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, p_fix.data(), p_fix.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-  // calculate non-unique-norms
-  for (size_t i = 0; i < N_NORMS; i++) {
-    size_t ni = norm_index[i];
-    self_coop_levels[i] = self_coop_levels[ni];
-    for (size_t j = 0; j < N_NORMS; j++) {
-      size_t nj = norm_index[j];
-      p_fix(i,j) = p_fix(ni,nj);
-    }
-  }
 
   return std::make_pair(self_coop_levels, p_fix);
 }
