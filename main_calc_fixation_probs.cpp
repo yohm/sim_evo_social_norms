@@ -150,23 +150,9 @@ int main(int argc, char* argv[]) {
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
 
-  // second-order norms
-  // std::vector<Norm> norms;
-  // for (size_t i = 0; i < 4096; i++) {
-  //   Norm norm = Norm::ConstructFromIDwithoutR2(i);
-  //   if (norm.IsSecondOrder()) {
-  //     norms.push_back(norm);
-  //   }
-  // }
-
-  // three-species systems
   // std::vector<Norm> norms = {Norm::L1(), Norm::AllC(), Norm::AllD()};
-
-  // third-order norms without R2
-  std::vector<Norm> norms;
-  for (int i = 0; i < 4096; i++) {
-    norms.push_back(Norm::ConstructFromIDwithoutR2(i));
-  }
+  // std::vector<Norm> norms = Norm::Deterministic2ndOrderWithoutR2Norms();
+  std::vector<Norm> norms = Norm::Deterministic3rdOrderWithoutR2Norms();
   const auto result = CalculateFixationProbs(params, norms);
 
   std::vector<int> norm_ids;
