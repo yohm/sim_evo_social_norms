@@ -7,86 +7,35 @@
 #include <nlohmann/json.hpp>
 #include "PrivRepGame.hpp"
 
-#define my_assert(condition) \
-  if (!(condition)) { \
-    std::cerr << "Assertion failed: " << #condition << " in " << __FILE__ \
-              << " line " << __LINE__ << std::endl; \
-    std::terminate(); \
-  }
-
-
-template <typename T>
-bool IsAllClose(T a, T b, double epsilon = 0.02) {
-  for (size_t i = 0; i < a.size(); i++) {
-    if (std::abs(a[i] - b[i]) > epsilon) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool IsClose(double a, double b, double epsilon = 0.02) {
-  return std::abs(a - b) < epsilon;
-}
+#include <gtest/gtest.h>
 
 void test_SelfCooperationLevel(const Norm& norm, double expected_c_level, double expected_good_rep) {
-  auto start = std::chrono::high_resolution_clock::now();
-
   PrivateRepGame priv_game( {{norm, 50}}, 123456789ull);
   priv_game.Update(1e4, 0.9, 0.05, false);
   priv_game.ResetCounts();
   priv_game.Update(1e4, 0.9, 0.05, true);
-  IC( priv_game.NormCooperationLevels(), priv_game.NormAverageReputation() );
-  my_assert( IsClose(priv_game.SystemWideCooperationLevel(), expected_c_level, 0.02) );
-  my_assert( IsAllClose(priv_game.NormCooperationLevels()[0], {expected_c_level}, 0.02) );
-  my_assert( IsAllClose(priv_game.NormAverageReputation()[0], {expected_good_rep}, 0.02) );
-
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end - start;
-  std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
-  std::cerr << __func__ <<" passed" << std::endl;
+  // IC( priv_game.NormCooperationLevels(), priv_game.NormAverageReputation() );
+  EXPECT_NEAR( priv_game.SystemWideCooperationLevel(), expected_c_level, 0.02);
+  EXPECT_NEAR( priv_game.NormCooperationLevels()[0][0], expected_c_level, 0.02);
+  EXPECT_NEAR( priv_game.NormAverageReputation()[0][0], expected_good_rep, 0.02);
 }
 
-void test_RandomNorm() {
-  // random norm
+TEST(SelfCooperationLevel, RandomNorm) {
   test_SelfCooperationLevel(Norm::Random(), 0.5, 0.5);
-  std::cerr << __func__ <<" passed" << std::endl;
 }
 
-
-void test_LeadingEight() {
-
-  // measure time
+TEST(SelfCooperationLevel, LeadingEight) {
   test_SelfCooperationLevel(Norm::L1(), 0.90, 0.90);
-  std::cerr << "test L1 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L2(), 0.66, 0.65);
-  std::cerr << "test L2 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L3(), 0.90, 0.90);
-  std::cerr << "test L3 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L4(), 0.90, 0.90);
-  std::cerr << "test L4 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L5(), 0.70, 0.70);
-  std::cerr << "test L5 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L6(), 0.50, 0.50);
-  std::cerr << "test L6 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L7(), 0.88, 0.88);
-  std::cerr << "test L7 passed" << std::endl;
-
   test_SelfCooperationLevel(Norm::L8(), 0.0, 0.0);
-  std::cerr << "test L8 passed" << std::endl;
-
-  std::cerr << __func__ <<" passed" << std::endl;
 }
 
-void test_SelectionMutationEquilibrium() {
-  auto start = std::chrono::high_resolution_clock::now();
-
+TEST(SelectionMutationEquilibrium, L1_AllC_AllD) {
   Norm norm = Norm::L1();
   EvolPrivRepGame::SimulationParameters params;
   params.n_init = 1e5;
@@ -94,25 +43,27 @@ void test_SelectionMutationEquilibrium() {
 
   EvolPrivRepGame evol(50, {norm, Norm::AllC(), Norm::AllD()}, params);
   auto rhos = evol.FixationProbabilities(5.0, 1.0);
-  IC(rhos);
-  my_assert( IsClose(rhos[0][1], 0.097, 0.02) );
-  my_assert( IsClose(rhos[0][2], 0.000, 0.02) );
-  my_assert( IsClose(rhos[1][0], 0.012, 0.02) );
-  my_assert( IsClose(rhos[2][0], 0.043, 0.02) );
+  // rhos: [
+  // [0, 0.0976933, 4.47544e-29],
+  // [0.0114276, 0, 0.668377],
+  // [0.0444453, 2.16425e-24, 0]
+  // ]
+
+  EXPECT_NEAR(rhos[0][1], 0.097, 0.02);
+  EXPECT_NEAR(rhos[0][2], 0.000, 0.02);
+  EXPECT_NEAR(rhos[1][0], 0.012, 0.02);
+  EXPECT_NEAR(rhos[2][0], 0.043, 0.02);
+  EXPECT_NEAR(rhos[1][2], 0.668, 0.02);
+  EXPECT_NEAR(rhos[2][1], 0.000, 0.02);
+
   auto eq = evol.EquilibriumPopulationLowMut(rhos);
-  IC(eq);
-  my_assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
-
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end - start;
-  std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
-
-  std::cerr << __func__ <<" passed" << std::endl;
+  // eq: [0.302589, 0.0434844, 0.653927]
+  EXPECT_NEAR(eq[0], 0.30, 0.02);
+  EXPECT_NEAR(eq[1], 0.04, 0.02);
+  EXPECT_NEAR(eq[2], 0.66, 0.02);
 }
 
-void test_SelectionMutationEquilibrium2() {
-  auto start = std::chrono::high_resolution_clock::now();
-
+TEST(EvolPrivRepGameAllCAllD, L1) {
   EvolPrivRepGame::SimulationParameters params;
   params.n_init = 1e5;
   params.n_steps = 1e5;
@@ -124,45 +75,39 @@ void test_SelectionMutationEquilibrium2() {
   auto rhos = std::get<1>(selfc_rho_eq);
   auto eq = std::get<2>(selfc_rho_eq);
 
-  IC(self_cooperation_level);
-  my_assert( IsClose(self_cooperation_level, 0.90, 0.02) );
-  IC(rhos);
-  my_assert( IsClose(rhos[0][1], 0.097, 0.02) );
-  my_assert( IsClose(rhos[0][2], 0.000, 0.02) );
-  my_assert( IsClose(rhos[1][0], 0.012, 0.02) );
-  my_assert( IsClose(rhos[2][0], 0.043, 0.02) );
-  IC(eq);
-  my_assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
+  // IC(self_cooperation_level, rhos, eq);
+  // ic| self_cooperation_level: 0.90224
+  // ic| rhos: [
+  // [0, 0.0933583, 4.4365e-29],
+  // [0.0120976, 0, 0.670243],
+  // [0.0453502, 2.35795e-24, 0]
+  // ]
+  // ic| eq: [0.316563, 0.0433123, 0.640125]
 
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end - start;
-  std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
-
-  std::cerr << __func__ <<" passed" << std::endl;
+  EXPECT_NEAR(self_cooperation_level, 0.90, 0.02);
+  EXPECT_NEAR(rhos[0][1], 0.097, 0.02);
+  EXPECT_NEAR(rhos[0][2], 0.000, 0.02);
+  EXPECT_NEAR(rhos[1][0], 0.012, 0.02);
+  EXPECT_NEAR(rhos[2][0], 0.043, 0.02);
+  EXPECT_NEAR(eq[0], 0.30, 0.02);
+  EXPECT_NEAR(eq[1], 0.04, 0.02);
+  EXPECT_NEAR(eq[2], 0.66, 0.02);
 }
 
-void test_SelectionMutationEquilibriumFiniteMu() {
-  auto start = std::chrono::high_resolution_clock::now();
-
+TEST(EvolPrivRepGameFiniteMutationRateAllCAllD, L1) {
   EvolPrivRepGame::SimulationParameters params;
   params.n_init = 1e4;
   params.n_steps = 1e4;
 
-  Norm L1star = Norm::ConstructFromID(765643);
-  EvolPrivRepGameFiniteMutationRateAllCAllD evol(50, L1star, params);
-  // for (double mu: {1.0e-4,3.0e-4,1.e-3,3.e-3,1.e-2,3.e-2,1.e-1,3.e-1,1.}) {
-  // for (double benefit: std::vector<double>{1.5, 2.5, 3, 5}) {
-    double mu = 1.0e-2;
-    double benefit = 5.0;
-    auto result = evol.CalculateEquilibrium(benefit, 1.0, mu);
-    IC(mu, benefit, result.OverallCooperationLevel(), result.OverallAbundances() );
-  // }
-
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end - start;
-  std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
-
-  std::cerr << __func__ <<" passed" << std::endl;
+  Norm L1 = Norm::L1();
+  EvolPrivRepGameFiniteMutationRateAllCAllD evol(50, L1, params);
+  double mu = 1.0e-2;
+  double benefit = 5.0;
+  auto result = evol.CalculateEquilibrium(benefit, 1.0, mu);
+  EXPECT_NEAR(result.OverallCooperationLevel(), 0.74, 0.02);
+  EXPECT_NEAR(result.OverallAbundances()[0], 0.47, 0.02);
+  EXPECT_NEAR(result.OverallAbundances()[1], 0.32, 0.02);
+  EXPECT_NEAR(result.OverallAbundances()[2], 0.21, 0.02);
 }
 
 struct SimulationParams {
@@ -327,6 +272,7 @@ void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   std::cerr << norm.InspectComparison(min_eq_norm);
 }
 
+/*
 int main(int argc, char *argv[]) {
 
   std::vector<std::string> args;
@@ -384,3 +330,4 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+ */
