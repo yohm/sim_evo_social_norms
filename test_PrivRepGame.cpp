@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <cassert>
 #include <chrono>
 #include <regex>
 #include <icecream.hpp>
