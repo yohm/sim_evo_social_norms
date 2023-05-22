@@ -7,6 +7,13 @@
 #include <nlohmann/json.hpp>
 #include "PrivRepGame.hpp"
 
+#define my_assert(condition) \
+  if (!(condition)) { \
+    std::cerr << "Assertion failed: " << #condition << " in " << __FILE__ \
+              << " line " << __LINE__ << std::endl; \
+    std::terminate(); \
+  }
+
 
 template <typename T>
 bool IsAllClose(T a, T b, double epsilon = 0.02) {
@@ -30,9 +37,9 @@ void test_SelfCooperationLevel(const Norm& norm, double expected_c_level, double
   priv_game.ResetCounts();
   priv_game.Update(1e4, 0.9, 0.05, true);
   IC( priv_game.NormCooperationLevels(), priv_game.NormAverageReputation() );
-  assert( IsClose(priv_game.SystemWideCooperationLevel(), expected_c_level, 0.02) );
-  assert( IsAllClose(priv_game.NormCooperationLevels()[0], {expected_c_level}, 0.02) );
-  assert( IsAllClose(priv_game.NormAverageReputation()[0], {expected_good_rep}, 0.02) );
+  my_assert( IsClose(priv_game.SystemWideCooperationLevel(), expected_c_level, 0.02) );
+  my_assert( IsAllClose(priv_game.NormCooperationLevels()[0], {expected_c_level}, 0.02) );
+  my_assert( IsAllClose(priv_game.NormAverageReputation()[0], {expected_good_rep}, 0.02) );
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
@@ -88,13 +95,13 @@ void test_SelectionMutationEquilibrium() {
   EvolPrivRepGame evol(50, {norm, Norm::AllC(), Norm::AllD()}, params);
   auto rhos = evol.FixationProbabilities(5.0, 1.0);
   IC(rhos);
-  assert( IsClose(rhos[0][1], 0.097, 0.02) );
-  assert( IsClose(rhos[0][2], 0.000, 0.02) );
-  assert( IsClose(rhos[1][0], 0.012, 0.02) );
-  assert( IsClose(rhos[2][0], 0.043, 0.02) );
+  my_assert( IsClose(rhos[0][1], 0.097, 0.02) );
+  my_assert( IsClose(rhos[0][2], 0.000, 0.02) );
+  my_assert( IsClose(rhos[1][0], 0.012, 0.02) );
+  my_assert( IsClose(rhos[2][0], 0.043, 0.02) );
   auto eq = evol.EquilibriumPopulationLowMut(rhos);
   IC(eq);
-  assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
+  my_assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
@@ -118,14 +125,14 @@ void test_SelectionMutationEquilibrium2() {
   auto eq = std::get<2>(selfc_rho_eq);
 
   IC(self_cooperation_level);
-  assert( IsClose(self_cooperation_level, 0.90, 0.02) );
+  my_assert( IsClose(self_cooperation_level, 0.90, 0.02) );
   IC(rhos);
-  assert( IsClose(rhos[0][1], 0.097, 0.02) );
-  assert( IsClose(rhos[0][2], 0.000, 0.02) );
-  assert( IsClose(rhos[1][0], 0.012, 0.02) );
-  assert( IsClose(rhos[2][0], 0.043, 0.02) );
+  my_assert( IsClose(rhos[0][1], 0.097, 0.02) );
+  my_assert( IsClose(rhos[0][2], 0.000, 0.02) );
+  my_assert( IsClose(rhos[1][0], 0.012, 0.02) );
+  my_assert( IsClose(rhos[2][0], 0.043, 0.02) );
   IC(eq);
-  assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
+  my_assert(IsAllClose(eq, {0.30, 0.04, 0.66}, 0.02) );
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
