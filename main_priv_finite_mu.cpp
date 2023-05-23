@@ -12,7 +12,7 @@
 constexpr Reputation B = Reputation::B, G = Reputation::G;
 constexpr Action C = Action::C, D = Action::D;
 
-struct SimulationParams {
+struct ParametersWithMu {
   size_t n_init;
   size_t n_steps;
   size_t N;
@@ -22,9 +22,12 @@ struct SimulationParams {
   double beta;
   double mu;
   uint64_t seed;
-  SimulationParams() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), mu(0.01), seed(123456789) {};
+  ParametersWithMu() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), mu(0.01), seed(123456789) {};
+  EvolPrivRepGame::SimulationParameters ToEvolParams() const {
+    return EvolPrivRepGame::SimulationParameters(N, n_init, n_steps, q, mu_percept, seed);
+  }
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, mu, seed);
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ParametersWithMu, n_init, n_steps, N, q, mu_percept, benefit, beta, mu, seed);
 };
 
 int main(int argc, char** argv) {
@@ -62,7 +65,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  SimulationParams params = j.get<SimulationParams>();
+  ParametersWithMu params = j.get<ParametersWithMu>();
   if (args.size() != 1) {
     std::cerr << "[Error] invalid number of arguments" << std::endl;
     std::cerr << "Usage: " << argv[0] << " [options] norm" << std::endl;
@@ -75,9 +78,9 @@ int main(int argc, char** argv) {
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  EvolPrivRepGame::SimulationParameters evo_param(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+  auto evo_param = params.ToEvolParams();
 
-  EvolPrivRepGameFiniteMutationRateAllCAllD evol(params.N, n, evo_param);
+  EvolPrivRepGameFiniteMutationRateAllCAllD evol(n, evo_param);
   auto result = evol.CalculateEquilibrium(params.benefit, params.beta, params.mu);
   IC(result.OverallCooperationLevel(), result.OverallAbundances() );
 
