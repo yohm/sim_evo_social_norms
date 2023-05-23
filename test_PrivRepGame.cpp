@@ -36,7 +36,7 @@ TEST(SelfCooperationLevel, LeadingEight) {
 
 TEST(EvolPrivRepGame, L1_AllC_AllD) {
   Norm norm = Norm::L1();
-  EvolPrivRepGame::SimulationParameters params;
+  auto params = EvolPrivRepGame::SimulationParameters::Default();
   params.n_init = 1e5;
   params.n_steps = 1e5;
 
@@ -72,7 +72,7 @@ TEST(EvolPrivRepGame, L1_AllC_AllD) {
 // }
 
 TEST(EvolPrivRepGameAllCAllD, L1) {
-  EvolPrivRepGame::SimulationParameters params;
+  auto params = EvolPrivRepGame::SimulationParameters::Default();
   params.n_init = 1e5;
   params.n_steps = 1e5;
 
@@ -103,7 +103,7 @@ TEST(EvolPrivRepGameAllCAllD, L1) {
 }
 
 TEST(EvolPrivRepGameFiniteMutationRateAllCAllD, L1) {
-  EvolPrivRepGame::SimulationParameters params;
+  auto params = EvolPrivRepGame::SimulationParameters::Default();
   params.n_init = 1e4;
   params.n_steps = 1e4;
 

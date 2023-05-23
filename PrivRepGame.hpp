@@ -230,8 +230,11 @@ private:
 class EvolPrivRepGame {
 public:
   struct SimulationParameters {
-    SimulationParameters(size_t N = 50, size_t n_init = 1e6, size_t n_steps = 1e6, double q = 0.9, double mu_percept = 0.05, uint64_t seed = 123456789ull) :
+    SimulationParameters(size_t N, size_t n_init, size_t n_steps, double q, double mu_percept, uint64_t seed) :
         N(N), n_init(n_init), n_steps(n_steps), q(q), mu_percept(mu_percept), seed(seed) {};
+    static SimulationParameters Default() {
+      return SimulationParameters(50, 1e6, 1e6, 0.9, 0.05, 123456789ull);
+    }
     size_t N;  // population size
     size_t n_init, n_steps;  // simulation duration
     double q;  // observation probability
