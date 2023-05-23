@@ -230,23 +230,22 @@ private:
 class EvolPrivRepGame {
 public:
   struct SimulationParameters {
-    SimulationParameters(size_t n_init = 1e6, size_t n_steps = 1e6, double q = 0.9, double mu_percept = 0.05, uint64_t seed = 123456789ull) :
-        n_init(n_init), n_steps(n_steps), q(q), mu_percept(mu_percept), seed(seed) {};
-    size_t n_init, n_steps;
+    SimulationParameters(size_t N = 50, size_t n_init = 1e6, size_t n_steps = 1e6, double q = 0.9, double mu_percept = 0.05, uint64_t seed = 123456789ull) :
+        N(N), n_init(n_init), n_steps(n_steps), q(q), mu_percept(mu_percept), seed(seed) {};
+    size_t N;  // population size
+    size_t n_init, n_steps;  // simulation duration
     double q;  // observation probability
     double mu_percept;  // perception error probability
     uint64_t seed;  // random number seed
   };
 
-  EvolPrivRepGame(size_t N, const std::vector<Norm>& norms, const SimulationParameters& sim_param) :
-      N(N), norms(norms), param(sim_param) {};
+  using norms_t = std::vector<Norm>;
 
-  const size_t N;
-  const std::vector<Norm> norms;
+  EvolPrivRepGame(const SimulationParameters& sim_param) : param(sim_param) {};
   SimulationParameters param;
 
   // rho[i][j] = fixation probability of a j-mutant into i-resident community
-  std::vector<std::vector<double>> FixationProbabilities(double benefit, double beta) const {
+  std::vector<std::vector<double>> FixationProbabilities(const norms_t& norms, double benefit, double beta) const {
     size_t num_norms = norms.size();
     std::vector<std::vector<double>> rho(num_norms, std::vector<double>(num_norms, 0.0));
 
@@ -261,21 +260,14 @@ public:
     return rho;
   }
 
-  // return array of self cooperation levels
-  std::vector<double> SelfCooperationLevels() const {
-    size_t num_norms = norms.size();
-    std::vector<double> c_levels(num_norms, 0.0);
-
-    for (size_t i = 0; i < num_norms; i++) {
-      PrivateRepGame game({{norms[i], N}}, param.seed);
-      game.Update(param.n_init, param.q, param.mu_percept, false);
-      game.ResetCounts();
-      game.Update(param.n_steps, param.q, param.mu_percept, false);
-      double self_coop_level = game.NormCooperationLevels()[0][0];
-      c_levels[i] = self_coop_level;
-    }
-
-    return c_levels;
+  // self cooperation level
+  double SelfCooperationLevel(const Norm& norm) const {
+    PrivateRepGame game({{norm, param.N}}, param.seed);
+    game.Update(param.n_init, param.q, param.mu_percept, false);
+    game.ResetCounts();
+    game.Update(param.n_steps, param.q, param.mu_percept, false);
+    double self_coop_level = game.NormCooperationLevels()[0][0];
+    return self_coop_level;
   }
 
   // first: fixation probability of resident j against resident i
@@ -283,10 +275,11 @@ public:
   // second: fixation probability of resident i against resident j
   //        i.e., the probability to change from j to i
   std::pair<double,double> FixationProbability(const Norm& norm_i, const Norm& norm_j, double benefit, double beta) const {
+    const size_t N = param.N;
     std::vector<double> pi_i(N);  // pi_i[l]: payoff of resident i when l mutants exist
     std::vector<double> pi_j(N);  // pi_j[l]: payoff of mutant j when l mutants exist
 
-    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_i, pi_j, norm_i, norm_j, benefit, beta)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_i, pi_j, norm_i, norm_j, benefit, beta, N)
     for (size_t l = 1; l < N; l++) {
       PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed + l);
       game.Update(param.n_init, param.q, param.mu_percept, false);
@@ -327,6 +320,18 @@ public:
     }
     double rho_2 = 1.0 / rho_2_inv;
     return std::make_pair(rho_1, rho_2);
+  }
+
+  // first: fixation probability of resident j against resident i
+  //        i.e., the probability to change from i to j
+  // second: fixation probability of resident i against resident j
+  //        i.e., the probability to change from j to i
+  std::vector<std::pair<double,double>> FixationProbabilityBatch(const Norm& norm_i, const Norm& norm_j, const std::vector<std::pair<double,double>>& benefit_beta_pairs) const {
+    std::vector<std::pair<double,double>> ans;
+    for (auto& [benefit,beta] : benefit_beta_pairs) {
+      ans.push_back( FixationProbability(norm_i, norm_j, benefit, beta) );
+    }
+    return ans;
   }
 
   // arg: transition probability matrix p
@@ -370,14 +375,13 @@ public:
 // Evolutionary game between X and AllC and AllD
 class EvolPrivRepGameAllCAllD {
 public:
-  EvolPrivRepGameAllCAllD(size_t N, const EvolPrivRepGame::SimulationParameters& sim_param, double benefit, double selection_strength) :
-    N(N), benefit(benefit), selection_strength(selection_strength), param(sim_param) {
+  EvolPrivRepGameAllCAllD(const EvolPrivRepGame::SimulationParameters& sim_param, double benefit, double selection_strength) :
+    benefit(benefit), selection_strength(selection_strength), param(sim_param) {
     auto p = FixationProbsBetweenAllCAllD();
     rho_allc = p.first;
     rho_alld = p.second;
   }
 
-  const size_t N;
   const double benefit;
   const double selection_strength;
   const EvolPrivRepGame::SimulationParameters param;
@@ -385,12 +389,13 @@ public:
 
   // fixation probability between AllC and AllD
   std::pair<double,double> FixationProbsBetweenAllCAllD() const {
+    const size_t N = param.N;
     const Norm allc = Norm::AllC(), alld = Norm::AllD();
 
     // payoff when there are i AllC and N-i AllD players
     std::vector<double> pi_allc(N, 0.0), pi_alld(N, 0.0);
 
-    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_allc, pi_alld, allc, alld)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_allc, pi_alld, allc, alld, N)
     for (size_t i = 1; i < N; i++) {
       // i AllC vs N-i AllD
       PrivateRepGame game({{allc, i}, {alld, N-i}}, param.seed);
@@ -438,6 +443,7 @@ public:
 
   // return self-cooperation-level, rho, equilibrium population
   std::tuple<double,std::vector<std::vector<double>>,std::vector<double>> EquilibriumCoopLevelAllCAllD(const Norm& norm) const {
+    const size_t N = param.N;
     std::vector<double> pi_x_allc(N, 0.0), pi_allc(N, 0.0), pi_x_alld(N, 0.0), pi_alld(N, 0.0);
     double self_coop_level;
     // pi_x_allc[l] : payoff of X against AllC when there are l AllC and (N-l) residents
@@ -445,7 +451,7 @@ public:
     // pi_x_alld[l] : payoff of X against AllD when there are l AllD and (N-l) residents
     // pi_alld[l]   : payoff of AllD against X when there are l AllD and (N-l) residents
 
-    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_x_allc, pi_allc, pi_x_alld, pi_alld, norm, self_coop_level)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(pi_x_allc, pi_allc, pi_x_alld, pi_alld, norm, self_coop_level, N)
     for (size_t i = 0; i < 2*N-1; i++) {
       if (i == 0) {  // monomorphic population of X
         PrivateRepGame game({{norm, N}}, param.seed);
@@ -563,19 +569,18 @@ class EvolPrivRepGameFiniteMutationRateAllCAllD {
 public:
   using SimulationParameters = EvolPrivRepGame::SimulationParameters;
 
-  EvolPrivRepGameFiniteMutationRateAllCAllD(size_t N, const Norm &norm, const SimulationParameters &sim_param) :
-      N(N), norm(norm), param(sim_param) {
-    games.resize(N+1);
+  EvolPrivRepGameFiniteMutationRateAllCAllD(const Norm &norm, const SimulationParameters &sim_param) :
+      norm(norm), param(sim_param) {
+    games.resize(param.N+1);
     #pragma omp parallel for schedule(dynamic,1) shared(games)
-    for (size_t nf = 0; nf <= N; nf++) {
+    for (size_t nf = 0; nf <= param.N; nf++) {
       if (nf % 5 == 0) { std::cerr << "simulating games at nf=" << nf << std::endl; }
-      for (size_t nc = 0; nc <= N-nf; nc++) {
+      for (size_t nc = 0; nc <= param.N-nf; nc++) {
         games[nf].push_back(RunSimulationAt(nf, nc));
       }
     }
   };
 
-  const size_t N;
   const Norm norm;
   SimulationParameters param;
   std::vector<std::vector<PrivateRepGame>> games;
@@ -621,25 +626,25 @@ public:
     // index of (nf, nc) in the one-dimensional vector
     std::vector<std::vector<size_t>> pair2index;
     std::vector<std::pair<size_t,size_t>> index2pair;
-    for (size_t nf = 0; nf <= N; nf++) {
+    for (size_t nf = 0; nf <= param.N; nf++) {
       pair2index.emplace_back();
-      for (size_t nc = 0; nc <= N-nf; nc++) {
+      for (size_t nc = 0; nc <= param.N-nf; nc++) {
         index2pair.emplace_back(nf, nc);
         pair2index[nf].emplace_back(index2pair.size()-1);
       }
     }
     // IC(pair2index, index2pair);
 
-    EquilibriumState equilibrium_state(N);
+    EquilibriumState equilibrium_state(param.N);
 
     size_t num_states = index2pair.size();
     Eigen::MatrixXd W(num_states, num_states);
     W.setZero();
 
     // calculate the transition probabilities
-    for (size_t nf = 0; nf <= N; nf++) {
-      for (size_t nc = 0; nc <= N - nf; nc++) {
-        size_t nd = N - nf - nc;
+    for (size_t nf = 0; nf <= param.N; nf++) {
+      for (size_t nc = 0; nc <= param.N - nf; nc++) {
+        size_t nd = param.N - nf - nc;
         const PrivateRepGame g = games.at(nf).at(nc);
         equilibrium_state.cooperation_level[nf][nc] = g.SystemWideCooperationLevel();
         auto [w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c] = CalculateTransitionProbabilitiesFromGame(benefit, beta, mu, g);
@@ -688,7 +693,7 @@ public:
 private:
   // run simulation at [nf, nc, N-nf-nc] and return the game
   PrivateRepGame RunSimulationAt(size_t nf, size_t nc) const {
-    PrivateRepGame game({{norm, nf}, {Norm::AllC(), nc}, {Norm::AllD(), N-nf-nc}}, param.seed);
+    PrivateRepGame game({{norm, nf}, {Norm::AllC(), nc}, {Norm::AllD(), param.N-nf-nc}}, param.seed);
     game.Update(param.n_init, param.q, param.mu_percept, false);
     game.ResetCounts();
     game.Update(param.n_steps, param.q, param.mu_percept, true);
@@ -722,7 +727,7 @@ private:
     }
     if (nd > 0) {
       pi_d = 0.0;
-      for (size_t i = nf+nc; i < N; i++) {
+      for (size_t i = nf+nc; i < param.N; i++) {
         pi_d += benefit * coop_levels[i].first - coop_levels[i].second;
       }
       pi_d /= nd;
@@ -739,6 +744,7 @@ private:
     size_t nf = pop.at(0).second;  // number of the focal norm players
     size_t nc = pop.at(1).second;  // number of AllC players
     size_t nd = pop.at(2).second;  // number of AllD players
+    const size_t N = param.N;
 
     double rho_f = nf / (double) N;
     double rho_c = nc / (double) N;
