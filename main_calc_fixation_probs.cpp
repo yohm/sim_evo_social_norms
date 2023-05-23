@@ -63,9 +63,9 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Pa
     const Norm& n1 = norms[i];
     const Norm& n2 = norms[j];
     EvolPrivRepGame evol(evoparams);
-    auto rhos = evol.FixationProbabilities({n1, n2}, params.benefit, params.beta);
-    p_fix(i,j) = rhos[0][1];
-    p_fix(j,i) = rhos[1][0];
+    auto fs = evol.FixationProbability(n1, n2, params.benefit, params.beta);
+    p_fix(i,j) = fs.first;
+    p_fix(j,i) = fs.second;
   }
 
   // take the sum of p_fix using MPI
