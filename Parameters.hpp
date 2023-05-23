@@ -2,8 +2,8 @@
 // Created by Yohsuke Murase on 2023/05/23.
 //
 
-#ifndef SIM_INDIRECT_STOCHASTIC_PRIVREP__PARAMETERS_HPP
-#define SIM_INDIRECT_STOCHASTIC_PRIVREP__PARAMETERS_HPP
+#ifndef PARAMETERS_HPP
+#define PARAMETERS_HPP
 
 #include <nlohmann/json.hpp>
 #include "PrivRepGame.hpp"
@@ -26,4 +26,4 @@ struct Parameters {
   NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Parameters, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
 };
 
-#endif //SIM_INDIRECT_STOCHASTIC_PRIVREP__PARAMETERS_HPP
+#endif //PARAMETERS_HPP
