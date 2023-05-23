@@ -13,18 +13,12 @@
 #include "Parameters.hpp"
 
 
-constexpr Reputation B = Reputation::B, G = Reputation::G;
-constexpr Action C = Action::C, D = Action::D;
-
-double SelfCoopLevel(const Norm& norm, const Parameters& params) {
-  PrivateRepGame prg({{norm, params.N}}, params.seed);
-  prg.Update(params.n_init, params.q, params.mu_percept, false);
-  prg.ResetCounts();
-  prg.Update(params.n_steps, params.q, params.mu_percept, true);
-  return prg.NormCooperationLevels()[0][0];
+double SelfCoopLevel(const Norm& norm, const EvolPrivRepGame::SimulationParameters& evoparams) {
+  EvolPrivRepGame evol(evoparams);
+  return evol.SelfCooperationLevel(norm);
 }
 
-std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Parameters& params, const std::vector<Norm>& norms) {
+std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const ParametersBatch& params, const std::vector<Norm>& norms) {
 
   const size_t NN = norms.size();   // number of norms
   std::vector<double> self_coop_levels(NN, 0.0);
@@ -40,7 +34,7 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Pa
   for (size_t i = 0; i < NN; i++) {
     if (i % num_procs != my_rank) continue;
     const Norm& n1 = norms[i];
-    double pc = SelfCoopLevel(n1, params);
+    double pc = SelfCoopLevel(n1, evoparams);
     self_coop_levels[i] = pc;
     p_fix(i, i) = 1.0 / params.N;
   }
@@ -63,7 +57,7 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Pa
     const Norm& n1 = norms[i];
     const Norm& n2 = norms[j];
     EvolPrivRepGame evol(evoparams);
-    auto fs = evol.FixationProbability(n1, n2, params.benefit, params.beta);
+    auto fs = evol.FixationProbability(n1, n2, params.benefit_beta_vec[0].first, params.benefit_beta_vec[0].second);
     p_fix(i,j) = fs.first;
     p_fix(j,i) = fs.second;
   }
@@ -76,7 +70,7 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Pa
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const Parameters& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const ParametersBatch& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
@@ -131,7 +125,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
   }
-  Parameters params = j.get<Parameters>();
+  ParametersBatch params = j.get<ParametersBatch>();
   if (my_rank == 0) std::cerr << "params: " << nlohmann::json(params) << std::endl;
 
   // measure elapsed time
