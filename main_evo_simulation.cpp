@@ -10,9 +10,6 @@
 #include "PrivRepGame.hpp"
 
 
-constexpr Reputation B = Reputation::B, G = Reputation::G;
-constexpr Action C = Action::C, D = Action::D;
-
 nlohmann::json LoadMsgpackFile(const std::string& path) {
   std::ifstream fin(path, std::ios::binary);
   std::vector<char> bytes;
