@@ -10,26 +10,13 @@
 #include "Vector2d.hpp"
 #include "Norm.hpp"
 #include "PrivRepGame.hpp"
+#include "Parameters.hpp"
 
 
 constexpr Reputation B = Reputation::B, G = Reputation::G;
 constexpr Action C = Action::C, D = Action::D;
 
-struct SimulationParams {
-  size_t n_init;
-  size_t n_steps;
-  size_t N;
-  double q;
-  double mu_percept;
-  double benefit;
-  double beta;
-  uint64_t seed;
-  SimulationParams() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), seed(123456789) {};
-
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
-};
-
-double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
+double SelfCoopLevel(const Norm& norm, const Parameters& params) {
   PrivateRepGame prg({{norm, params.N}}, params.seed);
   prg.Update(params.n_init, params.q, params.mu_percept, false);
   prg.ResetCounts();
@@ -37,13 +24,13 @@ double SelfCoopLevel(const Norm& norm, const SimulationParams& params) {
   return prg.NormCooperationLevels()[0][0];
 }
 
-std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const SimulationParams& params, const std::vector<Norm>& norms) {
+std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Parameters& params, const std::vector<Norm>& norms) {
 
   const size_t NN = norms.size();   // number of norms
   std::vector<double> self_coop_levels(NN, 0.0);
   Vector2d<double> p_fix(NN, NN, 0.0);
 
-  EvolPrivRepGame::SimulationParameters evoparams({params.n_init, params.n_steps, params.q, params.mu_percept, params.seed});
+  EvolPrivRepGame::SimulationParameters evoparams = params.ToEvolParams();
 
   int my_rank = 0, num_procs = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -75,8 +62,8 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Si
     }
     const Norm& n1 = norms[i];
     const Norm& n2 = norms[j];
-    EvolPrivRepGame evol(params.N, std::vector<Norm>({n1, n2}), evoparams);
-    auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
+    EvolPrivRepGame evol(evoparams);
+    auto rhos = evol.FixationProbabilities({n1, n2}, params.benefit, params.beta);
     p_fix(i,j) = rhos[0][1];
     p_fix(j,i) = rhos[1][0];
   }
@@ -89,7 +76,7 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Si
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const SimulationParams& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const Parameters& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
@@ -144,7 +131,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
   }
-  SimulationParams params = j.get<SimulationParams>();
+  Parameters params = j.get<Parameters>();
   if (my_rank == 0) std::cerr << "params: " << nlohmann::json(params) << std::endl;
 
   // measure elapsed time

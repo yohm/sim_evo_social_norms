@@ -5,24 +5,10 @@
 #include <icecream.hpp>
 #include <nlohmann/json.hpp>
 #include "PrivRepGame.hpp"
+#include "Parameters.hpp"
 
 
-struct SimulationParams {
-  size_t n_init;
-  size_t n_steps;
-  size_t N;
-  double q;
-  double mu_percept;
-  double benefit;
-  double beta;
-  uint64_t seed;
-  SimulationParams() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), seed(123456789) {};
-
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(SimulationParams, n_init, n_steps, N, q, mu_percept, benefit, beta, seed);
-};
-
-
-void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params);
+void CompareWithLocalMutants(const Norm& norm, const Parameters& params);
 
 std::vector<Norm> LocalMutants(const Norm& norm) {
   std::vector<Norm> local_mutants;
@@ -49,7 +35,7 @@ std::vector<Norm> LocalMutants(const Norm& norm) {
   return local_mutants;
 }
 
-void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const SimulationParams& params, bool check_local_mutants = false) {
+void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Parameters& params, bool check_local_mutants = false) {
   auto start = std::chrono::high_resolution_clock::now();
 
   PrivateRepGame prg({{norm, params.N}}, params.seed);
@@ -58,8 +44,8 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
   prg.Update(params.n_steps, params.q, params.mu_percept, true);
   IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
 
-  EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
-  EvolPrivRepGameAllCAllD evol(params.N, evo_params, params.benefit, params.beta);
+  auto evo_params = params.ToEvolParams();
+  EvolPrivRepGameAllCAllD evol(evo_params, params.benefit, params.beta);
   auto res = evol.EquilibriumCoopLevelAllCAllD(norm);
   auto rho = std::get<1>(res);
   auto eq = std::get<2>(res);
@@ -74,7 +60,7 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Simulatio
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void PrintESSCheck(const Norm& norm, const SimulationParams& params, bool check_local_mutants = false) {
+void PrintESSCheck(const Norm& norm, const Parameters& params, bool check_local_mutants = false) {
   auto start = std::chrono::high_resolution_clock::now();
 
   auto compare_payoffs = [&params](const Norm& resident, const Norm& mutant) -> std::pair<double,double> {
@@ -130,13 +116,13 @@ void PrintESSCheck(const Norm& norm, const SimulationParams& params, bool check_
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void PrintCompetition(const Norm& n1, const Norm& n2, const SimulationParams& params) {
+void PrintCompetition(const Norm& n1, const Norm& n2, const Parameters& params) {
   auto start = std::chrono::high_resolution_clock::now();
 
-  EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+  EvolPrivRepGame::SimulationParameters evo_params = params.ToEvolParams();
 
-  EvolPrivRepGame evol(params.N, {n1, n2}, evo_params);
-  auto fixs = evol.FixationProbabilities(params.benefit, params.beta);
+  EvolPrivRepGame evol(evo_params);
+  auto fixs = evol.FixationProbabilities({n1, n2}, params.benefit, params.beta);
   auto eq = evol.EquilibriumPopulationLowMut(fixs);
   IC( fixs, eq );
 
@@ -145,8 +131,8 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const SimulationParams& pa
   std::cerr << "Elapsed time: " << elapsed.count() << " s\n";
 }
 
-void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
-  EvolPrivRepGame::SimulationParameters evo_params(params.n_init, params.n_steps, params.q, params.mu_percept, params.seed);
+void CompareWithLocalMutants(const Norm& norm, const Parameters& params) {
+  EvolPrivRepGame::SimulationParameters evo_params = params.ToEvolParams();
 
   std::vector<Norm> mutants = {Norm::AllC(), Norm::AllD()};
   auto local_mutants = LocalMutants(norm);
@@ -155,8 +141,8 @@ void CompareWithLocalMutants(const Norm& norm, const SimulationParams& params) {
   Norm min_eq_norm = Norm::AllC();
   for (const auto& mutant : mutants) {
     // std::cout << mutant.Inspect();
-    EvolPrivRepGame evol(params.N, {norm, mutant}, evo_params);
-    auto rhos = evol.FixationProbabilities(params.benefit, params.beta);
+    EvolPrivRepGame evol(evo_params);
+    auto rhos = evol.FixationProbabilities({norm, mutant}, params.benefit, params.beta);
     auto eq = evol.EquilibriumPopulationLowMut(rhos);
     if (eq[0] < min_eq) {
       min_eq = eq[0];
@@ -204,7 +190,7 @@ int main(int argc, char *argv[]) {
   if (args.size() == 1) {
     Norm n = Norm::ParseNormString(args.at(0), swap_gb);
     std::cout << n.Inspect();
-    SimulationParams params = j.get<SimulationParams>();
+    Parameters params = j.get<Parameters>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
     PrintSelectionMutationEquilibriumAllCAllD(n, params, check_local_mutants);
     PrintESSCheck(n, params, check_local_mutants);
@@ -212,7 +198,7 @@ int main(int argc, char *argv[]) {
   else if (args.size() == 2) {  // if two arguments are given, direct competition between two norms are shown
     Norm n1 = Norm::ParseNormString(args.at(0), swap_gb);
     Norm n2 = Norm::ParseNormString(args.at(1), swap_gb);
-    SimulationParams params = j.get<SimulationParams>();
+    Parameters params = j.get<Parameters>();
     std::cout << nlohmann::json(params).dump(2) << std::endl;
     PrintCompetition(n1, n2, params);
   }
@@ -225,7 +211,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "  -s : swap good and bad" << std::endl;
     std::cerr << "  norm_string : string representation of a norm" << std::endl;
     std::cerr << "Default parameters:" << std::endl;
-    std::cerr << "  " << nlohmann::json(SimulationParams()).dump(2) << std::endl;
+    std::cerr << "  " << nlohmann::json(Parameters()).dump(2) << std::endl;
     return 1;
   }
 

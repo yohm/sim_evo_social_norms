@@ -1,3 +1,6 @@
+#ifndef PRIVATE_REP_GAME_HPP
+#define PRIVATE_REP_GAME_HPP
+
 #include <iostream>
 #include <vector>
 #include <random>
@@ -817,3 +820,5 @@ private:
     return {w_f_c, w_f_d, w_c_f, w_c_d, w_d_f, w_d_c};
   }
 };
+
+#endif // PRIVATE_REP_GAME_H
