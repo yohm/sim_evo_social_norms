@@ -36,6 +36,7 @@ struct ParametersBatch {
   uint64_t seed;
   ParametersBatch() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), seed(123456789) {
     benefit_beta_vec.push_back(std::make_pair(5.0, 1.0));
+    benefit_beta_vec.push_back(std::make_pair(1.5, 1.0));
   };
 
   EvolPrivRepGame::SimulationParameters ToEvolParams() const {

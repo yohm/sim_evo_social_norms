@@ -18,11 +18,16 @@ double SelfCoopLevel(const Norm& norm, const EvolPrivRepGame::SimulationParamete
   return evol.SelfCooperationLevel(norm);
 }
 
-std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const ParametersBatch& params, const std::vector<Norm>& norms) {
+using p_fix_vec_t = std::vector< Vector2d<double> >;
+void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Norm>& norms, std::vector<double>& self_coop_levels, p_fix_vec_t& p_fix_vec) {
 
   const size_t NN = norms.size();   // number of norms
-  std::vector<double> self_coop_levels(NN, 0.0);
-  Vector2d<double> p_fix(NN, NN, 0.0);
+  self_coop_levels.clear();
+  self_coop_levels.assign(NN, 0.0);
+  // std::vector<double> self_coop_levels(NN, 0.0);
+  size_t NP = params.benefit_beta_vec.size();
+  p_fix_vec.clear();
+  p_fix_vec.assign(NP, Vector2d<double>(NN, NN, 0.0));
 
   EvolPrivRepGame::SimulationParameters evoparams = params.ToEvolParams();
 
@@ -36,7 +41,9 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Pa
     const Norm& n1 = norms[i];
     double pc = SelfCoopLevel(n1, evoparams);
     self_coop_levels[i] = pc;
-    p_fix(i, i) = 1.0 / params.N;
+    for (auto& p_fix : p_fix_vec) {
+      p_fix(i, i) = 1.0 / params.N;
+    }
   }
 
   std::vector<std::array<size_t,2>> ij_pairs{};
@@ -57,16 +64,18 @@ std::pair<std::vector<double>, Vector2d<double>> CalculateFixationProbs(const Pa
     const Norm& n1 = norms[i];
     const Norm& n2 = norms[j];
     EvolPrivRepGame evol(evoparams);
-    auto fs = evol.FixationProbability(n1, n2, params.benefit_beta_vec[0].first, params.benefit_beta_vec[0].second);
-    p_fix(i,j) = fs.first;
-    p_fix(j,i) = fs.second;
+    auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_beta_vec);
+    for (size_t n = 0; n < NP; n++) {
+      p_fix_vec[n](i,j) = fs_vec[n].first;
+      p_fix_vec[n](j,i) = fs_vec[n].second;
+    }
   }
 
   // take the sum of p_fix using MPI
   MPI_Allreduce(MPI_IN_PLACE, self_coop_levels.data(), self_coop_levels.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, p_fix.data(), p_fix.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-  return std::make_pair(self_coop_levels, p_fix);
+  for (size_t n = 0; n < NP; n++) {
+    MPI_Allreduce(MPI_IN_PLACE, p_fix_vec[n].data(), p_fix_vec[n].size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  }
 }
 
 
@@ -134,23 +143,28 @@ int main(int argc, char* argv[]) {
   // std::vector<Norm> norms = {Norm::L1(), Norm::AllC(), Norm::AllD()};
   // std::vector<Norm> norms = Norm::Deterministic2ndOrderWithoutR2Norms();
   std::vector<Norm> norms = Norm::Deterministic3rdOrderWithoutR2Norms();
-  const auto result = CalculateFixationProbs(params, norms);
+
+  std::vector<double> self_coop_levels;
+  p_fix_vec_t p_fix_vec;
+  CalculateFixationProbs(params, norms, self_coop_levels, p_fix_vec);
 
   std::vector<int> norm_ids;
   for (const Norm& n: norms) {
     norm_ids.emplace_back(n.ID());
   }
-  std::vector<double> self_coop_levels = result.first;
-  Vector2d<double> p_fix = result.second;
 
-  auto end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
   if (my_rank == 0) {
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
     std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
-    WriteInMsgpack("fixation_probs.msgpack", params, norm_ids, self_coop_levels, p_fix);
-    std::ofstream fout("fixation_probs.dat");
-    PrintFixationProbsInText(fout, norm_ids, self_coop_levels, p_fix);
+    for (size_t n = 0; n < p_fix_vec.size(); n++) {
+      std::string filename = "fixation_probs_" + std::to_string(n) + ".msgpack";
+      WriteInMsgpack(filename, params, norm_ids, self_coop_levels, p_fix_vec[n]);
+      // write txt file as well
+      std::ofstream fout("fixation_probs_" + std::to_string(n) + ".dat");
+      PrintFixationProbsInText(fout, norm_ids, self_coop_levels, p_fix_vec[n]);
+    }
   }
 
   MPI_Finalize();
