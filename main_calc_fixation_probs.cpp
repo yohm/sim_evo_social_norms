@@ -116,6 +116,7 @@ int main(int argc, char* argv[]) {
 
   std::vector<std::string> args;
   json j = json::object();
+  bool debug_mode = false;
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -129,13 +130,28 @@ int main(int argc, char* argv[]) {
         iss >> j;
       }
     }
+    else if (std::string(argv[i]) == "-d") {
+      debug_mode = true;
+    }
     else {
       std::cerr << "unknown option: " << argv[i] << std::endl;
       return 1;
     }
   }
   ParametersBatch params = j.get<ParametersBatch>();
+
+  if (debug_mode) {
+    // debug mode
+    if (my_rank == 0) {
+      std::cerr << "debug mode" << std::endl;
+      std::cerr << "params: " << nlohmann::json(params) << std::endl;
+    }
+    MPI_Finalize();
+    return 0;
+  }
+
   if (my_rank == 0) std::cerr << "params: " << nlohmann::json(params) << std::endl;
+
 
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
