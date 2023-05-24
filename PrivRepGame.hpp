@@ -333,11 +333,66 @@ public:
   // second: fixation probability of resident i against resident j
   //        i.e., the probability to change from j to i
   std::vector<std::pair<double,double>> FixationProbabilityBatch(const Norm& norm_i, const Norm& norm_j, const std::vector<std::pair<double,double>>& benefit_beta_pairs) const {
-    std::vector<std::pair<double,double>> ans;
-    for (auto& [benefit,beta] : benefit_beta_pairs) {
-      ans.push_back( FixationProbability(norm_i, norm_j, benefit, beta) );
+    const size_t N = param.N;
+    // i_donate[l], i_receive[l]: the probability that i donate or receive when l mutants exist
+    // payoff_i[l] = benefit * receive[l] - i_donate[l]
+    std::vector<double> i_receive(N, 0.0), i_donate(N, 0.0);
+    // j_donate[l], j_receive[l]: the probability that j donate or receive when l mutants exist
+    // payoff_j[l] = benefit * j_receive[l] - j_donate[l]
+    std::vector<double> j_receive(N, 0.0), j_donate(N, 0.0);
+
+    #pragma omp parallel for schedule(dynamic) default(none), shared(i_donate, i_receive, j_donate, j_receive, norm_i, norm_j, benefit_beta_pairs, N)
+    for (size_t l = 1; l < N; l++) {
+      PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed + l);
+      game.Update(param.n_init, param.q, param.mu_percept, false);
+      game.ResetCounts();
+      game.Update(param.n_steps, param.q, param.mu_percept, false);
+      auto coop_levles = game.IndividualCooperationLevels();
+      double i_donate_total = 0.0, i_receive_total = 0.0;
+      for (size_t k = 0; k < N-l; k++) {
+        i_receive_total += coop_levles[k].first;
+        i_donate_total += coop_levles[k].second;
+      }
+      i_receive[l] = i_receive_total / (N-l);
+      i_donate[l] = i_donate_total / (N-l);
+      double j_donate_total = 0.0, j_receive_total = 0.0;
+      for (size_t k = N-l; k < N; k++) {
+        j_receive_total += coop_levles[k].first;
+        j_donate_total += coop_levles[k].second;
+      }
+      j_receive[l] = j_receive_total / l;
+      j_donate[l] = j_donate_total / l;
     }
-    return ans;
+
+    std::vector<std::pair<double,double>> rho_pair_vec;
+    for (const auto[benefit,beta]: benefit_beta_pairs) {
+      double rho_1_inv = 1.0;
+      // p_ij = 1 / (1 + sum_{l' != 1}^{N-1}  prod_{l=1}^{l_prime} exp{-beta * (pi_j[l] - pi_i[l]) }
+      for (size_t l_prime = 1; l_prime < N; l_prime++) {
+        double prod = 1.0;
+        for (size_t l = 1; l <= l_prime; l++) {
+          double pi_j = benefit * j_receive[l] - j_donate[l];
+          double pi_i = benefit * i_receive[l] - i_donate[l];
+          prod *= exp(-beta * (pi_j - pi_i));
+        }
+        rho_1_inv += prod;
+      }
+      double rho_1 = 1.0 / rho_1_inv;
+
+      double rho_2_inv = 1.0;
+      for (size_t l_prime = 1; l_prime < N; l_prime++) {
+        double prod = 1.0;
+        for (size_t l = 1; l <= l_prime; l++) {
+          double pi_i = benefit * i_receive[N-l] - i_donate[N-l];
+          double pi_j = benefit * j_receive[N-l] - j_donate[N-l];
+          prod *= exp(-beta * (pi_i - pi_j));
+        }
+        rho_2_inv += prod;
+      }
+      double rho_2 = 1.0 / rho_2_inv;
+      rho_pair_vec.emplace_back(rho_1, rho_2);
+    }
+    return rho_pair_vec;
   }
 
   // arg: transition probability matrix p
