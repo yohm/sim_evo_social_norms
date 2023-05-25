@@ -124,7 +124,7 @@ private:
     return 1.0 / (1.0 + std::exp(prm.sigma_out * (pi_resident - pi_immigrant) ));
   }
 public:
-  void TakeHistogram() {
+  void UpdateHistogram() {
     for (unsigned long s : species) {
       histogram[s] += 1;
     }
@@ -143,13 +143,20 @@ public:
     }
     return normed;
   }
-  [[nodiscard]] double AverageCoopLevel() const {
+  [[nodiscard]] double AverageCoopLevelOverHistogram() const {
     std::vector<double> n_histo = NormalizedHistogram();
     double sum = 0.0;
     for (size_t i = 0; i < n_histo.size(); i++) {
       sum += n_histo[i] * self_coop_level_cache[i];
     }
     return sum;
+  }
+  [[nodiscard]] double CurrentCooperationLevel() const {
+    double sum = 0.0;
+    for (const auto& s: species) {
+      sum += self_coop_level_cache[s];
+    }
+    return sum / static_cast<double>(species.size());
   }
 };
 
@@ -217,24 +224,31 @@ int main(int argc, char* argv[]) {
   GroupedEvoGame evo(params, benefit, norms);
   evo.SetFixationProbsCache(p_fix);
   evo.SetSelfCoopLevelCache(self_coop_levels);
+
+  std::ofstream tout("timeseries.dat");
+  size_t t_interval = params.T_init / 100;
+
   for (size_t t = 0; t < params.T_init; t++) {
     evo.Update();
+    if (t % t_interval == 0) {
+      tout << t << ' ' << evo.CurrentCooperationLevel() << std::endl;
+    }
   }
   for (size_t t = 0; t < params.T_measure; t++) {
-    size_t interval = params.T_measure / 100;
-    if (t % interval == 0) {
+    size_t prog_interval = params.T_measure / 20;
+    if (t % prog_interval == 0) {
       std::cerr << "t = " << t << std::endl;
     }
     evo.Update();
-    evo.TakeHistogram();
+    evo.UpdateHistogram();
+    if ((t+params.T_init) % t_interval == 0) {
+      tout << t + params.T_init << ' ' << evo.CurrentCooperationLevel() << std::endl;
+    }
   }
+  tout.close();
+
   auto n_histo = evo.NormalizedHistogram();
-  // Print n_histo
-  // for (size_t i = 0; i < n_histo.size(); ++i) {
-  //   std::cout << i << ' ' << norms[i].ID() << ' ' << n_histo[i] << ' ' << self_coop_levels[i] << std::endl;
-  // }
-  // print average cooperation level
-  std::cout << "overall_c_prob: " << evo.AverageCoopLevel() << std::endl;
+  std::cout << "overall_c_prob: " << evo.AverageCoopLevelOverHistogram() << std::endl;
   std::cout << "histo: " << std::endl;
 
   // sort histo in descending order with its index
