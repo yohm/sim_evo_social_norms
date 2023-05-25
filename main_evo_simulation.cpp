@@ -160,6 +160,23 @@ public:
   }
 };
 
+void PrintProgress(double progress) {
+  int barWidth = 70;
+  std::cerr << "[";
+  int pos = static_cast<int>(barWidth * progress);
+  for (int i = 0; i < barWidth; ++i) {
+    if (i < pos) std::cerr << "=";
+    else if (i == pos) std::cerr << ">";
+    else std::cerr << " ";
+  }
+  std::cerr << "] " << int(progress * 100.0) << " %\r";
+  std::cerr.flush();
+  if (progress >= 1.0) {
+    std::cerr << std::endl;
+    return;
+  }
+}
+
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
 
@@ -234,10 +251,10 @@ int main(int argc, char* argv[]) {
       tout << t << ' ' << evo.CurrentCooperationLevel() << std::endl;
     }
   }
-  for (size_t t = 0; t < params.T_measure; t++) {
-    size_t prog_interval = params.T_measure / 20;
+  for (size_t t = params.T_init; t < params.T_measure + params.T_init; t++) {
+    size_t prog_interval = params.T_measure / 100;
     if (t % prog_interval == 0) {
-      std::cerr << "t = " << t << std::endl;
+      PrintProgress(static_cast<double>(t) / static_cast<double>(params.T_init+params.T_measure));
     }
     evo.Update();
     evo.UpdateHistogram();
@@ -245,6 +262,7 @@ int main(int argc, char* argv[]) {
       tout << t + params.T_init << ' ' << evo.CurrentCooperationLevel() << std::endl;
     }
   }
+  PrintProgress(1.0);
   tout.close();
 
   auto n_histo = evo.NormalizedHistogram();
