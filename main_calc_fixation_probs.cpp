@@ -79,7 +79,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const ParametersBatch& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const Parameters& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
 
     for (size_t n = 0; n < p_fix_vec.size(); n++) {
       std::string filename = "fixation_probs_" + std::to_string(n) + ".msgpack";
-      WriteInMsgpack(filename, params, norm_ids, self_coop_levels, p_fix_vec[n]);
+      WriteInMsgpack(filename, params.ParameterAt(n), norm_ids, self_coop_levels, p_fix_vec[n]);
       // write txt file as well
       std::ofstream fout("fixation_probs_" + std::to_string(n) + ".dat");
       PrintFixationProbsInText(fout, norm_ids, self_coop_levels, p_fix_vec[n]);

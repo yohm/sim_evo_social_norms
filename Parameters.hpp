@@ -36,8 +36,20 @@ struct ParametersBatch {
   uint64_t seed;
   ParametersBatch() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), seed(123456789) {
     benefit_beta_vec.emplace_back(5.0, 1.0);
-    benefit_beta_vec.emplace_back(1.5, 1.0);
   };
+
+  Parameters ParameterAt(size_t i) const {  // return i-th parameter
+    Parameters p;
+    p.n_init = n_init;
+    p.n_steps = n_steps;
+    p.N = N;
+    p.q = q;
+    p.mu_percept = mu_percept;
+    p.benefit = benefit_beta_vec[i].first;
+    p.beta = benefit_beta_vec[i].second;
+    p.seed = seed;
+    return p;
+  }
 
   EvolPrivRepGame::SimulationParameters ToEvolParams() const {
     return {N, n_init, n_steps, q, mu_percept, seed};
