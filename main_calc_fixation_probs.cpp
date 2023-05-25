@@ -114,7 +114,6 @@ int main(int argc, char* argv[]) {
 
   using namespace nlohmann;
 
-  std::vector<std::string> args;
   json j = json::object();
   bool debug_mode = false;
   for (int i = 1; i < argc; ++i) {

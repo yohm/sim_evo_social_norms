@@ -47,7 +47,7 @@ public:
     double sigma_out;
     double mut_r;   // relative mutation rate
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, sigma_out, mut_r)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, sigma_out, mut_r)
   };
 
   explicit GroupedEvoGame(const Parameters& _prm, double _benefit, const std::vector<Norm>& _norms) :
@@ -156,12 +156,37 @@ public:
 int main(int argc, char* argv[]) {
   // run evolutionary simulation in group-structured population
 
-  if (argc != 2) {
-    std::cerr << "Usage: " << argv[0] << " <input_msgpack_file>" << std::endl;
-    exit(1);
+  using namespace nlohmann;
+
+  std::vector<std::string> args;
+  nlohmann::json j = nlohmann::json::object();
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "-j" && i + 1 < argc) {
+      std::ifstream fin(argv[++i]);
+      // check if file exists
+      if (fin) {
+        fin >> j;
+        fin.close();
+      }
+      else {
+        std::istringstream iss(argv[i]);
+        iss >> j;
+      }
+    }
+    else {
+      args.emplace_back(argv[i]);  // for backward compatibility (do nothing
+    }
+  }
+  GroupedEvoGame::Parameters params = j.get<GroupedEvoGame::Parameters>();
+  std::cerr << "parameters:" << std::endl;
+  std::cerr << nlohmann::json(params) << std::endl;
+
+  if (args.size() != 1) {
+    std::cerr << "Error: invalid number of arguments" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <input_msgpack_file> -j [parameter.json]" << std::endl;
+    return 1;
   }
 
-  using namespace nlohmann;
 
   // load fixation probabilities from the input file
   json j_in = LoadMsgpackFile(argv[1]);
@@ -189,7 +214,6 @@ int main(int argc, char* argv[]) {
 
   // SimulateWellMixedPopulation(norms, p_fix, self_coop_levels, seed, T_init, T_measure);
 
-  GroupedEvoGame::Parameters params;
   GroupedEvoGame evo(params, benefit, norms);
   evo.SetFixationProbsCache(p_fix);
   evo.SetSelfCoopLevelCache(self_coop_levels);
