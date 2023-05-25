@@ -5,6 +5,7 @@
 #include <chrono>
 #include <random>
 #include <nlohmann/json.hpp>
+#include <icecream.hpp>
 #include "Vector2d.hpp"
 #include "Norm.hpp"
 
@@ -38,18 +39,19 @@ class GroupedEvoGame {
 public:
   class Parameters {
     public:
-    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(0.1) {}
+    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), sigma_out(1.0), mut_r(0.1) {}
     size_t M;   // number of groups
     size_t T_init;
     size_t T_measure;
     uint64_t seed;
-    double benefit;
     double sigma_out;
     double mut_r;   // relative mutation rate
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, sigma_out, mut_r)
   };
 
-  explicit GroupedEvoGame(const Parameters& _prm, const std::vector<Norm>& _norms) :
-    prm(_prm), norms(_norms)
+  explicit GroupedEvoGame(const Parameters& _prm, double _benefit, const std::vector<Norm>& _norms) :
+    prm(_prm), benefit(_benefit), norms(_norms)
   {
     if (_norms.empty()) {
       throw std::runtime_error("norms is empty");
@@ -63,6 +65,7 @@ public:
     histogram.resize(norms.size(), 0);
   }
   Parameters prm;
+  double benefit;
   std::vector<size_t> species;   //  species[i] : species index at group i
   std::vector<Norm> norms;
   std::mt19937_64 rng;
@@ -84,6 +87,7 @@ public:
       UpdateGroup(res_index);
     }
   }
+private:
   void UpdateGroup(size_t res_index) {
     // focal species : species[g]
     std::uniform_real_distribution<double> uni(0.0, 1.0);
@@ -110,35 +114,36 @@ public:
       }
     }
   }
-  double IntraGroupFixationProb(size_t mutant, size_t resident) {
+  double IntraGroupFixationProb(size_t mutant, size_t resident) const {
     return fixation_prob_cache(resident, mutant);
   }
-  double InterGroupImitationProb(size_t immigrant, size_t resident) {
-    double pi_resident  = (prm.benefit - 1.0) * self_coop_level_cache[resident];
-    double pi_immigrant = (prm.benefit - 1.0) * self_coop_level_cache[immigrant];
+  double InterGroupImitationProb(size_t immigrant, size_t resident) const {
+    double pi_resident  = (benefit - 1.0) * self_coop_level_cache[resident];
+    double pi_immigrant = (benefit - 1.0) * self_coop_level_cache[immigrant];
     // f_{A\to B} = { 1 + \exp[ \sigma_out (s_A - s_B) ] }^{-1}
     return 1.0 / (1.0 + std::exp(prm.sigma_out * (pi_resident - pi_immigrant) ));
   }
+public:
   void TakeHistogram() {
-    for (size_t i = 0; i < species.size(); i++) {
-      histogram[species[i]] += 1;
+    for (unsigned long s : species) {
+      histogram[s] += 1;
     }
   }
   void ResetHistogram() {
     std::fill(histogram.begin(), histogram.end(), 0);
   }
-  std::vector<double> NormalizedHistogram() const {
+  [[nodiscard]] std::vector<double> NormalizedHistogram() const {
     std::vector<double> normed(histogram.size(), 0.0);
     double sum = 0.0;
-    for (size_t i = 0; i < histogram.size(); i++) {
-      sum += histogram[i];
+    for (unsigned long h : histogram) {
+      sum += static_cast<double>(h);
     }
     for (size_t i = 0; i < histogram.size(); i++) {
-      normed[i] = histogram[i] / sum;
+      normed[i] = static_cast<double>(histogram[i]) / sum;
     }
     return normed;
   }
-  double AverageCoopLevel() const {
+  [[nodiscard]] double AverageCoopLevel() const {
     std::vector<double> n_histo = NormalizedHistogram();
     double sum = 0.0;
     for (size_t i = 0; i < n_histo.size(); i++) {
@@ -178,12 +183,14 @@ int main(int argc, char* argv[]) {
   for (size_t i = 0; i < self_coop_levels.size(); ++i) {
     self_coop_levels[i] = j_in["self_coop_levels"][i].get<double>();
   }
+  double benefit = j_in["params"]["benefit"].get<double>();
+  IC(benefit);
   // IC(p_fix._data, self_coop_levels);
 
   // SimulateWellMixedPopulation(norms, p_fix, self_coop_levels, seed, T_init, T_measure);
 
   GroupedEvoGame::Parameters params;
-  GroupedEvoGame evo(params, norms);
+  GroupedEvoGame evo(params, benefit, norms);
   evo.SetFixationProbsCache(p_fix);
   evo.SetSelfCoopLevelCache(self_coop_levels);
   for (size_t t = 0; t < params.T_init; t++) {
@@ -199,9 +206,9 @@ int main(int argc, char* argv[]) {
   }
   auto n_histo = evo.NormalizedHistogram();
   // Print n_histo
-  for (size_t i = 0; i < n_histo.size(); ++i) {
-    std::cout << i << ' ' << norms[i].ID() << ' ' << n_histo[i] << ' ' << self_coop_levels[i] << std::endl;
-  }
+  // for (size_t i = 0; i < n_histo.size(); ++i) {
+  //   std::cout << i << ' ' << norms[i].ID() << ' ' << n_histo[i] << ' ' << self_coop_levels[i] << std::endl;
+  // }
   // print average cooperation level
   std::cout << "overall_c_prob: " << evo.AverageCoopLevel() << std::endl;
   std::cout << "histo: " << std::endl;
