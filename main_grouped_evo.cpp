@@ -276,9 +276,9 @@ int main(int argc, char* argv[]) {
   // sort histo in descending order with its index
   std::vector<std::pair<double, size_t>> histo_sorted;
   for (size_t i = 0; i < n_histo.size(); ++i) {
-    histo_sorted.emplace_back(std::make_pair(n_histo[i], i));
+    histo_sorted.emplace_back(n_histo[i], i);
   }
-  std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<std::pair<double, size_t>>());
+  std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<>());
   for (size_t i = 0; i < histo_sorted.size(); ++i) {
     size_t idx = histo_sorted[i].second;
     int nid = norms[idx].ID();
