@@ -222,6 +222,7 @@ int main(int argc, char* argv[]) {
     Norm n = Norm::ConstructFromID(id);
     norms.emplace_back(n);
   }
+  std::cerr << "  # of norms: " << norms.size() << std::endl;
 
   const size_t N_NORMS = norms.size();
   Vector2d<double> p_fix(N_NORMS, N_NORMS, 0.0);
@@ -243,23 +244,26 @@ int main(int argc, char* argv[]) {
   evo.SetSelfCoopLevelCache(self_coop_levels);
 
   std::ofstream tout("timeseries.dat");
-  size_t t_interval = params.T_init / 100;
+  size_t print_interval = (params.T_init + params.T_measure) / 1000;
+  size_t progress_interval = (params.T_init + params.T_measure) / 100;
 
   for (size_t t = 0; t < params.T_init; t++) {
+    if (t % progress_interval == 0) {
+      PrintProgress(static_cast<double>(t) / static_cast<double>(params.T_init+params.T_measure));
+    }
     evo.Update();
-    if (t % t_interval == 0) {
+    if (t % print_interval == 0) {
       tout << t << ' ' << evo.CurrentCooperationLevel() << std::endl;
     }
   }
   for (size_t t = params.T_init; t < params.T_measure + params.T_init; t++) {
-    size_t prog_interval = params.T_measure / 100;
-    if (t % prog_interval == 0) {
+    if (t % progress_interval == 0) {
       PrintProgress(static_cast<double>(t) / static_cast<double>(params.T_init+params.T_measure));
     }
     evo.Update();
     evo.UpdateHistogram();
-    if ((t+params.T_init) % t_interval == 0) {
-      tout << t + params.T_init << ' ' << evo.CurrentCooperationLevel() << std::endl;
+    if (t % print_interval == 0) {
+      tout << t << ' ' << evo.CurrentCooperationLevel() << std::endl;
     }
   }
   PrintProgress(1.0);
