@@ -11,5 +11,6 @@ plt.clf()
 plt.plot(data[:,0], data[:,1])
 plt.xlabel('Time')
 plt.ylabel('Cooperation Level')
+plt.ylim(0,1)
 plt.savefig('timeseries.pdf')
 # %%
