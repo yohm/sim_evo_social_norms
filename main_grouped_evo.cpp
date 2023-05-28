@@ -4,7 +4,6 @@
 #include <array>
 #include <chrono>
 #include <random>
-#include <optional>
 #include <nlohmann/json.hpp>
 #include <icecream.hpp>
 #include "Vector2d.hpp"
@@ -273,22 +272,22 @@ int main(int argc, char* argv[]) {
   auto n_histo = evo.NormalizedHistogram();
   std::cerr << "overall_c_prob: " << evo.AverageCoopLevelOverHistogram() << std::endl;
 
-  auto is_close_to_L8 = [](const Norm& n) -> std::optional<Norm> {
-    // close to L8 if it only differs in P(B,B)
-    std::optional<Norm> ret = std::nullopt;
-    std::vector<Norm> l8 = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8()};
-    for (const Norm& l : l8) {
-      if (n.Rd == l.Rd && n.Rr == l.Rr && n.P != l.P) {  // differs only in P
-        Norm l_copy = l;
-        constexpr Reputation B = Reputation::B;
-        l_copy.P.SetCProb(B, B, 1.0 - l.P.CProb(B, B));
-        if (n.P == l_copy.P) {
-          ret = l;
-          break;
-        }
-      }
+  std::vector<Norm> l8 = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8()};
+  std::vector<Norm> l8v;
+  for (Norm l : l8) {
+    constexpr Reputation B = Reputation::B;
+    l.P.SetCProb(B, B, 1.0 - l.P.CProb(B, B));
+    l8v.push_back(l);
+  }
+
+  auto l8_variant_name = [&l8v](const Norm& n) -> std::string {
+    // find n from l8v, return its index
+    auto it = std::find(l8v.begin(), l8v.end(), n);
+    if (it != l8v.end()) {
+      size_t idx = std::distance(l8v.begin(), it) + 1;
+      return "L" + std::to_string(idx) + "v";
     }
-    return ret;
+    return "";
   };
 
   // sort histo in descending order with its index
@@ -305,8 +304,8 @@ int main(int argc, char* argv[]) {
     if (norms[idx].P.ID() == 0) { type = "AllD"; }
     else if (norms[idx].P.ID() == 15) { type = "AllC"; }
     else if (!norms[idx].GetName().empty()) { type = norms[idx].GetName(); }
-    else if (is_close_to_L8(norms[idx])) {
-      type = is_close_to_L8(norms[idx])->GetName() + "v";
+    else if (!l8_variant_name(norms[idx]).empty()) {
+      type = l8_variant_name(norms[idx]);
     }
     histo_out << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
     if (histo_sorted[i].first < 0.01 && i > 8) {
