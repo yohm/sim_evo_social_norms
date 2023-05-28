@@ -7,5 +7,7 @@ if [ $# -ge 1 ]; then
 else
   $script_dir/../cmake-build-release/main_grouped_evo _input.json
 fi
+cat histo_norms.dat
 export PIPENV_PIPFILE=${script_dir}/Pipfile
 pipenv run python ${script_dir}/plot_timeseries.py
+pipenv run python ${script_dir}/plot_histo_norms.py

@@ -271,8 +271,7 @@ int main(int argc, char* argv[]) {
   tout.close();
 
   auto n_histo = evo.NormalizedHistogram();
-  std::cout << "overall_c_prob: " << evo.AverageCoopLevelOverHistogram() << std::endl;
-  std::cout << "histo: " << std::endl;
+  std::cerr << "overall_c_prob: " << evo.AverageCoopLevelOverHistogram() << std::endl;
 
   auto is_close_to_L8 = [](const Norm& n) -> std::optional<Norm> {
     // close to L8 if it only differs in P(B,B)
@@ -298,6 +297,7 @@ int main(int argc, char* argv[]) {
     histo_sorted.emplace_back(n_histo[i], i);
   }
   std::sort(histo_sorted.begin(), histo_sorted.end(), std::greater<>());
+  std::ofstream histo_out("histo_norms.dat");
   for (size_t i = 0; i < histo_sorted.size(); ++i) {
     size_t idx = histo_sorted[i].second;
     int nid = norms[idx].ID();
@@ -308,12 +308,12 @@ int main(int argc, char* argv[]) {
     else if (is_close_to_L8(norms[idx])) {
       type = is_close_to_L8(norms[idx])->GetName() + "v";
     }
-    std::cout << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
-    if (histo_sorted[i].first < 0.01 && i > 20) {
+    histo_out << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
+    if (histo_sorted[i].first < 0.01 && i > 8) {
       break;
     }
   }
+  histo_out.close();
 
   return 0;
 }
-
