@@ -124,6 +124,15 @@ private:
     return 1.0 / (1.0 + std::exp(prm.sigma_out * (pi_resident - pi_immigrant) ));
   }
 public:
+  size_t NumGroupsOf(const Norm& n) const {
+    size_t count = 0;
+    for (size_t s : species) {
+      if (norms[s] == n) {
+        count++;
+      }
+    }
+    return count;
+  }
   void UpdateHistogram() {
     for (unsigned long s : species) {
       histogram[s] += 1;
@@ -244,8 +253,17 @@ int main(int argc, char* argv[]) {
   evo.SetSelfCoopLevelCache(self_coop_levels);
 
   std::ofstream tout("timeseries.dat");
+  std::vector<Norm> norms_to_measure = {Norm::L1(), Norm::ConstructFromID(765130), Norm::L3()};
+  auto plot_time_series = [&tout,&norms_to_measure](size_t t, const GroupedEvoGame& evo) {
+    tout << t << ' ' << evo.CurrentCooperationLevel();
+    for (const auto& n: norms_to_measure) {
+      tout << ' ' << static_cast<double>(evo.NumGroupsOf(n)) / static_cast<double>(evo.prm.M);
+    }
+    tout << std::endl;
+  };
   size_t print_interval = (params.T_init + params.T_measure) / 1000;
   size_t progress_interval = (params.T_init + params.T_measure) / 100;
+
 
   for (size_t t = 0; t < params.T_init; t++) {
     if (t % progress_interval == 0) {
@@ -253,7 +271,7 @@ int main(int argc, char* argv[]) {
     }
     evo.Update();
     if (t % print_interval == 0) {
-      tout << t << ' ' << evo.CurrentCooperationLevel() << std::endl;
+      plot_time_series(t, evo);
     }
   }
   for (size_t t = params.T_init; t < params.T_measure + params.T_init; t++) {
@@ -263,7 +281,7 @@ int main(int argc, char* argv[]) {
     evo.Update();
     evo.UpdateHistogram();
     if (t % print_interval == 0) {
-      tout << t << ' ' << evo.CurrentCooperationLevel() << std::endl;
+      plot_time_series(t, evo);
     }
   }
   PrintProgress(1.0);
