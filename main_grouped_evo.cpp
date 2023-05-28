@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <random>
+#include <optional>
 #include <nlohmann/json.hpp>
 #include <icecream.hpp>
 #include "Vector2d.hpp"
@@ -273,6 +274,24 @@ int main(int argc, char* argv[]) {
   std::cout << "overall_c_prob: " << evo.AverageCoopLevelOverHistogram() << std::endl;
   std::cout << "histo: " << std::endl;
 
+  auto is_close_to_L8 = [](const Norm& n) -> std::optional<Norm> {
+    // close to L8 if it only differs in P(B,B)
+    std::optional<Norm> ret = std::nullopt;
+    std::vector<Norm> l8 = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8()};
+    for (const Norm& l : l8) {
+      if (n.Rd == l.Rd && n.Rr == l.Rr && n.P != l.P) {  // differs only in P
+        Norm l_copy = l;
+        constexpr Reputation B = Reputation::B;
+        l_copy.P.SetCProb(B, B, 1.0 - l.P.CProb(B, B));
+        if (n.P == l_copy.P) {
+          ret = l;
+          break;
+        }
+      }
+    }
+    return ret;
+  };
+
   // sort histo in descending order with its index
   std::vector<std::pair<double, size_t>> histo_sorted;
   for (size_t i = 0; i < n_histo.size(); ++i) {
@@ -286,6 +305,9 @@ int main(int argc, char* argv[]) {
     if (norms[idx].P.ID() == 0) { type = "AllD"; }
     else if (norms[idx].P.ID() == 15) { type = "AllC"; }
     else if (!norms[idx].GetName().empty()) { type = norms[idx].GetName(); }
+    else if (is_close_to_L8(norms[idx])) {
+      type = is_close_to_L8(norms[idx])->GetName() + "v";
+    }
     std::cout << idx << ' ' << nid << ' ' << histo_sorted[i].first << ' ' << self_coop_levels[idx] << ' ' << type << std::endl;
     if (histo_sorted[i].first < 0.01 && i > 20) {
       break;
