@@ -1,0 +1,7 @@
+Put `fixation_probs.msgpack` files into this directory and run
+
+```
+python make_path_to_param.py
+```
+
+The above command makes path_to_param.json file, which contains the mapping between the output file path and their parameters.
