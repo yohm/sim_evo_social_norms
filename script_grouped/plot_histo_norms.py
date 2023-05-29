@@ -40,7 +40,7 @@ for w in wedges:
   w.set_linewidth(0.3)
   w.set_edgecolor('black')
 
-plt.savefig('histo_norms.pdf')
+plt.savefig('histo_norms.png')
 
 
 # %%

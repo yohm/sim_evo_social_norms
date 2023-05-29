@@ -288,7 +288,15 @@ int main(int argc, char* argv[]) {
   tout.close();
 
   auto n_histo = evo.NormalizedHistogram();
-  std::cerr << "overall_c_prob: " << evo.AverageCoopLevelOverHistogram() << std::endl;
+  {
+    double c_level = evo.AverageCoopLevelOverHistogram();
+    std::cerr << "overall_c_prob: " << c_level << std::endl;
+    std::ofstream jout("_output.json");
+    nlohmann::json j;
+    j["cooperation_level"] = evo.AverageCoopLevelOverHistogram();
+    jout << j;
+    jout.close();
+  }
 
   std::vector<Norm> l8 = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8()};
   std::vector<Norm> l8v;

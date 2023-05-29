@@ -16,5 +16,5 @@ plt.xlabel('Time')
 plt.ylabel('Cooperation Level')
 plt.ylim(0,1)
 plt.legend()
-plt.savefig('timeseries.pdf')
+plt.savefig('timeseries.png')
 # %%
