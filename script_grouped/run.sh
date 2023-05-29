@@ -5,7 +5,7 @@ script_dir=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
 if [ $# -ge 1 ]; then
   $script_dir/../cmake-build-release/main_grouped_evo $@
 else
-  $script_dir/../cmake-build-release/main_grouped_evo _input.json
+  python $script_dir/get_args.py | xargs -t $script_dir/../cmake-build-release/main_grouped_evo
 fi
 cat histo_norms.dat
 export PIPENV_PIPFILE=${script_dir}/Pipfile
