@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) {
   evo.SetSelfCoopLevelCache(self_coop_levels);
 
   std::ofstream tout("timeseries.dat");
-  std::vector<Norm> norms_to_measure = {Norm::L1(), Norm::ConstructFromID(765130), Norm::L3()};
+  std::vector<Norm> norms_to_measure = {Norm::L1(), Norm::ConstructFromID(765130), Norm::L3(), Norm::ConstructFromID(769227)};
   auto plot_time_series = [&tout,&norms_to_measure](size_t t, const GroupedEvoGame& evo) {
     tout << t << ' ' << evo.CurrentCooperationLevel();
     for (const auto& n: norms_to_measure) {
@@ -294,6 +294,18 @@ int main(int argc, char* argv[]) {
     std::ofstream jout("_output.json");
     nlohmann::json j;
     j["cooperation_level"] = evo.AverageCoopLevelOverHistogram();
+    for (const Norm& n: norms_to_measure) {
+      // get an index of n in norms
+      auto it = std::find(norms.begin(), norms.end(), n);
+      if (it != norms.end()) {
+        size_t idx = std::distance(norms.begin(), it);
+        j["norms"][std::to_string(n.ID())] = n_histo[idx];
+      }
+      else {
+        std::cerr << "Error: norm " << n.ID() << " not found" << std::endl;
+      }
+    }
+
     jout << j;
     jout.close();
   }
