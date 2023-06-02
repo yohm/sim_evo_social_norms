@@ -11,9 +11,8 @@
 using timeseries_t = std::vector<std::pair<int,double>>;
 
 timeseries_t TimeSeries(PrivateRepGame& prg, const Parameters& params) {
-  size_t total_steps = params.n_init + params.n_steps;
   size_t num_prints = 100;
-  size_t interval = total_steps / num_prints;
+  size_t interval = params.n_steps / num_prints;
 
   std::vector< std::pair<int,double>> timeseries;
   for (size_t i = 0; i < num_prints; i++) {
@@ -43,9 +42,11 @@ int main(int argc, char *argv[]) {
 
   std::vector<std::string> args;
   bool swap_gb = false;
+  bool batch = false;
   nlohmann::json j = nlohmann::json::object();
   // -j param.json : set parameters used for evolutionary simulation by json file
   // -s : swap good and bad
+  // -b : batch run
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -62,6 +63,9 @@ int main(int argc, char *argv[]) {
     else if (std::string(argv[i]) == "-s") {
       swap_gb = true;
     }
+    else if (std::string(argv[i]) == "-b") {
+      batch = true;
+    }
     else {
       args.emplace_back(argv[i]);
     }
@@ -69,7 +73,28 @@ int main(int argc, char *argv[]) {
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  if (args.size() == 1) {
+  if (batch & args.empty()) {
+    Parameters params = j.get<Parameters>();
+    std::cerr << nlohmann::json(params).dump(2) << std::endl;
+    auto norms = Norm::Deterministic3rdOrderWithoutR2Norms();
+    std::vector<timeseries_t> t_series_vec;
+    for (size_t i = 0; i < norms.size(); i++) {
+      if (i % 100 == 0) {
+        std::cerr << i << "/" << norms.size() << " : " << norms[i].ID() << std::endl;
+      }
+      PrivateRepGame prg({{norms[i], params.N}}, params.seed);
+      auto t_series = TimeSeries(prg, params);
+      t_series_vec.emplace_back(t_series);
+    }
+    for (size_t t = 0; t < t_series_vec[0].size(); t++) {
+      std::cout << t_series_vec[0][t].first;
+      for (size_t i = 0; i < t_series_vec.size(); i++) {
+        std::cout << " " << t_series_vec[i][t].second;
+      }
+      std::cout << std::endl;
+    }
+  }
+  else if (args.size() == 1) {
     Norm n = Norm::ParseNormString(args.at(0), swap_gb);
     std::cerr << n.Inspect();
     Parameters params = j.get<Parameters>();
