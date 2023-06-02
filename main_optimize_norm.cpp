@@ -18,7 +18,7 @@ double EquilibriumCoopLevel(const std::array<double,20>& norm_vec) {
 
   Norm norm = Norm::FromSerialized(norm_vec);
 
-  EvolPrivRepGameAllCAllD evol(30, params, 5.0, 1.0);
+  EvolPrivRepGameAllCAllD evol(params, 5.0, 1.0);
 
   auto selfc_rho_eq = evol.EquilibriumCoopLevelAllCAllD(norm);
   double self_cooperation_level = std::get<0>(selfc_rho_eq);
@@ -34,7 +34,7 @@ double EquilibriumCoopLevelWithoutR2(const std::array<double,12>& norm_vec) {
   params.n_init = 1e4;
   params.n_steps = 1e4;
 
-  EvolPrivRepGameAllCAllD evol(30, params, 5.0, 1.0);
+  EvolPrivRepGameAllCAllD evol(params, 5.0, 1.0);
 
   AssessmentRule rd{{norm_vec[0], norm_vec[1], norm_vec[2], norm_vec[3], norm_vec[4], norm_vec[5], norm_vec[6], norm_vec[7]}};
   ActionRule ad{{norm_vec[8], norm_vec[9], norm_vec[10], norm_vec[11]}};

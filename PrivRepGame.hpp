@@ -31,7 +31,7 @@ public:
   // t_max : number of steps
   // q : observation probability
   // epsilon :
-  void Update(size_t t_max, double q, double mu_percept, bool count_good = true) {
+  void Update(size_t t_max, double q, double mu_percept, double mu_assess, bool count_good) {
     for (size_t t = 0; t < t_max; t++) {
       // randomly choose donor & recipient
       size_t donor = static_cast<size_t>(R01() * N);
@@ -66,6 +66,11 @@ public:
             M[obs*N+donor] = (R01() < g_prob_donor) ? Reputation::G : Reputation::B;
           }
 
+          // assessment error
+          if (mu_assess > 0.0 && R01() < mu_assess) {
+            M[obs*N+donor] = FlipReputation(M[obs*N+donor]);
+          }
+
           // update recipient's reputation
           double g_prob_recip = norms[obs].Rr.GProb(M[obs*N+donor], M[obs*N+recip], a_obs);
           if (g_prob_recip == 1.0) {
@@ -76,6 +81,11 @@ public:
           }
           else {
             M[obs*N+recip] = (R01() < g_prob_recip) ? Reputation::G : Reputation::B;
+          }
+
+          // assessment error
+          if (mu_assess > 0.0 && R01() < mu_assess) {
+              M[obs*N+recip] = FlipReputation(M[obs*N+recip]);
           }
         }
       }
@@ -233,15 +243,19 @@ private:
 class EvolPrivRepGame {
 public:
   struct SimulationParameters {
-    SimulationParameters(size_t N, size_t n_init, size_t n_steps, double q, double mu_percept, uint64_t seed) :
-        N(N), n_init(n_init), n_steps(n_steps), q(q), mu_percept(mu_percept), seed(seed) {};
+    SimulationParameters() {
+      *this = Default();
+    }
+    SimulationParameters(size_t N, size_t n_init, size_t n_steps, double q, double mu_percept, double mu_assess, uint64_t seed) :
+        N(N), n_init(n_init), n_steps(n_steps), q(q), mu_percept(mu_percept), mu_assess(mu_assess), seed(seed) {};
     static SimulationParameters Default() {
-      return SimulationParameters(50, 1e6, 1e6, 0.9, 0.05, 123456789ull);
+      return {50, static_cast<size_t>(1e6), static_cast<size_t>(1e6), 0.9, 0.05, 0.0, 123456789ull};
     }
     size_t N;  // population size
     size_t n_init, n_steps;  // simulation duration
     double q;  // observation probability
     double mu_percept;  // perception error probability
+    double mu_assess;  // assessment error probability
     uint64_t seed;  // random number seed
   };
 
@@ -269,9 +283,9 @@ public:
   // self cooperation level
   double SelfCooperationLevel(const Norm& norm) const {
     PrivateRepGame game({{norm, param.N}}, param.seed);
-    game.Update(param.n_init, param.q, param.mu_percept, false);
+    game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
     game.ResetCounts();
-    game.Update(param.n_steps, param.q, param.mu_percept, false);
+    game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
     double self_coop_level = game.NormCooperationLevels()[0][0];
     return self_coop_level;
   }
@@ -288,9 +302,9 @@ public:
     #pragma omp parallel for schedule(dynamic) default(none), shared(pi_i, pi_j, norm_i, norm_j, benefit, beta, N)
     for (size_t l = 1; l < N; l++) {
       PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed + l);
-      game.Update(param.n_init, param.q, param.mu_percept, false);
+      game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
       game.ResetCounts();
-      game.Update(param.n_steps, param.q, param.mu_percept, false);
+      game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
       auto coop_levles = game.IndividualCooperationLevels();
       double payoff_i_total = 0.0;
       for (size_t k = 0; k < N-l; k++) {
@@ -344,9 +358,9 @@ public:
     #pragma omp parallel for schedule(dynamic) default(none), shared(i_donate, i_receive, j_donate, j_receive, norm_i, norm_j, benefit_beta_pairs, N)
     for (size_t l = 1; l < N; l++) {
       PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed + l);
-      game.Update(param.n_init, param.q, param.mu_percept, false);
+      game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
       game.ResetCounts();
-      game.Update(param.n_steps, param.q, param.mu_percept, false);
+      game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
       auto coop_levles = game.IndividualCooperationLevels();
       double i_donate_total = 0.0, i_receive_total = 0.0;
       for (size_t k = 0; k < N-l; k++) {
@@ -460,9 +474,9 @@ public:
     for (size_t i = 1; i < N; i++) {
       // i AllC vs N-i AllD
       PrivateRepGame game({{allc, i}, {alld, N-i}}, param.seed);
-      game.Update(param.n_init, param.q, param.mu_percept, false);
+      game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
       game.ResetCounts();
-      game.Update(param.n_steps, param.q, param.mu_percept, false);
+      game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
       auto coop_levels = game.IndividualCooperationLevels();
       double payoff_i_total = 0.0;
       for (size_t k = 0; k < i; k++) {
@@ -516,9 +530,9 @@ public:
     for (size_t i = 0; i < 2*N-1; i++) {
       if (i == 0) {  // monomorphic population of X
         PrivateRepGame game({{norm, N}}, param.seed);
-        game.Update(param.n_init, param.q, param.mu_percept, false);
+        game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
         game.ResetCounts();
-        game.Update(param.n_steps, param.q, param.mu_percept, false);
+        game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
         self_coop_level = game.SystemWideCooperationLevel();
         pi_x_allc[0] = pi_x_alld[0] = self_coop_level * (benefit - 1.0);
       }
@@ -526,9 +540,9 @@ public:
         size_t l = i;
         // (N-l) X vs l AllC
         PrivateRepGame game({{norm, N-l}, {Norm::AllC(), l}}, param.seed);
-        game.Update(param.n_init, param.q, param.mu_percept, false);
+        game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
         game.ResetCounts();
-        game.Update(param.n_steps, param.q, param.mu_percept, false);
+        game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
         auto coop_levels = game.IndividualCooperationLevels();
         double payoff_i_total = 0.0;
         for (size_t k = 0; k < N-l; k++) {
@@ -545,9 +559,9 @@ public:
         // (N-l) X vs l AllD
         size_t l = i - N + 1;
         PrivateRepGame game({{norm, N-l}, {Norm::AllD(), l}}, param.seed);
-        game.Update(param.n_init, param.q, param.mu_percept, false);
+        game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
         game.ResetCounts();
-        game.Update(param.n_steps, param.q, param.mu_percept, false);
+        game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, false);
         auto coop_levels = game.IndividualCooperationLevels();
         double payoff_i_total = 0.0;
         for (size_t k = 0; k < N-l; k++) {
@@ -755,9 +769,9 @@ private:
   // run simulation at [nf, nc, N-nf-nc] and return the game
   PrivateRepGame RunSimulationAt(size_t nf, size_t nc) const {
     PrivateRepGame game({{norm, nf}, {Norm::AllC(), nc}, {Norm::AllD(), param.N-nf-nc}}, param.seed);
-    game.Update(param.n_init, param.q, param.mu_percept, false);
+    game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
     game.ResetCounts();
-    game.Update(param.n_steps, param.q, param.mu_percept, true);
+    game.Update(param.n_steps, param.q, param.mu_percept, param.mu_assess, true);
     return game;
   }
 

@@ -18,16 +18,17 @@ struct ParametersWithMu {
   size_t N;
   double q;
   double mu_percept;
+  double mu_assess;
   double benefit;
   double beta;
   double mu;
   uint64_t seed;
-  ParametersWithMu() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), benefit(5.0), beta(1.0), mu(0.01), seed(123456789) {};
+  ParametersWithMu() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.05), mu_assess(0.0), benefit(5.0), beta(1.0), mu(0.01), seed(123456789) {};
   EvolPrivRepGame::SimulationParameters ToEvolParams() const {
-    return EvolPrivRepGame::SimulationParameters(N, n_init, n_steps, q, mu_percept, seed);
+    return EvolPrivRepGame::SimulationParameters(N, n_init, n_steps, q, mu_percept, mu_assess, seed);
   }
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ParametersWithMu, n_init, n_steps, N, q, mu_percept, benefit, beta, mu, seed);
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ParametersWithMu, n_init, n_steps, N, q, mu_percept, mu_assess, benefit, beta, mu, seed);
 };
 
 int main(int argc, char** argv) {

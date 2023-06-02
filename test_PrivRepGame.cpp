@@ -10,9 +10,9 @@
 
 void test_SelfCooperationLevel(const Norm& norm, double expected_c_level, double expected_good_rep) {
   PrivateRepGame priv_game( {{norm, 50}}, 123456789ull);
-  priv_game.Update(1e4, 0.9, 0.05, false);
+  priv_game.Update(1e4, 0.9, 0.05, 0.0, false);
   priv_game.ResetCounts();
-  priv_game.Update(1e4, 0.9, 0.05, true);
+  priv_game.Update(1e4, 0.9, 0.05, 0.0, true);
   // IC( priv_game.NormCooperationLevels(), priv_game.NormAverageReputation() );
   EXPECT_NEAR( priv_game.SystemWideCooperationLevel(), expected_c_level, 0.02);
   EXPECT_NEAR( priv_game.NormCooperationLevels()[0][0], expected_c_level, 0.02);

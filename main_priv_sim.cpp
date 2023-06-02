@@ -17,9 +17,9 @@ constexpr Action C = Action::C, D = Action::D;
 
 double SelfCoopLevel(const Norm& norm, const Parameters& params) {
   PrivateRepGame prg({{norm, params.N}}, params.seed);
-  prg.Update(params.n_init, params.q, params.mu_percept, false);
+  prg.Update(params.n_init, params.q, params.mu_percept, params.mu_assess, false);
   prg.ResetCounts();
-  prg.Update(params.n_steps, params.q, params.mu_percept, true);
+  prg.Update(params.n_steps, params.q, params.mu_percept, params.mu_assess, true);
   return prg.NormCooperationLevels()[0][0];
 }
 

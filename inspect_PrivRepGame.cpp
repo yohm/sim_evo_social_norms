@@ -39,9 +39,9 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Parameter
   auto start = std::chrono::high_resolution_clock::now();
 
   PrivateRepGame prg({{norm, params.N}}, params.seed);
-  prg.Update(params.n_init, params.q, params.mu_percept, false);
+  prg.Update(params.n_init, params.q, params.mu_percept, params.mu_assess, false);
   prg.ResetCounts();
-  prg.Update(params.n_steps, params.q, params.mu_percept, true);
+  prg.Update(params.n_steps, params.q, params.mu_percept, params.mu_assess, true);
   IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
 
   auto evo_params = params.ToEvolParams();
@@ -65,9 +65,9 @@ void PrintESSCheck(const Norm& norm, const Parameters& params, bool check_local_
 
   auto compare_payoffs = [&params](const Norm& resident, const Norm& mutant) -> std::pair<double,double> {
     PrivateRepGame prg({{resident, params.N-1}, {mutant, 1}}, 123456789);
-    prg.Update(params.n_init, params.q, params.mu_percept, false);
+    prg.Update(params.n_init, params.q, params.mu_percept, params.mu_assess, false);
     prg.ResetCounts();
-    prg.Update(params.n_steps, params.q, params.mu_percept, true);
+    prg.Update(params.n_steps, params.q, params.mu_percept, params.mu_assess, true);
     auto c_levels = prg.NormCooperationLevels();
 
     // pi_res = b[ (N-2)p_{res->res} + p_{mut->res} ] - c[ (N-2)p_{res->res} + p_{res->mut} ]

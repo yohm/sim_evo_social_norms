@@ -16,7 +16,7 @@ timeseries_t TimeSeries(PrivateRepGame& prg, const Parameters& params) {
 
   std::vector< std::pair<int,double>> timeseries;
   for (size_t i = 0; i < num_prints; i++) {
-    prg.Update(interval, params.q, params.mu_percept, false);
+    prg.Update(interval, params.q, params.mu_percept, params.mu_assess, false);
     double pc = prg.NormCooperationLevels()[0][0];
     timeseries.emplace_back((i+1)*interval, pc);
     prg.ResetCounts();
