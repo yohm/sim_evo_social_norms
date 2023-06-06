@@ -39,6 +39,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
   for (size_t i = 0; i < NN; i++) {
     if (i % num_procs != my_rank) continue;
     const Norm& n1 = norms[i];
+    evoparams.seed += i;
     double pc = SelfCoopLevel(n1, evoparams);
     self_coop_levels[i] = pc;
     for (auto& p_fix : p_fix_vec) {
@@ -63,6 +64,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
     }
     const Norm& n1 = norms[i];
     const Norm& n2 = norms[j];
+    evoparams.seed += NN + ij * params.N;
     EvolPrivRepGame evol(evoparams);
     auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_beta_vec);
     for (size_t n = 0; n < NP; n++) {
