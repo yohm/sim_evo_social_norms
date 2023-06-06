@@ -13,7 +13,10 @@ map_to_param = {}
 for msgpack_file in msgpack_files:
     with open(msgpack_file, 'rb') as f:
         data = msgpack.unpack(f)
-    map_to_param[msgpack_file] = data['params']
+    params = data['params']
+    if not 'mu_assess' in params:
+        params['mu_assess'] = 0.0
+    map_to_param[msgpack_file] = params
 map_to_param
 # %%
 # print in json
