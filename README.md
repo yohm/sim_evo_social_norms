@@ -23,7 +23,7 @@ brew install nlohmann-json
 Clone the repository with submodules.
 
 ```bash
-git clone --recursive git@github.com:yohm/sim_indirect_recip_stochastic.git
+git clone --recursive git@github.com:yohm/sim_indirect_stochastic_privrep.git
 cd sim_indirect_recip_stochastic
 ```
 
