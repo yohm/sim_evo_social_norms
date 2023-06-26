@@ -158,6 +158,9 @@ int main(int argc, char* argv[]) {
   auto start = std::chrono::system_clock::now();
 
   // std::vector<Norm> norms = {Norm::L1(), Norm::AllC(), Norm::AllD()};
+  // std::vector<Norm> norms = {Norm::L1(), Norm::L3(), Norm::L7(), Norm::AllC(), Norm::AllD()};
+  // std::vector<Norm> norms = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD()};
+  // std::vector<Norm> norms = {Norm::L1(), Norm::ConstructFromID(765130), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD(), Norm::ImageScoring()};
   // std::vector<Norm> norms = Norm::Deterministic2ndOrderWithoutR2Norms();
   std::vector<Norm> norms = Norm::Deterministic3rdOrderWithoutR2Norms();
 
