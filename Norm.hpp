@@ -488,6 +488,20 @@ public:
                 AssessmentRule{{0, 0, 0, 0, 0, 0, 0, 0}},
                 ActionRule{{0, 0, 0, 0}});
   }
+  static Norm AllG() {
+    // Always assess G, but action rule is Discriminator
+    // it may defect under assessment error
+    return Norm(AssessmentRule::AllGood(),
+                AssessmentRule::KeepRecipient(),
+                ActionRule::DISC());
+  }
+  static Norm AllB() {
+    // Always assess B, but action rule is Discriminator
+    // it may defect under assessment error
+    return Norm(AssessmentRule::AllBad(),
+                AssessmentRule::KeepRecipient(),
+                ActionRule::DISC());
+  }
   static Norm ImageScoring() {
     return Norm(AssessmentRule::ImageScoring(),
                 AssessmentRule::KeepRecipient(),
@@ -725,6 +739,8 @@ public:
 const std::vector<std::pair<int,std::string> > Norm::NormNames = {{
                                                                     {AllC().ID(), "AllC"},
                                                                     {AllD().ID(), "AllD"},
+                                                                    {AllG().ID(), "AllG"},
+                                                                    {AllB().ID(), "AllB"},
                                                                     {ImageScoring().ID(), "ImageScoring"},
                                                                     {L1().ID(), "L1"},
                                                                     {L2().ID(), "L2"},

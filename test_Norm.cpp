@@ -140,6 +140,24 @@ TEST(Norm, ImageScoring) {
   EXPECT_EQ( is.IDwithoutR2(), 0b10101010'1010);
 }
 
+TEST(Norm, AllG) {
+  Norm allg = Norm::AllG();
+  EXPECT_TRUE( allg.IsRecipKeep() );
+  EXPECT_TRUE( allg.IsDeterministic() );
+  EXPECT_TRUE( allg.IsSecondOrder() );
+  EXPECT_EQ( allg.ID(), 0b11111111'11001100'1010);
+  EXPECT_EQ( allg.IDwithoutR2(), 0b11111111'1010);
+}
+
+TEST(Norm, AllB) {
+  Norm allb = Norm::AllB();
+  EXPECT_TRUE( allb.IsRecipKeep() );
+  EXPECT_TRUE( allb.IsDeterministic() );
+  EXPECT_TRUE( allb.IsSecondOrder() );
+  EXPECT_EQ( allb.ID(), 0b00000000'11001100'1010);
+  EXPECT_EQ( allb.IDwithoutR2(), 0b00000000'1010);
+}
+
 TEST(Norm, LeadingEight) {
   std::array<Norm, 8> leading_eight = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(),
                                        Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8()};
@@ -276,6 +294,7 @@ TEST(Norm, Determinisitic3rdOrder) {
 }
 
 TEST(Norm, ParseNormString) {
+  EXPECT_EQ( Norm::ParseNormString("AllG").GetName(), "AllG" );
   EXPECT_EQ( Norm::ParseNormString("L1").GetName(), "L1" );
   EXPECT_EQ( Norm::ParseNormString("S16").GetName(), "S16" );
 
