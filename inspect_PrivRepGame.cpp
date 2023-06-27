@@ -122,9 +122,20 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const Parameters& params) 
   EvolPrivRepGame::SimulationParameters evo_params = params.ToEvolParams();
 
   EvolPrivRepGame evol(evo_params);
-  auto fixs = evol.FixationProbabilities({n1, n2}, params.benefit, params.beta);
-  auto eq = evol.EquilibriumPopulationLowMut(fixs);
-  IC( fixs, eq );
+  auto fixs = evol.FixationProbabilityAndPayoffs(n1, n2, params.benefit, params.beta);
+  double rho_n1 = std::get<0>(fixs);
+  double rho_n2 = std::get<1>(fixs);
+  auto eq = evol.EquilibriumPopulationLowMut({ {0.0, rho_n1}, {rho_n2, 0.0}});
+  std::cerr << "Transition probabilities between " << n1.GetName() << "(" << n1.ID() << ") vs " << n2.GetName() << "(" << n2.ID() << "):" << std::endl;
+  std::cerr << "  ---> : " << rho_n1 << std::endl;
+  std::cerr << "  <--- : " << rho_n2 << std::endl;
+  std::cerr << "Equilibrium population: " << eq[0] << " , " << eq[1] << std::endl;
+
+  std::vector<double>& pi_n1 = std::get<2>(fixs);
+  std::vector<double>& pi_n2 = std::get<3>(fixs);
+  for (size_t i = 1; i < pi_n1.size(); ++i) {
+    std::cout << "  " << i << ", " << pi_n1[i] << ", " << pi_n2[i] << std::endl;
+  }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;

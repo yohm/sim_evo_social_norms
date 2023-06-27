@@ -295,6 +295,17 @@ public:
   // second: fixation probability of resident i against resident j
   //        i.e., the probability to change from j to i
   std::pair<double,double> FixationProbability(const Norm& norm_i, const Norm& norm_j, double benefit, double beta) const {
+    auto a = FixationProbabilityAndPayoffs(norm_i, norm_j, benefit, beta);
+    return {std::get<0>(a), std::get<1>(a)};
+  }
+
+  // first: fixation probability of resident j against resident i
+  //        i.e., the probability to change from i to j
+  // second: fixation probability of resident i against resident j
+  //        i.e., the probability to change from j to i
+  // third: payoff of resident i when l mutants exist
+  // fourth: payoff of mutant j when l mutants exist
+  std::tuple<double,double,std::vector<double>,std::vector<double> > FixationProbabilityAndPayoffs(const Norm& norm_i, const Norm& norm_j, double benefit, double beta) const {
     const size_t N = param.N;
     std::vector<double> pi_i(N);  // pi_i[l]: payoff of resident i when l mutants exist
     std::vector<double> pi_j(N);  // pi_j[l]: payoff of mutant j when l mutants exist
@@ -316,7 +327,6 @@ public:
         payoff_j_total += benefit * coop_levles[k].first - coop_levles[k].second;
       }
       pi_j[l] = payoff_j_total / l;
-      // IC(l, pi_i[l], pi_j[l]);
     }
 
     double rho_1_inv = 1.0;
@@ -339,7 +349,7 @@ public:
       rho_2_inv += prod;
     }
     double rho_2 = 1.0 / rho_2_inv;
-    return std::make_pair(rho_1, rho_2);
+    return std::make_tuple(rho_1, rho_2, pi_i, pi_j);
   }
 
   // first: fixation probability of resident j against resident i
