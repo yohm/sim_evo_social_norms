@@ -28,80 +28,105 @@ public:
     good_count.assign(N*N, 0);
   }
 
+  static std::pair<std::vector<size_t>,std::vector<size_t>> RandomNonIdenticalPermutations(size_t N, std::mt19937_64& rnd) {
+    // construct two random permutations of the numbers ranging from 0 to N-1,
+    // while ensuring that the i-th number in the first permutation is never identical to the i-th number in the second permutation
+    std::vector<size_t> perm1(N), perm2(N);
+    for (size_t i = 0; i < N; i++) {
+      perm1[i] = i;
+      perm2[i] = i;
+    }
+    std::shuffle(perm1.begin(), perm1.end(), rnd);
+    std::shuffle(perm2.begin(), perm2.end(), rnd);
+
+    // perm2[i] should be different from perm1[i] for any i
+    // if not, swap perm2[i] with perm2[j] where j is the smallest index such that perm2[j] != perm1[i]
+    for (size_t i = 0; i < N; i++) {
+      if (perm1[i] == perm2[i]) {
+        size_t j = (i+1)%N;
+        while (perm1[j] == perm2[i] || perm1[i] == perm2[j]) {
+          j++;
+          j %= N;
+        }
+        std::swap(perm2[i], perm2[j]);
+      }
+    }
+
+    return std::make_pair(perm1, perm2);
+  }
+
   // t_max : number of steps
   // q : observation probability
   // epsilon :
   void Update(size_t t_max, double q, double mu_percept, double mu_assess, bool count_good) {
     for (size_t t = 0; t < t_max; t++) {
-      // randomly choose donor & recipient
-      size_t donor = static_cast<size_t>(R01() * N);
-      size_t recip = (donor + static_cast<size_t>(R01() * (N-1)) + 1) % N;
-      assert(donor != recip);
+      auto [perm1, perm2] = RandomNonIdenticalPermutations(N, rnd);
+      for (size_t tt=0; tt < perm1.size(); tt++) {
+        // randomly choose donor & recipient
+        size_t donor = perm1[tt];
+        size_t recip = perm2[tt];
+        assert(donor != recip);
 
-      double c_prob = norms[donor].P.CProb(M[donor*N+donor], M[donor*N+recip]);
-      Action A = (c_prob == 1.0 || R01() < c_prob) ? Action::C : Action::D;
+        double c_prob = norms[donor].P.CProb(M[donor * N + donor], M[donor * N + recip]);
+        Action A = (c_prob == 1.0 || R01() < c_prob) ? Action::C : Action::D;
 
-      if (A == Action::C) {
-        coop_count[donor*N+recip]++;
-      }
-      game_count[donor*N+recip]++;
-
-      // updating the images from observers' viewpoint
-      for (size_t obs = 0; obs < N; obs++) {
-        if (obs == donor || obs == recip || R01() < q) {  // observe with probability q
-          Action a_obs = A;
-          if (mu_percept > 0.0 && R01() < mu_percept) {
-            a_obs = FlipAction(A);
-          }
-
-          // update donor's reputation
-          double g_prob_donor = norms[obs].Rd.GProb(M[obs*N+donor], M[obs*N+recip], a_obs);
-          if (g_prob_donor == 1.0) {
-            M[obs*N+donor] = Reputation::G;
-          }
-          else if (g_prob_donor == 0.0) {
-            M[obs*N+donor] = Reputation::B;
-          }
-          else {
-            M[obs*N+donor] = (R01() < g_prob_donor) ? Reputation::G : Reputation::B;
-          }
-
-          // assessment error
-          if (mu_assess > 0.0 && R01() < mu_assess) {
-            M[obs*N+donor] = FlipReputation(M[obs*N+donor]);
-          }
-
-          // update recipient's reputation
-          double g_prob_recip = norms[obs].Rr.GProb(M[obs*N+donor], M[obs*N+recip], a_obs);
-          if (g_prob_recip == 1.0) {
-            M[obs*N+recip] = Reputation::G;
-          }
-          else if (g_prob_recip == 0.0) {
-            M[obs*N+recip] = Reputation::B;
-          }
-          else {
-            M[obs*N+recip] = (R01() < g_prob_recip) ? Reputation::G : Reputation::B;
-          }
-
-          // assessment error
-          if (mu_assess > 0.0 && R01() < mu_assess) {
-              M[obs*N+recip] = FlipReputation(M[obs*N+recip]);
-          }
+        if (A == Action::C) {
+          coop_count[donor * N + recip]++;
         }
-      }
+        game_count[donor * N + recip]++;
 
-      // count good
-      if (count_good) {
-        for (size_t i = 0; i < N; i++) {
-          for (size_t j = 0; j < N; j++) {
-            if (M[i*N+j] == Reputation::G) {
-              good_count[i*N+j]++;
+        // updating the images from observers' viewpoint
+        for (size_t obs = 0; obs < N; obs++) {
+          if (obs == donor || obs == recip || R01() < q) {  // observe with probability q
+            Action a_obs = A;
+            if (mu_percept > 0.0 && R01() < mu_percept) {
+              a_obs = FlipAction(A);
+            }
+
+            // update donor's reputation
+            double g_prob_donor = norms[obs].Rd.GProb(M[obs * N + donor], M[obs * N + recip], a_obs);
+            if (g_prob_donor == 1.0) {
+              M[obs * N + donor] = Reputation::G;
+            } else if (g_prob_donor == 0.0) {
+              M[obs * N + donor] = Reputation::B;
+            } else {
+              M[obs * N + donor] = (R01() < g_prob_donor) ? Reputation::G : Reputation::B;
+            }
+
+            // assessment error
+            if (mu_assess > 0.0 && R01() < mu_assess) {
+              M[obs * N + donor] = FlipReputation(M[obs * N + donor]);
+            }
+
+            // update recipient's reputation
+            double g_prob_recip = norms[obs].Rr.GProb(M[obs * N + donor], M[obs * N + recip], a_obs);
+            if (g_prob_recip == 1.0) {
+              M[obs * N + recip] = Reputation::G;
+            } else if (g_prob_recip == 0.0) {
+              M[obs * N + recip] = Reputation::B;
+            } else {
+              M[obs * N + recip] = (R01() < g_prob_recip) ? Reputation::G : Reputation::B;
+            }
+
+            // assessment error
+            if (mu_assess > 0.0 && R01() < mu_assess) {
+              M[obs * N + recip] = FlipReputation(M[obs * N + recip]);
             }
           }
         }
-        total_update++;
-      }
 
+        // count good
+        if (count_good) {
+          for (size_t i = 0; i < N; i++) {
+            for (size_t j = 0; j < N; j++) {
+              if (M[i * N + j] == Reputation::G) {
+                good_count[i * N + j]++;
+              }
+            }
+          }
+          total_update++;
+        }
+      }
     }
   }
 

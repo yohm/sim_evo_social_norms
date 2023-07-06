@@ -34,6 +34,52 @@ TEST(SelfCooperationLevel, LeadingEight) {
   test_SelfCooperationLevel(Norm::L8(), 0.0, 0.0);
 }
 
+TEST(PrivateRepGame, RandomNonIdenticalPermutations) {
+  PrivateRepGame priv_game({{Norm::Random(), 3}}, 123456789ull);
+  for (int t = 0; t < 100; t++) {
+    std::mt19937_64 rng(123456789ull + t);
+    auto [perm1, perm2] = priv_game.RandomNonIdenticalPermutations(2, rng);
+    EXPECT_EQ(perm1.size(), 2);
+    EXPECT_EQ(perm2.size(), 2);
+    std::set<size_t> s1, s2;
+    for (int i = 0; i < perm1.size(); i++) {
+      EXPECT_NE(perm1[i], perm2[i]);
+      s1.insert(perm1[i]);
+      s2.insert(perm2[i]);
+    }
+    EXPECT_EQ(s1.size(), 2);
+    EXPECT_EQ(s2.size(), 2);
+  }
+  for (int t = 0; t < 100; t++) {
+    std::mt19937_64 rng(123456789ull + t);
+    auto [perm1, perm2] = priv_game.RandomNonIdenticalPermutations(3, rng);
+    EXPECT_EQ(perm1.size(), 3);
+    EXPECT_EQ(perm2.size(), 3);
+    std::set<size_t> s1, s2;
+    for (int i = 0; i < perm1.size(); i++) {
+      EXPECT_NE(perm1[i], perm2[i]);
+      s1.insert(perm1[i]);
+      s2.insert(perm2[i]);
+    }
+    EXPECT_EQ(s1.size(), 3);
+    EXPECT_EQ(s2.size(), 3);
+  }
+  for (int t = 0; t < 100; t++) {
+    std::mt19937_64 rng(123456789ull + t);
+    auto [perm1, perm2] = priv_game.RandomNonIdenticalPermutations(50, rng);
+    EXPECT_EQ(perm1.size(), 50);
+    EXPECT_EQ(perm2.size(), 50);
+    std::set<size_t> s1, s2;
+    for (int i = 0; i < perm1.size(); i++) {
+      EXPECT_NE(perm1[i], perm2[i]);
+      s1.insert(perm1[i]);
+      s2.insert(perm2[i]);
+    }
+    EXPECT_EQ(s1.size(), 50);
+    EXPECT_EQ(s2.size(), 50);
+  }
+}
+
 TEST(EvolPrivRepGame, L1_AllC_AllD) {
   Norm norm = Norm::L1();
   auto params = EvolPrivRepGame::SimulationParameters::Default();
