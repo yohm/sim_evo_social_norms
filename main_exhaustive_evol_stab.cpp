@@ -26,7 +26,7 @@ double SelfCoopLevel(const Norm& norm, const Parameters& params) {
 const EvolPrivRepGameAllCAllD* p_evol = nullptr;
 void InitializeEvol(const Parameters& params) {
   EvolPrivRepGame::SimulationParameters evoparams = params.ToEvolParams();
-  p_evol = new EvolPrivRepGameAllCAllD(evoparams, params.benefit, params.beta);
+  p_evol = new EvolPrivRepGameAllCAllD(evoparams, params.benefit, params.sigma_in());
 }
 
 const EvolPrivRepGameAllCAllD GetEvol() {
@@ -76,7 +76,7 @@ std::pair<double,double> EqCooperationLevelWithLocalMutants(const Norm& norm, co
   auto local_mutants = LocalMutants(norm);
   norms.insert(norms.end(), local_mutants.begin(), local_mutants.end());
   EvolPrivRepGame evol(evoparams);
-  auto fixation_probs = evol.FixationProbabilities(norms, params.benefit, params.beta);
+  auto fixation_probs = evol.FixationProbabilities(norms, params.benefit, params.sigma_in());
   std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
   std::vector<double> self_coop_levels;
   for (const auto& norm : norms) {
@@ -100,7 +100,7 @@ std::pair<double,Norm> MostRiskyMutant(const Norm& norm, const Parameters& param
   mutants.insert(mutants.end(), local_mutants.begin(), local_mutants.end());
   for (const auto& mutant : mutants) {
     EvolPrivRepGame evol(evoparams);
-    auto fixation_probs = evol.FixationProbabilities({norm, mutant}, params.benefit, params.beta);
+    auto fixation_probs = evol.FixationProbabilities({norm, mutant}, params.benefit, params.sigma_in());
     std::vector<double> eq = EvolPrivRepGame::EquilibriumPopulationLowMut(fixation_probs);
     if (eq[0] < min_eq_population) {
       min_eq_population = eq[0];

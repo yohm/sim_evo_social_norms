@@ -45,7 +45,7 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const Parameter
   IC( prg.NormAverageReputation(), prg.NormCooperationLevels());
 
   auto evo_params = params.ToEvolParams();
-  EvolPrivRepGameAllCAllD evol(evo_params, params.benefit, params.beta);
+  EvolPrivRepGameAllCAllD evol(evo_params, params.benefit, params.sigma_in());
   auto res = evol.EquilibriumCoopLevelAllCAllD(norm);
   auto rho = std::get<1>(res);
   auto eq = std::get<2>(res);
@@ -122,7 +122,7 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const Parameters& params) 
   EvolPrivRepGame::SimulationParameters evo_params = params.ToEvolParams();
 
   EvolPrivRepGame evol(evo_params);
-  auto fixs = evol.FixationProbabilityAndPayoffs(n1, n2, params.benefit, params.beta);
+  auto fixs = evol.FixationProbabilityAndPayoffs(n1, n2, params.benefit, params.sigma_in());
   double rho_n1 = std::get<0>(fixs);
   double rho_n2 = std::get<1>(fixs);
   auto eq = evol.EquilibriumPopulationLowMut({ {0.0, rho_n1}, {rho_n2, 0.0}});
@@ -153,7 +153,7 @@ void CompareWithLocalMutants(const Norm& norm, const Parameters& params) {
   for (const auto& mutant : mutants) {
     // std::cout << mutant.Inspect();
     EvolPrivRepGame evol(evo_params);
-    auto rhos = evol.FixationProbabilities({norm, mutant}, params.benefit, params.beta);
+    auto rhos = evol.FixationProbabilities({norm, mutant}, params.benefit, params.sigma_in());
     auto eq = evol.EquilibriumPopulationLowMut(rhos);
     if (eq[0] < min_eq) {
       min_eq = eq[0];
