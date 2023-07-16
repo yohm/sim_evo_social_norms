@@ -22,7 +22,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
   const size_t NN = norms.size();   // number of norms
   self_coop_levels.clear();
   self_coop_levels.assign(NN, 0.0);
-  size_t NP = params.benefit_sigma_in_over_b_vec.size();
+  size_t NP = params.benefit_sigma_in_times_b_vec.size();
   p_fix_vec.clear();
   p_fix_vec.assign(NP, Vector2d<double>(NN, NN, 0.0));
 
@@ -63,7 +63,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
     const Norm& n2 = norms[j];
     evoparams.seed += NN + ij * params.N;
     EvolPrivRepGame evol(evoparams);
-    auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_sigma_in_over_b_vec);
+    auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_sigma_in_times_b_vec);
     for (size_t n = 0; n < NP; n++) {
       p_fix_vec[n](i,j) = fs_vec[n].first;
       p_fix_vec[n](j,i) = fs_vec[n].second;
@@ -112,6 +112,7 @@ int main(int argc, char* argv[]) {
 
   json j = json::object();
   bool debug_mode = false;
+  bool leading_eight_only = false;
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -119,16 +120,15 @@ int main(int argc, char* argv[]) {
       if (fin) {
         fin >> j;
         fin.close();
-      }
-      else {
+      } else {
         std::istringstream iss(argv[i]);
         iss >> j;
       }
-    }
-    else if (std::string(argv[i]) == "-d") {
+    } else if (std::string(argv[i]) == "-d") {
       debug_mode = true;
-    }
-    else {
+    } else if (std::string(argv[i]) == "-l8") {
+      leading_eight_only = true;
+    } else {
       std::cerr << "unknown option: " << argv[i] << std::endl;
       return 1;
     }
@@ -151,8 +151,13 @@ int main(int argc, char* argv[]) {
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
 
-  // std::vector<Norm> norms = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD()};
-  std::vector<Norm> norms = Norm::Deterministic3rdOrderWithoutR2Norms();
+  std::vector<Norm> norms;
+  if (leading_eight_only) {
+    norms = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD()};
+  }
+  else {
+    norms = Norm::Deterministic3rdOrderWithoutR2Norms();
+  }
 
   std::vector<double> self_coop_levels;
   p_fix_vec_t p_fix_vec;

@@ -119,6 +119,10 @@ void PrintESSCheck(const Norm& norm, const Parameters& params, bool check_local_
 void PrintCompetition(const Norm& n1, const Norm& n2, const Parameters& params) {
   auto start = std::chrono::high_resolution_clock::now();
 
+  int omp_threads = omp_get_max_threads();
+  std::cerr << "Running with " << omp_threads << " threads" << std::endl;
+  std::cerr << "Parameteres:" << nlohmann::json(params).dump(2)  << std::endl;
+
   EvolPrivRepGame::SimulationParameters evo_params = params.ToEvolParams();
 
   EvolPrivRepGame evol(evo_params);

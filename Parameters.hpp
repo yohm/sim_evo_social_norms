@@ -16,18 +16,18 @@ struct Parameters {
   double mu_percept;
   double mu_assess;
   double benefit;
-  double sigma_in_over_b;
+  double sigma_in_times_b;
   uint64_t seed;
-  Parameters() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.0), mu_assess(0.05), benefit(5.0), sigma_in_over_b(1.0), seed(123456789) {};
+  Parameters() : n_init(1e4), n_steps(1e4), N(30), q(1.0), mu_percept(0.0), mu_assess(0.05), benefit(5.0), sigma_in_times_b(5.0), seed(123456789) {};
 
   EvolPrivRepGame::SimulationParameters ToEvolParams() const {
     return EvolPrivRepGame::SimulationParameters(N, n_init, n_steps, q, mu_percept, mu_assess, seed);
   }
   double sigma_in() const {
-    return sigma_in_over_b * (benefit-1.0);
+    return sigma_in_times_b / (benefit-1.0);
   }
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Parameters, n_init, n_steps, N, q, mu_percept, mu_assess, benefit, sigma_in_over_b, seed);
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Parameters, n_init, n_steps, N, q, mu_percept, mu_assess, benefit, sigma_in_times_b, seed);
 };
 
 struct ParametersBatch {
@@ -37,10 +37,10 @@ struct ParametersBatch {
   double q;
   double mu_percept;
   double mu_assess;
-  std::vector< std::pair<double,double> > benefit_sigma_in_over_b_vec;
+  std::vector< std::pair<double,double> > benefit_sigma_in_times_b_vec;
   uint64_t seed;
   ParametersBatch() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.0), mu_assess(0.05), seed(123456789) {
-    benefit_sigma_in_over_b_vec.emplace_back(5.0, 1.0);
+    benefit_sigma_in_times_b_vec.emplace_back(5.0, 1.0);
   };
 
   Parameters ParameterAt(size_t i) const {  // return i-th parameter
@@ -51,8 +51,8 @@ struct ParametersBatch {
     p.q = q;
     p.mu_percept = mu_percept;
     p.mu_assess = mu_assess;
-    p.benefit = benefit_sigma_in_over_b_vec[i].first;
-    p.sigma_in_over_b = benefit_sigma_in_over_b_vec[i].second;
+    p.benefit = benefit_sigma_in_times_b_vec[i].first;
+    p.sigma_in_times_b = benefit_sigma_in_times_b_vec[i].second;
     p.seed = seed;
     return p;
   }
@@ -61,7 +61,7 @@ struct ParametersBatch {
     return {N, n_init, n_steps, q, mu_percept, mu_assess, seed};
   }
 
-  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ParametersBatch, n_init, n_steps, N, q, mu_percept, mu_assess, benefit_sigma_in_over_b_vec, seed);
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ParametersBatch, n_init, n_steps, N, q, mu_percept, mu_assess, benefit_sigma_in_times_b_vec, seed);
 };
 
 #endif //PARAMETERS_HPP

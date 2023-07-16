@@ -39,17 +39,17 @@ class GroupedEvoGame {
 public:
   class Parameters {
     public:
-    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out_over_b(10.0), mut_r(0.1) {}
+    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out_times_b(5.0), mut_r(0.1) {}
     size_t M;   // number of groups
     size_t T_init;
     size_t T_measure;
     uint64_t seed;
     double benefit;
-    double sigma_out_over_b;
+    double sigma_out_times_b;
     double mut_r;   // relative mutation rate
-    double sigma_out() const { return sigma_out_over_b * (benefit-1.0); }
+    double sigma_out() const { return sigma_out_times_b / (benefit-1.0); }
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, benefit, sigma_out_over_b, mut_r)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, benefit, sigma_out_times_b, mut_r)
   };
 
   explicit GroupedEvoGame(const Parameters& _prm, const std::vector<Norm>& _norms) :

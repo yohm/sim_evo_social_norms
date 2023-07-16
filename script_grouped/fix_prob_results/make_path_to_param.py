@@ -5,7 +5,7 @@ import msgpack
 # load resluts file in msgpack format
 # find msgpack files in the current directory
 import glob
-msgpack_files = glob.glob('*/*.msgpack')
+msgpack_files = glob.glob('**/*.msgpack')
 print(msgpack_files)
 
 # %%

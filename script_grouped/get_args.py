@@ -16,7 +16,7 @@ with open('_input.json') as f:
     input_json = json.load(f)
 input_json
 # %%
-comp_keys = ['N','benefit','beta','mu_percept', 'mu_assess','q']
+comp_keys = ['N','benefit','sigma_in_times_b','mu_percept', 'mu_assess','q']
 p1 = [input_json[k] for k in comp_keys]
 fix_prob_path = ""
 for k,v in fix_param.items():
@@ -30,7 +30,7 @@ if fix_prob_path == "":
     print("No matching parameter found")
     exit(1)
 # %%
-arg_json_keys = ['M','T_init','T_measure','mut_r','sigma_out','_seed']
+arg_json_keys = ['M','T_init','T_measure','mut_r','sigma_out_times_b','_seed']
 d = {k:input_json[k] for k in arg_json_keys}
 d['seed'] = d.pop('_seed')  # change key name
 d
