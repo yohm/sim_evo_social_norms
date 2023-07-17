@@ -37,7 +37,16 @@ struct ParametersBatch {
   double q;
   double mu_percept;
   double mu_assess;
+  private:
   std::vector< std::pair<double,double> > benefit_sigma_in_times_b_vec;
+  public:
+  std::vector<std::pair<double,double>> benefit_sigma_in_vec() const {
+    std::vector<std::pair<double,double>> v;
+    for (const auto& p : benefit_sigma_in_times_b_vec) {
+      v.emplace_back(p.first, p.second / (p.first-1.0));
+    }
+    return v;
+  }
   uint64_t seed;
   ParametersBatch() : n_init(1e4), n_steps(1e4), N(30), q(0.9), mu_percept(0.0), mu_assess(0.05), seed(123456789) {
     benefit_sigma_in_times_b_vec.emplace_back(5.0, 1.0);

@@ -22,7 +22,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
   const size_t NN = norms.size();   // number of norms
   self_coop_levels.clear();
   self_coop_levels.assign(NN, 0.0);
-  size_t NP = params.benefit_sigma_in_times_b_vec.size();
+  size_t NP = params.benefit_sigma_in_vec().size();
   p_fix_vec.clear();
   p_fix_vec.assign(NP, Vector2d<double>(NN, NN, 0.0));
 
@@ -63,7 +63,7 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
     const Norm& n2 = norms[j];
     evoparams.seed += NN + ij * params.N;
     EvolPrivRepGame evol(evoparams);
-    auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_sigma_in_times_b_vec);
+    auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_sigma_in_vec());
     for (size_t n = 0; n < NP; n++) {
       p_fix_vec[n](i,j) = fs_vec[n].first;
       p_fix_vec[n](j,i) = fs_vec[n].second;

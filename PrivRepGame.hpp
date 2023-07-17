@@ -381,7 +381,7 @@ public:
   //        i.e., the probability to change from i to j
   // second: fixation probability of resident i against resident j
   //        i.e., the probability to change from j to i
-  std::vector<std::pair<double,double>> FixationProbabilityBatch(const Norm& norm_i, const Norm& norm_j, const std::vector<std::pair<double,double>>& benefit_beta_pairs) const {
+  std::vector<std::pair<double,double>> FixationProbabilityBatch(const Norm& norm_i, const Norm& norm_j, const std::vector<std::pair<double,double>>& benefit_sigma_in_pairs) const {
     const size_t N = param.N;
     // i_donate[l], i_receive[l]: the probability that i donate or receive when l mutants exist
     // payoff_i[l] = benefit * receive[l] - i_donate[l]
@@ -390,7 +390,7 @@ public:
     // payoff_j[l] = benefit * j_receive[l] - j_donate[l]
     std::vector<double> j_receive(N, 0.0), j_donate(N, 0.0);
 
-    #pragma omp parallel for schedule(dynamic) default(none), shared(i_donate, i_receive, j_donate, j_receive, norm_i, norm_j, benefit_beta_pairs, N)
+    #pragma omp parallel for schedule(dynamic) default(none), shared(i_donate, i_receive, j_donate, j_receive, norm_i, norm_j, benefit_sigma_in_pairs, N)
     for (size_t l = 1; l < N; l++) {
       PrivateRepGame game({{norm_i, N-l}, {norm_j, l}}, param.seed + l);
       game.Update(param.n_init, param.q, param.mu_percept, param.mu_assess, false);
@@ -414,7 +414,7 @@ public:
     }
 
     std::vector<std::pair<double,double>> rho_pair_vec;
-    for (const auto[benefit,beta]: benefit_beta_pairs) {
+    for (const auto[benefit,sigma_in]: benefit_sigma_in_pairs) {
       double rho_1_inv = 1.0;
       // p_ij = 1 / (1 + sum_{l' != 1}^{N-1}  prod_{l=1}^{l_prime} exp{-beta * (pi_j[l] - pi_i[l]) }
       for (size_t l_prime = 1; l_prime < N; l_prime++) {
@@ -422,7 +422,7 @@ public:
         for (size_t l = 1; l <= l_prime; l++) {
           double pi_j = benefit * j_receive[l] - j_donate[l];
           double pi_i = benefit * i_receive[l] - i_donate[l];
-          prod *= exp(-beta * (pi_j - pi_i));
+          prod *= exp(-sigma_in * (pi_j - pi_i));
         }
         rho_1_inv += prod;
       }
@@ -434,7 +434,7 @@ public:
         for (size_t l = 1; l <= l_prime; l++) {
           double pi_i = benefit * i_receive[N-l] - i_donate[N-l];
           double pi_j = benefit * j_receive[N-l] - j_donate[N-l];
-          prod *= exp(-beta * (pi_i - pi_j));
+          prod *= exp(-sigma_in * (pi_i - pi_j));
         }
         rho_2_inv += prod;
       }
