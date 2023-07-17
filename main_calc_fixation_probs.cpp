@@ -78,10 +78,11 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const Parameters& params, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const Parameters& params, const std::string& norm_set_name, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
   j_out["params"] = params;
+  j_out["norm_set"] = norm_set_name;
   j_out["norm_ids"] = norm_ids;
   j_out["self_coop_levels"] = self_coop_levels;
   j_out["p_fix"] = p_fix._data;
@@ -92,7 +93,8 @@ void WriteInMsgpack(const std::string& filepath, const Parameters& params, const
   ofs.close();
 }
 
-void PrintFixationProbsInText(std::ofstream& out, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+void PrintFixationProbsInText(std::ofstream& out, const std::string& norm_set_name, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+  out << "# norm_set: " << norm_set_name << std::endl;
   for (size_t i = 0; i < p_fix.Rows(); i++) {
     out << norm_ids[i] << " " << self_coop_levels[i] << " ";
     for (size_t j = 0; j < p_fix.Cols(); j++) {
@@ -109,10 +111,15 @@ int main(int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   using namespace nlohmann;
+  enum NormSet {
+    LeadingEight,
+    ThridOrder,
+    DualSecondOrder
+  };
 
   json j = json::object();
   bool debug_mode = false;
-  bool leading_eight_only = false;
+  NormSet norm_set = LeadingEight;
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
       std::ifstream fin(argv[++i]);
@@ -124,39 +131,63 @@ int main(int argc, char* argv[]) {
         std::istringstream iss(argv[i]);
         iss >> j;
       }
-    } else if (std::string(argv[i]) == "-d") {
+    }
+    else if (std::string(argv[i]) == "-d") {
       debug_mode = true;
-    } else if (std::string(argv[i]) == "-l8") {
-      leading_eight_only = true;
-    } else {
+    }
+    else if (std::string(argv[i]) == "--norm-set") {
+      std::string set_name = argv[++i];
+      if (set_name == "leading_eight") {
+        norm_set = LeadingEight;
+      }
+      else if (set_name == "third_order") {
+        norm_set = ThridOrder;
+      }
+      else if (set_name == "dual_second_order") {
+        norm_set = DualSecondOrder;
+      }
+      else {
+        std::cerr << "unknown norm set: " << set_name << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+    }
+    else {
       std::cerr << "unknown option: " << argv[i] << std::endl;
-      return 1;
+      MPI_Abort(MPI_COMM_WORLD, 1);
     }
   }
   ParametersBatch params = j.get<ParametersBatch>();
+
+  if (my_rank == 0) {
+    std::cerr << "params: " << nlohmann::json(params) << std::endl;
+    std::cerr << "norm_set: " << norm_set << std::endl;
+  }
 
   if (debug_mode) {
     // debug mode
     if (my_rank == 0) {
       std::cerr << "debug mode" << std::endl;
-      std::cerr << "params: " << nlohmann::json(params) << std::endl;
     }
     MPI_Finalize();
     return 0;
   }
 
-  if (my_rank == 0) std::cerr << "params: " << nlohmann::json(params) << std::endl;
-
-
   // measure elapsed time
   auto start = std::chrono::system_clock::now();
 
   std::vector<Norm> norms;
-  if (leading_eight_only) {
+  std::string norm_set_name;
+  if (norm_set == LeadingEight) {
     norms = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD()};
+    norm_set_name = "leading_eight";
   }
-  else {
+  else if (norm_set == ThridOrder) {
     norms = Norm::Deterministic3rdOrderWithoutR2Norms();
+    norm_set_name = "third_order";
+  }
+  else if (norm_set == DualSecondOrder) {
+    norms = Norm::Deterministic2ndOrderWithR2Norms();
+    norm_set_name = "dual_second_order";
   }
 
   std::vector<double> self_coop_levels;
@@ -175,10 +206,10 @@ int main(int argc, char* argv[]) {
 
     for (size_t n = 0; n < p_fix_vec.size(); n++) {
       std::string filename = "fixation_probs_" + std::to_string(n) + ".msgpack";
-      WriteInMsgpack(filename, params.ParameterAt(n), norm_ids, self_coop_levels, p_fix_vec[n]);
+      WriteInMsgpack(filename, params.ParameterAt(n), norm_set_name, norm_ids, self_coop_levels, p_fix_vec[n]);
       // write txt file as well
       std::ofstream fout("fixation_probs_" + std::to_string(n) + ".dat");
-      PrintFixationProbsInText(fout, norm_ids, self_coop_levels, p_fix_vec[n]);
+      PrintFixationProbsInText(fout, norm_set_name, norm_ids, self_coop_levels, p_fix_vec[n]);
     }
   }
 
