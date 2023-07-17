@@ -30,7 +30,7 @@ if fix_prob_path == "":
     print("No matching parameter found")
     exit(1)
 # %%
-arg_json_keys = ['M','T_init','T_measure','mut_r','sigma_out_times_b','_seed']
+arg_json_keys = ['benefit','M','T_init','T_measure','mut_r','sigma_out_times_b','_seed']
 d = {k:input_json[k] for k in arg_json_keys}
 d['seed'] = d.pop('_seed')  # change key name
 d
