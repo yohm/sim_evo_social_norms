@@ -603,6 +603,16 @@ public:
     }
     return norms;
   }
+  static std::vector<Norm> Deterministic2ndOrderWithR2Norms() {
+    std::vector<Norm> norms;
+    for (int i = 0; i < (1<<20); i++) {
+      const Norm n = Norm::ConstructFromID(i);
+      if (n.IsSecondOrder() && n.ID() >= n.SwapGB().ID()) {
+        norms.push_back(n);
+      }
+    }
+    return norms;
+  }
 
   static const std::vector<std::pair<int, std::string> > NormNames;
   std::string GetName() const {

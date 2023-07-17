@@ -293,6 +293,23 @@ TEST(Norm, Determinisitic3rdOrder) {
   EXPECT_EQ( ids.size(), 2080 );
 }
 
+TEST(Norm, Deterministic2ndOrderWithR2) {
+  std::vector<Norm> norms = Norm::Deterministic2ndOrderWithR2Norms();
+  std::set<int> ids;
+  std::set<int> self_symmetric;
+  for (const Norm& n: norms) {
+    EXPECT_TRUE(n.IsDeterministic());
+    EXPECT_TRUE(n.IsSecondOrder());
+    ids.insert(n.ID());
+    if (n.SwapGB().ID() == n.ID()) {
+      self_symmetric.insert(n.ID());
+    }
+  }
+  EXPECT_EQ( norms.size(), 528 );
+  EXPECT_EQ( ids.size(), 528 );
+  EXPECT_EQ( self_symmetric.size(), 32 );
+}
+
 TEST(Norm, ParseNormString) {
   EXPECT_EQ( Norm::ParseNormString("AllG").GetName(), "AllG" );
   EXPECT_EQ( Norm::ParseNormString("L1").GetName(), "L1" );
