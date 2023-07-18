@@ -1,3 +1,4 @@
-**/fixation_probs_*.msgpack
-**/fixation_probs_*.dat
-path_to_param.json
+*
+!.gitignore
+!make_path_to_param.py
+!readme
