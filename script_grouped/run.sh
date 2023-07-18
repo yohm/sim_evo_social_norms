@@ -1,4 +1,5 @@
 #!/bin/bash -eux
+set -o pipefail
 
 set +x
 eval $(/opt/homebrew/bin/brew shellenv)

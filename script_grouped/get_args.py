@@ -16,7 +16,7 @@ with open('_input.json') as f:
     input_json = json.load(f)
 input_json
 # %%
-comp_keys = ['N','benefit','sigma_in_times_b','mu_percept', 'mu_assess','q']
+comp_keys = ['norm_set','N','benefit','sigma_in_times_b','mu_percept', 'mu_assess','q']
 p1 = [input_json[k] for k in comp_keys]
 fix_prob_path = ""
 for k,v in fix_param.items():

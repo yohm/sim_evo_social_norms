@@ -1,7 +1,9 @@
 {
-  "N": 30,
-  "benefit": 5.0,
-  "sigma_in_times_b": 10.0,
+  "norm_set": "dual_second_order",
+  "___comment": "leading_eight, third_order, or dual_second_order",
+  "N": 50,
+  "benefit": 3.0,
+  "sigma_in_times_b": 1.0,
   "mu_assess": 0.05,
   "mu_percept": 0.0,
   "n_init": 10000,
@@ -9,8 +11,8 @@
   "q": 1.0,
   "M": 100,
   "T_init": 100000,
-  "T_measure": 5000000,
+  "T_measure": 10000000,
   "mut_r": 0.005,
-  "sigma_out_times_b": 10.0,
-  "_seed": 123456789
+  "sigma_out_times_b": 1.0,
+  "_seed": 1234567890
 }
