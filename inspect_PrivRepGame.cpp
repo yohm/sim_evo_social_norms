@@ -204,9 +204,9 @@ int main(int argc, char *argv[]) {
 
   if (args.size() == 1) {
     Norm n = Norm::ParseNormString(args.at(0), swap_gb);
-    std::cout << n.Inspect();
+    std::cerr << n.Inspect();
     Parameters params = j.get<Parameters>();
-    std::cout << nlohmann::json(params).dump(2) << std::endl;
+    std::cerr << nlohmann::json(params).dump(2) << std::endl;
     PrintSelectionMutationEquilibriumAllCAllD(n, params, check_local_mutants);
     PrintESSCheck(n, params, check_local_mutants);
   }
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
     Norm n1 = Norm::ParseNormString(args.at(0), swap_gb);
     Norm n2 = Norm::ParseNormString(args.at(1), swap_gb);
     Parameters params = j.get<Parameters>();
-    std::cout << nlohmann::json(params).dump(2) << std::endl;
+    std::cerr << nlohmann::json(params).dump(2) << std::endl;
     PrintCompetition(n1, n2, params);
   }
   else {
