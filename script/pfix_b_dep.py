@@ -8,8 +8,8 @@ script_path = os.path.dirname(os.path.abspath(__file__))
 exe_path = os.path.join(script_path, '..', 'cmake-build-release', 'main_fix_probs_param_dep')
 
 # %%
-def calc_payoffs(mu_assess=0.01, n_steps=10000, q=1.0, n=50):
-  out = subprocess.check_output([exe_path, '-j', f'{{"N":{n},"q":{q},"n_steps":{n_steps},"mu_assess":{mu_assess},"n_steps":{n_steps}}}', 'AllD', 'L1'], universal_newlines=True)
+def calc_payoffs(mu_assess=0.01, n_steps=10000, q=1.0, n=50, resident='AllD', mutant='L1'):
+  out = subprocess.check_output([exe_path, '-j', f'{{"N":{n},"q":{q},"n_steps":{n_steps},"mu_assess":{mu_assess},"n_steps":{n_steps}}}', resident, mutant], universal_newlines=True)
   dat = np.loadtxt(out.splitlines())
   return dat
 
@@ -35,11 +35,13 @@ def make_subplot(ax, dat, ylim_max=0.1):
 mu_list = [0.01, 0.03, 0.05, 0.1]
 q_list = [1.0, 0.9, 0.5, 0.1]
 
-N = 200
+N = 30
+resident = 'AllD'
+mutant = 'L1'
 dats = {}
 for mu_i,mu in enumerate(mu_list):
   for q_i,q in enumerate(q_list):
-    dat = calc_payoffs(mu_assess=mu, q=q, n=N)
+    dat = calc_payoffs(mu_assess=mu, q=q, n=N, resident=resident, mutant=mutant)
     dats[(mu_i, q_i)] = dat
 
 # %%
@@ -64,4 +66,4 @@ for mu_i,mu in enumerate(mu_list):
       ax.set_ylabel('fixation probability')
 
 # %%
-fig.savefig(f"pfix_b_dep_N{N}.pdf")
+fig.savefig(f"pfix_b_dep_N{N}_{resident}.pdf")
