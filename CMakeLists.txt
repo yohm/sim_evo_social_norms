@@ -57,6 +57,3 @@ target_link_libraries(inspect_PrivRepGame OpenMP::OpenMP_CXX Eigen3::Eigen nlohm
 add_executable(inspect_PrivRepGameTimeSeries inspect_PrivRepGameTimeSeries.cpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(inspect_PrivRepGameTimeSeries Eigen3::Eigen nlohmann_json::nlohmann_json)
 
-add_executable(inspect_finite_mu inspect_finite_mu.cpp Norm.hpp PrivRepGame.hpp)
-target_link_libraries(inspect_finite_mu Eigen3::Eigen OpenMP::OpenMP_CXX nlohmann_json::nlohmann_json)
-
