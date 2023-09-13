@@ -44,6 +44,9 @@ target_link_libraries(test_PublicRepGame GTest::gtest_main)
 add_executable(test_PrivRepGame test_PrivRepGame.cpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(test_PrivRepGame GTest::gtest_main)
 
+add_executable(test_EvolPrivRepGame test_EvolPrivRepGame.cpp EvolPrivRepGame.hpp PrivRepGame.hpp Norm.hpp)
+target_link_libraries(test_EvolPrivRepGame OpenMP::OpenMP_CXX Eigen3::Eigen nlohmann_json::nlohmann_json GTest::gtest_main)
+
 add_executable(inspect_Norm inspect_Norm.cpp Norm.hpp)
 
 add_executable(inspect_PublicRepGame inspect_PublicRepGame.cpp PublicRepGame.hpp Norm.hpp)
