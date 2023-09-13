@@ -44,8 +44,8 @@ public:
   }
 
   // cooperation probability of mono-morphic population
-  static double MonomorphicCooperationLevel(const Norm& str, const Parameters& param) {
-    PrivateRepGame game( {{str, param.N}}, param.seed);
+  static double MonomorphicCooperationLevel(const Norm& norm, const Parameters& param) {
+    PrivateRepGame game({{norm, param.N}}, param.seed);
     game.Update(param.t_init, param.q, param.mu_impl, param.mu_percept, param.mu_assess1, param.mu_assess2, false);
     game.ResetCounts();
     game.Update(param.t_measure, param.q, param.mu_impl, param.mu_percept, param.mu_assess1, param.mu_assess2, false);

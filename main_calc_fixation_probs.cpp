@@ -7,26 +7,24 @@
 #include <nlohmann/json.hpp>
 #include "Vector2d.hpp"
 #include "Norm.hpp"
-#include "PrivRepGame.hpp"
-#include "Parameters.hpp"
+#include "EvolPrivRepGame.hpp"
 
 
-double SelfCoopLevel(const Norm& norm, const EvolPrivRepGame::SimulationParameters& evoparams) {
-  EvolPrivRepGame evol(evoparams);
-  return evol.SelfCooperationLevel(norm);
+double SelfCoopLevel(const Norm& norm, const EvolPrivRepGame::Parameters& evoparam) {
+  return EvolPrivRepGame::MonomorphicCooperationLevel(norm, evoparam);
 }
 
 using p_fix_vec_t = std::vector< Vector2d<double> >;
-void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Norm>& norms, std::vector<double>& self_coop_levels, p_fix_vec_t& p_fix_vec) {
+using b_sigma_vec_t = std::vector< std::pair<double,double> >;
+void CalculateFixationProbs(const EvolPrivRepGame::Parameters& evoparam, const b_sigma_vec_t& b_sigma_vec, const std::vector<Norm>& norms, std::vector<double>& self_coop_levels, p_fix_vec_t& p_fix_vec) {
 
   const size_t NN = norms.size();   // number of norms
   self_coop_levels.clear();
   self_coop_levels.assign(NN, 0.0);
-  size_t NP = params.benefit_sigma_in_vec().size();
+  size_t NP = b_sigma_vec.size();
   p_fix_vec.clear();
   p_fix_vec.assign(NP, Vector2d<double>(NN, NN, 0.0));
 
-  EvolPrivRepGame::SimulationParameters evoparams = params.ToEvolParams();
 
   int my_rank = 0, num_procs = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -36,11 +34,12 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
   for (size_t i = 0; i < NN; i++) {
     if (i % num_procs != my_rank) continue;
     const Norm& n1 = norms[i];
-    evoparams.seed += i;
-    double pc = SelfCoopLevel(n1, evoparams);
+    EvolPrivRepGame::Parameters params = evoparam;
+    params.seed += i;
+    double pc = SelfCoopLevel(n1, evoparam);
     self_coop_levels[i] = pc;
     for (auto& p_fix : p_fix_vec) {
-      p_fix(i, i) = 1.0 / params.N;
+      p_fix(i, i) = 1.0 / static_cast<double>(params.N);
     }
   }
 
@@ -61,9 +60,9 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
     }
     const Norm& n1 = norms[i];
     const Norm& n2 = norms[j];
-    evoparams.seed += NN + ij * params.N;
-    EvolPrivRepGame evol(evoparams);
-    auto fs_vec = evol.FixationProbabilityBatch(n1, n2, params.benefit_sigma_in_vec());
+    EvolPrivRepGame::Parameters params = evoparam;
+    params.seed += NN + ij * params.N;
+    auto fs_vec = EvolPrivRepGame::FixationProbabilityBatch(n1, n2, params, b_sigma_vec);
     for (size_t n = 0; n < NP; n++) {
       p_fix_vec[n](i,j) = fs_vec[n].first;
       p_fix_vec[n](j,i) = fs_vec[n].second;
@@ -78,10 +77,12 @@ void CalculateFixationProbs(const ParametersBatch& params, const std::vector<Nor
 }
 
 
-void WriteInMsgpack(const std::string& filepath, const Parameters& params, const std::string& norm_set_name, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
+void WriteInMsgpack(const std::string& filepath, const EvolPrivRepGame::Parameters& evoparam, double benefit, double sigma_in, const std::string& norm_set_name, const std::vector<int>& norm_ids, const std::vector<double>& self_coop_levels, const Vector2d<double>& p_fix) {
   // convert to json
   nlohmann::json j_out = nlohmann::json::object();
-  j_out["params"] = params;
+  j_out["evoparam"] = evoparam;
+  j_out["benefit"] = benefit;
+  j_out["sigma_in"] = sigma_in;
   j_out["norm_set"] = norm_set_name;
   j_out["norm_ids"] = norm_ids;
   j_out["self_coop_levels"] = self_coop_levels;
@@ -103,6 +104,16 @@ void PrintFixationProbsInText(std::ofstream& out, const std::string& norm_set_na
     out << std::endl;
   }
 }
+
+struct Input {
+  EvolPrivRepGame::Parameters evoparam;
+  std::vector<std::pair<double, double>> benefit_sigma_in_vec;
+
+  Input() : evoparam(), benefit_sigma_in_vec() {};
+
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Input, evoparam, benefit_sigma_in_vec);
+};
+
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
@@ -156,10 +167,11 @@ int main(int argc, char* argv[]) {
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
   }
-  ParametersBatch params = j.get<ParametersBatch>();
+
+  Input input = j.get<Input>();
 
   if (my_rank == 0) {
-    std::cerr << "params: " << nlohmann::json(params) << std::endl;
+    std::cerr << "params: " << nlohmann::json(input) << std::endl;
     std::cerr << "norm_set: " << norm_set << std::endl;
   }
 
@@ -192,7 +204,7 @@ int main(int argc, char* argv[]) {
 
   std::vector<double> self_coop_levels;
   p_fix_vec_t p_fix_vec;
-  CalculateFixationProbs(params, norms, self_coop_levels, p_fix_vec);
+  CalculateFixationProbs(input.evoparam, input.benefit_sigma_in_vec, norms, self_coop_levels, p_fix_vec);
 
   std::vector<int> norm_ids;
   for (const Norm& n: norms) {
@@ -206,7 +218,8 @@ int main(int argc, char* argv[]) {
 
     for (size_t n = 0; n < p_fix_vec.size(); n++) {
       std::string filename = "fixation_probs_" + std::to_string(n) + ".msgpack";
-      WriteInMsgpack(filename, params.ParameterAt(n), norm_set_name, norm_ids, self_coop_levels, p_fix_vec[n]);
+      auto [benefit, sigma_in] = input.benefit_sigma_in_vec.at(n);
+      WriteInMsgpack(filename, input.evoparam, benefit, sigma_in, norm_set_name, norm_ids, self_coop_levels, p_fix_vec[n]);
       // write txt file as well
       std::ofstream fout("fixation_probs_" + std::to_string(n) + ".dat");
       PrintFixationProbsInText(fout, norm_set_name, norm_ids, self_coop_levels, p_fix_vec[n]);
