@@ -1,6 +1,3 @@
 [submodule "icecream-cpp"]
 	path = icecream-cpp
 	url = https://github.com/renatoGarcia/icecream-cpp.git
-[submodule "caravan-lib"]
-	path = caravan-lib
-	url = https://github.com/yohm/caravan-lib

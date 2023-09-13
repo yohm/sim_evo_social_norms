@@ -22,9 +22,6 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(main_exhaustive_evol_stab.out main_exhaustive_evol_stab.cpp Norm.hpp PrivRepGame.hpp)
-target_link_libraries(main_exhaustive_evol_stab.out Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
-target_include_directories(main_exhaustive_evol_stab.out PRIVATE ${CMAKE_SOURCE_DIR}/caravan-lib)
 
 add_executable(main_calc_fixation_probs main_calc_fixation_probs.cpp Norm.hpp PrivRepGame.hpp Vector2d.hpp Parameters.hpp)
 target_link_libraries(main_calc_fixation_probs Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
