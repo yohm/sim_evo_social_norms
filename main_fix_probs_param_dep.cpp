@@ -5,12 +5,10 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 #include "Vector2d.hpp"
-#include "Norm.hpp"
-#include "PrivRepGame.hpp"
-#include "Parameters.hpp"
+#include "EvolPrivRepGame.hpp"
 
 
-void PrintFixationProbParamDep(const Parameters& params, const Norm& resident, const Norm& mutant, std::ostream& out) {
+void PrintFixationProbParamDep(const EvolPrivRepGame::Parameters& evoparam, const Norm& resident, const Norm& mutant, std::ostream& out) {
   std::vector<double> sigma_array = {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0};
   std::vector<std::pair<double,double>> benefit_sigma_vec;
   for (double sigma : sigma_array) {
@@ -22,9 +20,7 @@ void PrintFixationProbParamDep(const Parameters& params, const Norm& resident, c
     }
   }
 
-  auto evoparams = params.ToEvolParams();
-  EvolPrivRepGame evol(evoparams);
-  std::vector<std::pair<double,double>> fixs = evol.FixationProbabilityBatch(resident, mutant, benefit_sigma_vec);
+  std::vector<std::pair<double,double>> fixs = EvolPrivRepGame::FixationProbabilityBatch(resident, mutant, evoparam, benefit_sigma_vec);
 
   for (size_t i = 0; i < benefit_sigma_vec.size(); i++) {
     out << benefit_sigma_vec[i].first << ' ' << benefit_sigma_vec[i].second << ' ' << fixs[i].first << std::endl;
@@ -55,7 +51,7 @@ int main(int argc, char* argv[]) {
       args.emplace_back(argv[i]);
     }
   }
-  Parameters params = j.get<Parameters>();
+  auto params = j.get<EvolPrivRepGame::Parameters>();
 
   std::cerr << "params: " << nlohmann::json(params) << std::endl;
 
