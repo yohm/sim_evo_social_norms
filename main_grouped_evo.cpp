@@ -39,17 +39,16 @@ class GroupedEvoGame {
 public:
   class Parameters {
     public:
-    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out_times_b(5.0), mut_r(0.1) {}
+    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(5.0), mut_r(0.1) {}
     size_t M;   // number of groups
     size_t T_init;
     size_t T_measure;
     uint64_t seed;
     double benefit;
-    double sigma_out_times_b;
+    double sigma_out;
     double mut_r;   // relative mutation rate
-    double sigma_out() const { return sigma_out_times_b / (benefit-1.0); }
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, benefit, sigma_out_times_b, mut_r)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, benefit, sigma_out, mut_r)
   };
 
   explicit GroupedEvoGame(const Parameters& _prm, const std::vector<Norm>& _norms) :
@@ -123,7 +122,7 @@ private:
     double pi_resident  = (benefit - 1.0) * self_coop_level_cache[resident];
     double pi_immigrant = (benefit - 1.0) * self_coop_level_cache[immigrant];
     // f_{A\to B} = { 1 + \exp[ \sigma_out (s_A - s_B) ] }^{-1}
-    return 1.0 / (1.0 + std::exp(prm.sigma_out() * (pi_resident - pi_immigrant) ));
+    return 1.0 / (1.0 + std::exp(prm.sigma_out * (pi_resident - pi_immigrant) ));
   }
 public:
   size_t NumGroupsOf(const Norm& n) const {
@@ -244,11 +243,11 @@ int main(int argc, char* argv[]) {
   for (size_t i = 0; i < self_coop_levels.size(); ++i) {
     self_coop_levels[i] = j_in["self_coop_levels"][i].get<double>();
   }
-  double benefit = j_in["params"]["benefit"].get<double>();
+  double benefit = j_in["benefit"].get<double>();
   // check consistency of benefit
   if ( std::abs(benefit - params.benefit) > 1.0e-8 ) {
     std::cerr << "Error: benefit in the input file is inconsistent with the parameter file" << std::endl;
-    std::cerr << j_in["params"] << std::endl;
+    std::cerr << j_in["benefit"] << std::endl;
     return 1;
   }
   // IC(p_fix._data, self_coop_levels);

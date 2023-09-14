@@ -26,10 +26,10 @@ FetchContent_MakeAvailable(googletest)
 add_executable(main_calc_fixation_probs main_calc_fixation_probs.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp Vector2d.hpp)
 target_link_libraries(main_calc_fixation_probs Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
 
-add_executable(main_fix_probs_param_dep main_fix_probs_param_dep.cpp Norm.hpp PrivRepGame.hpp Vector2d.hpp)
-target_link_libraries(main_fix_probs_param_dep Eigen3::Eigen OpenMP::OpenMP_CXX MPI::MPI_CXX nlohmann_json::nlohmann_json)
+add_executable(main_fix_probs_param_dep main_fix_probs_param_dep.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp Vector2d.hpp)
+target_link_libraries(main_fix_probs_param_dep Eigen3::Eigen OpenMP::OpenMP_CXX nlohmann_json::nlohmann_json)
 
-add_executable(main_grouped_evo main_grouped_evo.cpp Norm.hpp PrivRepGame.hpp Vector2d.hpp)
+add_executable(main_grouped_evo main_grouped_evo.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp Vector2d.hpp)
 target_link_libraries(main_grouped_evo Eigen3::Eigen nlohmann_json::nlohmann_json)
 
 add_executable(test_Norm test_Norm.cpp Norm.hpp)
