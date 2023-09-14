@@ -57,7 +57,7 @@ void PrintCompetition(const Norm& n1, const Norm& n2, const EvolPrivRepGame::Par
   auto pi_j = std::get<3>(rhoij_rhoji_pii_pij);
   std::cerr << "# num mutants l, pi_i[l], pi_j[l]" << std::endl;
   for (size_t l = 1; l < params.N; l++) {
-    std::cerr << l << " " << pi_i[l] << " " << pi_j[l] << std::endl;
+    std::cout << l << " " << pi_i[l] << " " << pi_j[l] << std::endl;
   }
 
   auto end = std::chrono::high_resolution_clock::now();

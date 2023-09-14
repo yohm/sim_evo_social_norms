@@ -6,17 +6,18 @@ import os
 
 # %%
 script_path = os.path.dirname(os.path.abspath(__file__))
-exe_path = os.path.join(script_path, 'inspect_PrivRepGame')
+exe_path = os.path.join(script_path, '..', 'cmake-build-release', 'inspect_EvolPrivRepGame')
 print(exe_path)
 
 # %%
-benefit = 1.5
+benefit = 5
 
 def calc_payoffs(resident, mutant):
-  n_steps = 50000
-  out = subprocess.check_output([exe_path, '-j', f'{{"N":50,"q":1,"n_steps":{n_steps},"benefit":{benefit}}}', resident, mutant], universal_newlines=True)
+  #t_measure = 1000
+  t_measure = 10000
+  out = subprocess.check_output([exe_path, '-j', f'{{"N":50,"q":1,"t_measure":{t_measure},"benefit":{benefit}}}', resident, mutant], universal_newlines=True)
 
-  dat = np.loadtxt(out.splitlines(), delimiter=',', skiprows=1)
+  dat = np.loadtxt(out.splitlines(), delimiter=' ', skiprows=0)
   return dat
 
 # %%
