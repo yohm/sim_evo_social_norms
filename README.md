@@ -4,7 +4,6 @@
 - OpenMP
 - MPI
 - Eigen3
-- pagmo
 - nlohmann-json
 
 Install these prerequisites by homebrew if you are on macOS.
@@ -14,7 +13,6 @@ brew install cmake
 brew install libomp
 brew install open-mpi
 brew install eigen
-brew install pagmo
 brew install nlohmann-json
 ```
 
@@ -34,5 +32,19 @@ mkdir build
 cd build
 cmake ..
 cmake --build .
+```
+
+## Executables
+
+- `main_calc_fixation_probs`: Calculate all the fixation probabilities between a set of social norms.
+- `main_fix_probs_param_dep`: Calculate the fixation probability between two species for different sigma & benefit.
+- `main_grouped_evo`: evolutionary simulation of group-structured population. Fixation probabilities must be calculated in advance by `main_calc_fixation_probs`.
+
+## Tests
+
+Unit tests are prepared. The executables that starts with `test_` are the unit tests. Run these like
+
+```bash
+./test_Norm
 ```
 
