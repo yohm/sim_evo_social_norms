@@ -208,6 +208,69 @@ public:
     return ans;
   }
 
+  // arg: transition probability matrix p
+  //      p[i][j] : fixation probability of a j-mutant into i-resident.
+  // return: stationary distribution vector
+  static std::vector<double> EquilibriumPopulationLowMutPowerMethod(const std::vector<std::vector<double>>& fixation_probs) {
+    // calculate stationary distribution using the power method
+
+    // Initialize the initial guess for the principal eigenvector
+    size_t N = fixation_probs.size();
+    std::vector<double> x(N, 1.0/static_cast<double>(N));
+
+    // transposed A matrix
+    // A_ij = fixation_probs[j][i] / (1.0 - static_cast<double>(N));
+    std::vector<double> A(N*N, 0.0);
+    for (size_t i = 0; i < N; i++) {
+      double sum = 0.0;
+      for (size_t j = 0; j < N; j++) {
+        if (i == j) continue;
+        A[j*N+i] = fixation_probs[i][j] / (static_cast<double>(N)-1.0);
+        sum += A[j*N+i];
+      }
+      A[i*N+i] = 1.0 - sum;
+    }
+
+    constexpr size_t maxIterations = 1000;
+    constexpr double tolerance = 1.0e-8;
+
+    for (size_t t=0; t < maxIterations; t++) {
+      // matrix multiplication
+      std::vector<double> x_new(N, 0.0);
+      for (size_t i = 0; i < N; i++) {
+        double sum = 0.0;
+        for (size_t j = 0; j < N; j++) {
+          sum += A[i*N+j] * x[j];
+        }
+        x_new[i] = sum;
+      }
+
+      if (t % 10 == 9) {
+        // normalization
+        double norm = 0.0;
+        for (size_t i = 0; i < N; i++) {
+          norm += x_new[i];
+        }
+        for (size_t i = 0; i < N; i++) {
+          x_new[i] /= norm;
+        }
+
+        // check convergence
+        double diff = 0.0;
+        for (size_t i = 0; i < N; i++) {
+          diff += std::abs(x_new[i] - x[i]);
+        }
+        if (diff < tolerance) {
+          std::cerr << "converged at step " << t << std::endl;
+          return x_new;
+        }
+      }
+
+      x = x_new;
+    }
+    return x;
+  }
+
   // Evolutionary game between X and AllC and AllD
   // optimized for the three-species system
   // return self-cooperation-level, rho, equilibrium population

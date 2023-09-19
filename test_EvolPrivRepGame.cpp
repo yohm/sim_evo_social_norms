@@ -81,6 +81,12 @@ TEST(EvolPrivRepGame, L1_AllC_AllD) {
   EXPECT_NEAR(eq[1], 0.04, 0.02);
   EXPECT_NEAR(eq[2], 0.66, 0.02);
 
+  auto eq2 = evol::EquilibriumPopulationLowMutPowerMethod(rhos);
+  // IC(eq2);
+  EXPECT_NEAR(eq2[0], 0.30, 0.02);
+  EXPECT_NEAR(eq2[1], 0.04, 0.02);
+  EXPECT_NEAR(eq2[2], 0.66, 0.02);
+
   auto pc_l1 = evol::MonomorphicCooperationLevel({l1}, params);
   // IC(pc_l1);
   // pc_l1: 0.903
