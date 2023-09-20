@@ -37,7 +37,7 @@ nlohmann::json LoadMsgpackFile(const std::string& path) {
 
 
 int main(int argc, char* argv[]) {
-  // run evolutionary simulation in group-structured population
+  // run evolutionary simulation in homogeneous population
 
   using json = nlohmann::json;
 

@@ -32,8 +32,11 @@ target_link_libraries(main_fix_probs_param_dep Eigen3::Eigen OpenMP::OpenMP_CXX 
 add_executable(main_grouped_evo main_grouped_evo.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp Vector2d.hpp)
 target_link_libraries(main_grouped_evo Eigen3::Eigen nlohmann_json::nlohmann_json)
 
-add_executable(main_homogeneous_evo main_homogeneous_evo.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp Vector2d.hpp)
+add_executable(main_homogeneous_evo main_homogeneous_evo.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp)
 target_link_libraries(main_homogeneous_evo Eigen3::Eigen nlohmann_json::nlohmann_json)
+
+add_executable(main_grouped_evo_ODE main_grouped_evo_ODE.cpp Norm.hpp PrivRepGame.hpp EvolPrivRepGame.hpp)
+target_link_libraries(main_grouped_evo_ODE Eigen3::Eigen nlohmann_json::nlohmann_json)
 
 add_executable(test_Norm test_Norm.cpp Norm.hpp)
 target_link_libraries(test_Norm GTest::gtest_main)
@@ -57,3 +60,5 @@ target_link_libraries(inspect_PrivRepGame nlohmann_json::nlohmann_json)
 add_executable(inspect_EvolPrivRepGame inspect_EvolPrivRepGame.cpp EvolPrivRepGame.hpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(inspect_EvolPrivRepGame Eigen3::Eigen OpenMP::OpenMP_CXX nlohmann_json::nlohmann_json)
 
+add_executable(msgpack2json msgpack2json.cpp)
+target_link_libraries(msgpack2json nlohmann_json::nlohmann_json)
