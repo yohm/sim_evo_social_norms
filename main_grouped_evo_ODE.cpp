@@ -115,13 +115,15 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
     return ans;
   };
 
-  const size_t T_max = 1000;
+  const size_t T_max = 1;
   vd_t x(N, 0.0);
+  // measure elapsed time
   {
     std::ofstream fout("timeseries.dat");
     for (double& xi : x) { xi = 1.0 / N; }
     size_t dt = T_max / 500;
     for (size_t t = 0; t < T_max; t++) {
+      auto start = std::chrono::high_resolution_clock::now();
       x = SolveByRungeKutta(x_dot, x, 0.01, 100);
       if (t % dt == 0) {
         fout << t << ' ';
@@ -131,6 +133,11 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
         for (double xi : x) { fout << xi << ' '; }
         fout << std::endl;
       }
+      auto end = std::chrono::high_resolution_clock::now();
+      // get elapsed time in second
+      std::chrono::duration<double> elapsed = end - start;
+
+      std::cerr << "t: " << t << ", elapsed: " << elapsed.count() << std::endl;
     }
   }
 
@@ -189,8 +196,9 @@ int main(int argc, char* argv[]) {
   });
 
   // print out
+  std::ofstream fout("stationary.dat");
   for (auto& n : norms_to_measure) {
-    std::cout << std::get<0>(n) << ' ' << std::get<1>(n) << ' ' << std::get<2>(n) << std::endl;
+    fout << std::get<0>(n) << ' ' << std::get<1>(n) << ' ' << std::get<2>(n) << std::endl;
   }
 
   return 0;
