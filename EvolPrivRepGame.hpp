@@ -231,10 +231,13 @@ public:
       A[i*N+i] = 1.0 - sum;
     }
 
-    constexpr size_t maxIterations = 1000;
+    constexpr size_t maxIterations = 100000;
     constexpr double tolerance = 1.0e-8;
 
     for (size_t t=0; t < maxIterations; t++) {
+      if (t % 1000 == 0) {
+        std::cerr << "iteration: " << t << std::endl;
+      }
       // matrix multiplication
       std::vector<double> x_new(N, 0.0);
       for (size_t i = 0; i < N; i++) {
@@ -256,11 +259,14 @@ public:
         }
 
         // check convergence
-        double diff = 0.0;
+        double max_diff = 0.0;
         for (size_t i = 0; i < N; i++) {
-          diff += std::abs(x_new[i] - x[i]);
+          double diff = std::abs(x_new[i] - x[i]);
+          if (diff > max_diff) {
+            max_diff = diff;
+          }
         }
-        if (diff < tolerance) {
+        if (max_diff < tolerance) {
           std::cerr << "converged at step " << t << std::endl;
           return x_new;
         }
@@ -268,6 +274,8 @@ public:
 
       x = x_new;
     }
+
+    std::cerr << "didn't converge" << std::endl;
     return x;
   }
 
