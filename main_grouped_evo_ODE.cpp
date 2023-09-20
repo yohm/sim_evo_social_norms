@@ -7,8 +7,27 @@
 #include <nlohmann/json.hpp>
 #include <icecream.hpp>
 #include "Norm.hpp"
-#include "EvolPrivRepGame.hpp"
 
+
+void PrintProgress(double progress) {
+  static auto start = std::chrono::high_resolution_clock::now();
+  int barWidth = 70;
+  std::cerr << "\33[2K[";
+  int pos = static_cast<int>(barWidth * progress);
+  for (int i = 0; i < barWidth; ++i) {
+    if (i < pos) std::cerr << "=";
+    else if (i == pos) std::cerr << ">";
+    else std::cerr << " ";
+  }
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  std::cerr << "] " << int(progress * 100.0) << " %,  " << elapsed.count() << " sec\r";
+  std::cerr.flush();
+  if (progress >= 1.0) {
+    std::cerr << std::endl;
+    return;
+  }
+}
 
 nlohmann::json LoadMsgpackFile(const std::string& path) {
   std::ifstream fin(path, std::ios::binary);
@@ -110,7 +129,7 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
     }
   };
 
-  const size_t T_max = 1;
+  const size_t T_max = 500;
   vd_t x(N, 0.0);
   // measure elapsed time
   {
@@ -118,8 +137,7 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
     for (double& xi : x) { xi = 1.0 / N; }
     size_t dt = T_max / 500;
     for (size_t t = 0; t < T_max; t++) {
-      auto start = std::chrono::high_resolution_clock::now();
-      x = SolveByRungeKutta(calc_x_dot, x, 0.01, 100);
+      x = SolveByRungeKutta(calc_x_dot, x, 0.1, 10);
       if (t % dt == 0) {
         fout << t << ' ';
         double pc = 0.0;
@@ -127,12 +145,8 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
         fout << pc << ' ';
         for (double xi : x) { fout << xi << ' '; }
         fout << std::endl;
+        PrintProgress(static_cast<double>(t) / T_max);
       }
-      auto end = std::chrono::high_resolution_clock::now();
-      // get elapsed time in second
-      std::chrono::duration<double> elapsed = end - start;
-
-      std::cerr << "t: " << t << ", elapsed: " << elapsed.count() << std::endl;
     }
   }
 
