@@ -43,47 +43,43 @@ double InterGroupImitationProb(double pc_res, double pc_mut, double benefit, dou
 }
 
 using vd_t = std::vector<double>;
-vd_t SolveByRungeKutta(std::function<vd_t(vd_t)>& func, const vd_t& init, double dt, size_t n_iter) {
+vd_t SolveByRungeKutta(std::function<void(const vd_t&,vd_t&)>& func, const vd_t& init, double dt, size_t n_iter) {
   const size_t N = init.size();
   vd_t ht = init;
+  vd_t k1(N, 0.0), arg2(N, 0.0), k2(N, 0.0), arg3(N, 0.0), k3(N, 0.0), arg4(N, 0.0), k4(N, 0.0);
   for (size_t t = 0; t < n_iter; t++) {
 #ifdef DEBUG
     if (t % 10000 == 9999) {
       std::cerr << t << ' ' << ht[0] << ' ' << ht[1] << ' ' << ht[2] << std::endl;
     }
 #endif
-    vd_t k1 = func(ht);
-    vd_t arg2(N, 0.0);
-    for(int i = 0; i < k1.size(); i++) {
+    func(ht, k1);
+    for(int i = 0; i < N; i++) {
       k1[i] *= dt;
       arg2[i] = ht[i] + 0.5 * k1[i];
     }
-    vd_t k2 = func(arg2);
-    vd_t arg3(N, 0.0);
-    for(int i = 0; i < k2.size(); i++) {
+    func(arg2, k2);
+    for(int i = 0; i < N; i++) {
       k2[i] *= dt;
       arg3[i] = ht[i] + 0.5 * k2[i];
     }
-    vd_t k3 = func(arg3);
-    vd_t arg4(N, 0.0);
-    for(int i = 0; i < k3.size(); i++) {
+    func(arg3, k3);
+    for(int i = 0; i < N; i++) {
       k3[i] *= dt;
       arg4[i] = ht[i] + k3[i];
     }
-    vd_t k4 = func(arg4);
-    for(int i = 0; i < k4.size(); i++) {
+    func(arg4, k4);
+    for(int i = 0; i < N; i++) {
       k4[i] *= dt;
     }
-    vd_t delta(N, 0.0);
     double sum = 0.0;
-    for (int i = 0; i < delta.size(); i++) {
-      delta[i] = (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]) / 6.0;
-      ht[i] += delta[i];
+    for (int i = 0; i < N; i++) {
+      ht[i] += (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]) / 6.0;
       sum += ht[i];
     }
     // normalize ht
     double sum_inv = 1.0 / sum;
-    for (int i = 0; i < ht.size(); i++) { ht[i] *= sum_inv; }
+    for (int i = 0; i < N; i++) { ht[i] *= sum_inv; }
   }
   return ht;
 }
@@ -102,17 +98,16 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
     }
   }
 
-  std::function<vd_t(vd_t)> x_dot = [&p_fix,&alpha,r_mut,N](const vd_t& x) {
-    vd_t ans(N, 0.0);
+  // x_dot must have size N
+  std::function<void(const vd_t&,vd_t&)> calc_x_dot = [&p_fix,&alpha,r_mut,N](const vd_t& x, vd_t& x_dot) {
     for (size_t i = 0; i < N; i++) {
       double dx = 0.0;
       for (size_t j = 0; j < N; j++) {
         if (i == j) continue;
         dx += (1.0 - r_mut) * x[i] * x[j] * alpha[j][i] - r_mut * x[i] * p_fix[i][j] / N + r_mut * x[j] * p_fix[i][j] / N;
       }
-      ans[i] = dx;
+      x_dot[i] = dx;
     }
-    return ans;
   };
 
   const size_t T_max = 1;
@@ -124,7 +119,7 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
     size_t dt = T_max / 500;
     for (size_t t = 0; t < T_max; t++) {
       auto start = std::chrono::high_resolution_clock::now();
-      x = SolveByRungeKutta(x_dot, x, 0.01, 100);
+      x = SolveByRungeKutta(calc_x_dot, x, 0.01, 100);
       if (t % dt == 0) {
         fout << t << ' ';
         double pc = 0.0;
