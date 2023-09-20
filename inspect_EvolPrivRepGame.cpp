@@ -21,7 +21,14 @@ void PrintSelectionMutationEquilibriumAllCAllD(const Norm& norm, const EvolPrivR
   auto rhos = std::get<1>(selfc_rho_eq);
   auto eq = std::get<2>(selfc_rho_eq);
   double eq_cooperation_level = self_cooperation_level * eq[0] + 1.0 * eq[1] + 0.0 * eq[2];
-  IC(self_cooperation_level, rhos, eq, eq_cooperation_level);
+
+  nlohmann::json j = {
+    {"self_cooperation_level", self_cooperation_level},
+    {"rhos", rhos},
+    {"eq", eq},
+    {"eq_cooperation_level", eq_cooperation_level}
+  };
+  std::cout << j.dump(2) << std::endl;
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
