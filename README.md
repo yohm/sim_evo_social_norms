@@ -48,3 +48,27 @@ Unit tests are prepared. The executables that starts with `test_` are the unit t
 ./test_Norm
 ```
 
+# how to run
+
+## `main_calc_fixation_probs`
+
+1. Run `main_calc_fixation_probs` to calculate the fixation probabilities between social norms.
+  - Since its calculation is heavy, it must be run on a supercomputer.
+  - To build on Fugaku, execute `./fugaku_build_calc_fixation_probs.sh`.
+2. Submit a job
+  - Use scripts in `fugaku_job/` directory.
+  - `fugaku_job.sh` is a sample job script. The input parameters are specified by `params.json`. When you run a job, copy these files into another directory and change parameters as you like. Don't forget to correctly specify the path to the executable in the job script if you change the working directory.
+3. After the job is complete, you will find files `fixation_probs_%d.dat` and `fixation_probs_%d.msgpack`.
+  - These output files contain the fixation probabilities for all possible combinations of the strategies.
+  - Both `dat` and `msgpack` files contain almost the same information. `dat` file is a text file that is convenient for debugging and a quick inspection. `msgpack` file is a binary file including more detailed information.
+
+## `main_well_mixed_evo`
+
+Calculate the stationary distribution of evolutionary process in well-mixed populations.
+Using the output of `main_calc_fixation_probs`, principal eigenvector of the Markov process is calculated via the power iteration method.
+
+1. Run with the msgpack file as an argument: `main_well_mixed_evo <msgpack file>`
+2. The abundance of each strategy in equilibrium state is printed.
+
+
+

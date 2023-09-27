@@ -72,6 +72,13 @@ int main(int argc, char* argv[]) {
 
   auto stationary = EvolPrivRepGame::EquilibriumPopulationLowMutPowerMethod(p_fix);
 
+  // equilibrium cooperation level
+  double pc_eq = 0.0;
+  for (size_t i = 0; i < norms.size(); ++i) {
+    pc_eq += stationary[i] * self_coop_levels[i];
+  }
+  std::cerr << "equilibrium_coop_level: " << pc_eq << std::endl;
+
   // make tuple of norm_id & stationary & coop_level
   std::vector<std::tuple<int, double, double>> norms_to_measure;
   for (size_t i = 0; i < norms.size(); ++i) {
@@ -82,6 +89,7 @@ int main(int argc, char* argv[]) {
   std::sort(norms_to_measure.begin(), norms_to_measure.end(), [](auto& a, auto& b) {
     return std::get<1>(a) > std::get<1>(b);
   });
+
 
   // print out
   for (auto& n : norms_to_measure) {
