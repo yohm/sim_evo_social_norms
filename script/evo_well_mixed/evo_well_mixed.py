@@ -34,17 +34,66 @@ pc
 benefit_list = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
 mu_list = [0.01, 0.02, 0.05, 0.1]
 
-input_dirs = [os.path.join(input_dir_path, f'third_order_mu{mu}') for mu in mu_list]
 
-input_paths = []
-for s in range(8, 16):
-  msgpack_path = os.path.join(input_dir_path, f'third_order_mu0.1/fixation_probs_{s}.msgpack')
-  input_paths.append(msgpack_path)
-input_paths
+# %%
+numpy_pc = None
+fname = 'third_order_eq_pc.dat'
+if os.path.exists(fname):
+  with open(fname, 'rb') as f:
+    numpy_pc = np.loadtxt(f)
+numpy_pc
+
+# %%
+if numpy_pc is None:
+  pc_all = []
+  for mu in mu_list:
+    input_dir = os.path.join(input_dir_path, f'third_order_mu{mu}')
+    paths = [os.path.join(input_dir, f'fixation_probs_{s}.msgpack') for s in range(8, 16)]
+
+    pc_list = []
+    for p in paths:
+      out = calc_stationary(p)
+      pc = equilibrium_coop_level(out)
+      pc_list.append(pc)
+    pc_all.append(pc_list)
+
+  numpy_pc = np.array(pc_all)
+
+# %%
+np.savetxt(fname, numpy_pc)
+numpy_pc
 
 
-# %%%%%%%%%%%%%%%%%%%
 
+
+
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(8,6))
+
+color_map = plt.get_cmap('viridis')
+for mu_i,mu in enumerate(mu_list):
+  ax.plot(benefit_list, numpy_pc[mu_i,:], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+  ax.set_xlim([1.2,5.2])
+  ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+  ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
+  ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+  ax.set_ylim([0.0,1.0])
+  ax.legend(loc='upper right', fontsize=20)
+  ax.set_xlabel('benefit', fontsize=24)
+  ax.set_ylabel('cooperation level', fontsize=24)
+
+fig.show()
+
+
+# %%
+fig.savefig('third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
+# %%
+dat = {}
+if os.path.exists('three_species.pickle'):
+  with open('three_species.pickle', 'rb') as f:
+    dat = pickle.load(f)
+dat
 # %%
 plt.clf()
 resident = 'L1'
@@ -54,58 +103,41 @@ plt.ylabel('cooperation level')
 plt.xlim([1.2,5.2])
 plt.ylim([0.0,1.0])
 for mu_i,mu in enumerate(mu_list):
-  key = (N,mu,resident)
+  key = (50,mu,resident)
   plt.plot(benefit_list, dat[key], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
 plt.legend(loc='upper left')
-
-
-# %%
-fig,axs = plt.subplots(2, 4, figsize=(24,12), sharex=True, sharey=True)
-plt.subplots_adjust(wspace=0.02, hspace=0.2)
-custom_x_ticks = [2.0, 3.0, 4.0, 5.0]
-
-for i, (ax, resident) in enumerate(zip(axs.flat, leading_eight)):
-  ax.set_title(resident, fontsize=26)
-  for mu_i,mu in enumerate(mu_list):
-    key = (N,mu,resident)
-    ax.plot(benefit_list, dat[key], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
-    ax.set_xlim([1.2,5.2])
-    ax.set_xticks(custom_x_ticks)
-    ax.set_xticklabels(custom_x_ticks, fontsize=16)
-    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-    ax.set_ylim([0.0,1.0])
-    if i == 3:
-      ax.legend(loc='upper right', fontsize=20)
-    if i >= 4:
-      ax.set_xlabel('benefit', fontsize=24)
-    if i % 4 == 0:
-      ax.set_ylabel('cooperation level', fontsize=24)
-
-# %%
-fig.savefig('three_species.pdf', bbox_inches='tight', pad_inches=0.3)
 # %%
 
-fig,axs = plt.subplots(4, 4, figsize=(24,24), sharex=True, sharey=True)
-plt.subplots_adjust(wspace=0.02, hspace=0.2)
-custom_x_ticks = [2.0, 3.0, 4.0, 5.0]
+plt.clf()
+fig,axs = plt.subplots(1,2,figsize=(16,6), sharey=True)
+plt.subplots_adjust(wspace=0.05)
 
-for i, (ax, resident) in enumerate(zip(axs.flat, secondary_sixteen)):
-  ax.set_title(resident, fontsize=26)
-  for mu_i,mu in enumerate(mu_list):
-    key = (N,mu,resident)
-    ax.plot(benefit_list, dat[key], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
-    ax.set_xlim([1.2,5.2])
-    ax.set_xticks(custom_x_ticks)
-    ax.set_xticklabels(custom_x_ticks, fontsize=16)
-    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-    ax.set_ylim([0.0,1.0])
-    if i == 3:
-      ax.legend(loc='upper right', fontsize=20)
-    if i >= 12:
-      ax.set_xlabel('benefit', fontsize=24)
-    if i % 4 == 0:
-      ax.set_ylabel('cooperation level', fontsize=24)
-# %%
-fig.savefig('three_species_S16.pdf', bbox_inches='tight', pad_inches=0.3)
+for mu_i,mu in enumerate(mu_list):
+  key = (50,mu,resident)
+  axs[0].plot(benefit_list, dat[key], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+axs[0].set_xticks([2.0, 3.0, 4.0, 5.0])
+axs[0].set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
+axs[0].set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+axs[0].set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+axs[0].set_ylim([0.0,1.0])
+axs[0].set_xlabel('benefit', fontsize=24)
+axs[0].set_ylabel('cooperation level', fontsize=24)
+axs[0].set_title('L1-AllC-AllD', fontsize=24)
+
+for mu_i,mu in enumerate(mu_list):
+  axs[1].plot(benefit_list, numpy_pc[mu_i,:], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+axs[1].set_xlim([1.2,5.2])
+axs[1].set_xticks([2.0, 3.0, 4.0, 5.0])
+axs[1].set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
+axs[1].set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+axs[1].set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+axs[1].set_ylim([0.0,1.0])
+axs[1].legend(loc='upper right', fontsize=16)
+axs[1].set_xlabel('benefit', fontsize=24)
+axs[1].set_title('all third-order', fontsize=24)
+
+axs[0].text(0.04, 0.95, "(a)", transform=axs[0].transAxes, fontsize=20, va='top', ha='left')
+axs[1].text(0.04, 0.95, "(b)", transform=axs[1].transAxes, fontsize=20, va='top', ha='left')
 
 # %%
+fig.savefig('third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)

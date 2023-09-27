@@ -27,7 +27,7 @@ if os.path.exists('three_species.pickle'):
 dat
 
 # %%
-mu_list = [0.01, 0.03, 0.05, 0.1]
+mu_list = [0.01, 0.02, 0.05, 0.1]
 benefit_list = [1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0]
 
 N = 50
