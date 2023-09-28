@@ -140,4 +140,6 @@ axs[0].text(0.04, 0.95, "(a)", transform=axs[0].transAxes, fontsize=20, va='top'
 axs[1].text(0.04, 0.95, "(b)", transform=axs[1].transAxes, fontsize=20, va='top', ha='left')
 
 # %%
-fig.savefig('third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
+fig.savefig('L1_third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
+
+# %%
