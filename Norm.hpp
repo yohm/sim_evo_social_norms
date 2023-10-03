@@ -317,7 +317,7 @@ public:
   std::string Inspect() const {
     std::stringstream ss;
     if (IsDeterministic()) {
-      ss << "Norm: 0x" << std::setfill('0') << std::setw(5) << std::hex << ID() << " : " << GetName() << std::endl;
+      ss << "Norm: 0x" << std::setfill('0') << std::setw(5) << std::hex << ID() << " " << std::dec << ID() << " : " << GetName() << std::endl;
       ss << std::resetiosflags(std::ios_base::fmtflags(-1));
       for (int i = 3; i >= 0; i--) {
         Reputation X = static_cast<Reputation>(i / 2);
