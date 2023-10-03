@@ -206,7 +206,7 @@ int main(int argc, char* argv[]) {
   });
 
   // print out
-  std::ofstream fout("stationary.dat");
+  std::ofstream fout("histo_norms.dat");
   for (auto& n : norms_to_measure) {
     fout << std::get<0>(n) << ' ' << std::get<1>(n) << ' ' << std::get<2>(n) << std::endl;
   }
