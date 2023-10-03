@@ -14,7 +14,8 @@ for msgpack_file in msgpack_files:
     with open(msgpack_file, 'rb') as f:
         data = msgpack.unpack(f)
     print(data.keys())
-    params = data['params']
+    params = data['evoparam']
+    params['benefit'] = data['benefit']
     params['norm_set'] = data['norm_set']
     map_to_param[msgpack_file] = params
 map_to_param
