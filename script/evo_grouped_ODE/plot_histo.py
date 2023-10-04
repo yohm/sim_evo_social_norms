@@ -44,7 +44,8 @@ norm_names = {
   625866: "L8",
   765130: "L1 BBD",
   765129: "L1 BGD",
-  634058: "L2 BBD"
+  634058: "L2 BBD",
+  769227: "L3 BBC"
 }
 
 for i, name in enumerate(names):
