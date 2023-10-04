@@ -12,5 +12,5 @@ ax.set_xlabel('time', fontsize=18)
 ax.set_ylabel('cooperation level', fontsize=18)
 ax.set_ylim(-0.03,1.03)
 
-fig.savefig('timeseries.pdf')
+fig.savefig('timeseries.png')
 # %%

@@ -68,6 +68,6 @@ for w in wedges:
   w.set_linewidth(0.3)
   w.set_edgecolor('black')
 
-fig.savefig('histo_norms.pdf', bbox_inches='tight')
+fig.savefig('histo_norms.png')
 
 # %%
