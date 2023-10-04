@@ -134,11 +134,11 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
   {
     std::ofstream fout("timeseries.dat");
     for (double& xi : x) { xi = 1.0 / N; }
-    size_t dt = T_max / 500;
-    if (dt == 0) { dt = 1; }
+    size_t t_interval = T_max / 500;
+    if (t_interval == 0) { t_interval = 1; }
     for (size_t t = 0; t < T_max; t++) {
       x = SolveByRungeKutta(calc_x_dot, x, dt, 10);
-      if (t % dt == 0) {
+      if (t % t_interval == 0) {
         fout << t << ' ';
         double pc = 0.0;
         for (size_t i = 0; i < N; i++) { pc += x[i] * self_coop_levels[i]; }
