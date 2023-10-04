@@ -103,7 +103,7 @@ vd_t SolveByRungeKutta(std::function<void(const vd_t&,vd_t&)>& func, const vd_t&
   return ht;
 }
 
-vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const std::vector<double>& self_coop_levels, double benefit, double sigma_out, double r_mut, size_t T_max) {
+vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const std::vector<double>& self_coop_levels, double benefit, double sigma_out, double r_mut, size_t T_max, double dt) {
   const size_t N = p_fix.size();
 
   std::vector<std::vector<double>> alpha(N, std::vector<double>(N, 0.0));
@@ -137,7 +137,7 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
     size_t dt = T_max / 500;
     if (dt == 0) { dt = 1; }
     for (size_t t = 0; t < T_max; t++) {
-      x = SolveByRungeKutta(calc_x_dot, x, 0.1, 10);
+      x = SolveByRungeKutta(calc_x_dot, x, dt, 10);
       if (t % dt == 0) {
         fout << t << ' ';
         double pc = 0.0;
@@ -158,8 +158,8 @@ int main(int argc, char* argv[]) {
 
   using json = nlohmann::json;
 
-  if (argc != 5) {
-    std::cerr << "Usage: " << argv[0] << " <input_msgpack_file> <sigma_out> <relative mutation rate> <tmax>" << std::endl;
+  if (argc != 6) {
+    std::cerr << "Usage: " << argv[0] << " <input_msgpack_file> <sigma_out> <relative mutation rate> <tmax> <dt>" << std::endl;
     return 1;
   }
 
@@ -170,6 +170,7 @@ int main(int argc, char* argv[]) {
   double sigma_out = std::stod(argv[2]);
   double relative_mutation_rate = std::stod(argv[3]);
   size_t T_max = std::stoul(argv[4]);
+  double dt = std::stod(argv[5]);
 
   std::vector<Norm> norms;
   for (auto& norm_id_j : j_in["norm_ids"]) {
@@ -192,7 +193,7 @@ int main(int argc, char* argv[]) {
   }
   double benefit = j_in["benefit"].get<double>();
 
-  auto stationary = StationaryGroupedEvo(p_fix, self_coop_levels, benefit, sigma_out, relative_mutation_rate, T_max);
+  auto stationary = StationaryGroupedEvo(p_fix, self_coop_levels, benefit, sigma_out, relative_mutation_rate, T_max, dt);
 
   // make tuple of norm_id & stationary & coop_level
   std::vector<std::tuple<int, double, double>> norms_to_measure;

@@ -16,6 +16,7 @@ for msgpack_file in msgpack_files:
     print(data.keys())
     params = data['evoparam']
     params['benefit'] = data['benefit']
+    params['sigma_in'] = data['sigma_in']
     params['norm_set'] = data['norm_set']
     map_to_param[msgpack_file] = params
 map_to_param
