@@ -70,17 +70,17 @@ from matplotlib.cm import ScalarMappable
 # plot a bar chart of the fixation probabilities
 plt.clf()
 fig, ax = plt.subplots(figsize=(6, 4))
-colormap = plt.get_cmap('YlGnBu')
+colormap = plt.get_cmap('RdYlBu')
 clormap = colormap
 sm = ScalarMappable(cmap=colormap)
 cbar = plt.colorbar(sm, ax=ax)
 cbar.set_label('self-cooperation level\nof mutants', fontsize=12)
 
 ax.set_xlim(-1, 81)
-ax.set_ylim(0, 0.059)
+ax.set_ylim(0, 0.11)
 for i in range(81):
-    c = colormap(self_coop_level_sorted[i])
-    ax.bar(i, alld_invadability_sorted[i], color=c, edgecolor='#222222', linewidth=0.3)
+    c = colormap(self_coop_level_sorted[i], alpha=0.9)
+    ax.bar(i, alld_invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=0.3)
 # plot y = 0.02
 ax.plot([-1, 81], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
 ax.set_xlabel('rank', fontsize=16)
@@ -92,21 +92,29 @@ fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 l1_invadability_sorted, norm_ids_sorted, self_coop_level_sorted = get_invadability(765131)
 l1_invadability_sorted, norm_ids_sorted, self_coop_level_sorted
 # %%
+import matplotlib.colors as mcolors
+
 plt.clf()
 fig, ax = plt.subplots(figsize=(6, 4))
-colormap = plt.get_cmap('YlGnBu')
-clormap = colormap
-sm = ScalarMappable(cmap=colormap)
+colormap = plt.get_cmap('RdYlBu')
+colors_with_alpha = colormap(np.arange(colormap.N))
+colors_with_alpha[:, -1] = 0.9
+custom_cmap = mcolors.ListedColormap(colors_with_alpha)
+
+#clormap = colormap
+sm = ScalarMappable(cmap=custom_cmap)
+sm.set_array([])
 cbar = plt.colorbar(sm, ax=ax)
 cbar.set_label('self-cooperation level\nof mutants', fontsize=12)
 
-ax.set_xlim(-1, 1001)
+xmax = 201
+ax.set_xlim(-1, xmax)
 ax.set_ylim(0, 0.059)
-for i in range(1001):
-    c = colormap(self_coop_level_sorted[i])
-    ax.bar(i, l1_invadability_sorted[i], color=c, edgecolor='#222222', linewidth=0.3)
+for i in range(xmax):
+    c = custom_cmap(self_coop_level_sorted[i])
+    ax.bar(i, l1_invadability_sorted[i], color=c, width=1.03) #, edgecolor='#222222', linewidth=0.3)
 # plot y = 0.02
-ax.plot([-1, 1001], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
+ax.plot([-1, xmax], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
 ax.set_xlabel('rank', fontsize=16)
 ax.set_ylabel('fixation probability\nagainst L1 residents', fontsize=16)
 
