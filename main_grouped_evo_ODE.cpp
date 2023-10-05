@@ -130,22 +130,24 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
   };
 
   vd_t x(N, 0.0);
+  const size_t n_iter = 100;
+  const auto N_max = static_cast<size_t>( std::round((double)T_max / (dt*n_iter)) );
   // measure elapsed time
   {
     std::ofstream fout("timeseries.dat");
     for (double& xi : x) { xi = 1.0 / N; }
-    size_t t_interval = T_max / 500;
-    if (t_interval == 0) { t_interval = 1; }
-    for (size_t t = 0; t < T_max; t++) {
-      x = SolveByRungeKutta(calc_x_dot, x, dt, 10);
-      if (t % t_interval == 0) {
-        fout << t << ' ';
+    size_t n_interval = N_max / 500;
+    if (n_interval == 0) { n_interval = 1; }
+    for (size_t n = 0; n < N_max; n++) {
+      x = SolveByRungeKutta(calc_x_dot, x, dt, n_iter);
+      if (n % n_interval == 0) {
+        fout << n*dt*n_iter << ' ';
         double pc = 0.0;
         for (size_t i = 0; i < N; i++) { pc += x[i] * self_coop_levels[i]; }
         fout << pc << ' ';
         for (double xi : x) { fout << xi << ' '; }
         fout << std::endl;
-        PrintProgress(static_cast<double>(t) / T_max);
+        PrintProgress(static_cast<double>(n) / T_max);
       }
     }
   }
