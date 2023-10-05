@@ -617,12 +617,13 @@ public:
   static const std::vector<std::pair<int, std::string> > NormNames;
   std::string GetName() const {
     if (IsDeterministic()) {
-      int id = ID();
       for (auto &p : NormNames) {
-        if (p.first == id) {
+        if (p.first == ID() || p.first == SwapGB().ID() ) {
           return p.second;
         }
       }
+      if (P.ID() == 0) { return "AllD"; }
+      if (P.ID() == 15) { return "AllC"; }
     }
     if (IsGenerousScoring()) {
       double benefit = 1.0 / Rd.good_probs[0];

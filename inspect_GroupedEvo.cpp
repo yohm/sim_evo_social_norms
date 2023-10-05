@@ -131,13 +131,19 @@ int main(int argc, char* argv[]) {
     // print out the 10 largest alpha_ji
     std::cout << "incoming flow from " << ni << " : " << i << std::endl;
     for (size_t j = 0; j < 10; ++j) {
-      std::cout << alpha_ji[j].first << ' ' << alpha_ji[j].second << std::endl;
+      auto norm = Norm::ConstructFromID(alpha_ji[j].first);
+      std::string name = norm.GetName();
+      if (name.empty()) { name = "other";}
+      std::cout << alpha_ji[j].first << ' ' << alpha_ji[j].second << ' ' << name << std::endl;
     }
 
     // print out the 10 smallest alpha_ji
     std::cout << "outgoing flow to " << ni << " : " << i << std::endl;
     for (size_t j = N_NORMS - 10; j < N_NORMS; ++j) {
-      std::cout << alpha_ji[j].first << ' ' << alpha_ji[j].second << std::endl;
+      auto norm = Norm::ConstructFromID(alpha_ji[j].first);
+      std::string name = norm.GetName();
+      if (name.empty()) { name = "other";}
+      std::cout << alpha_ji[j].first << ' ' << alpha_ji[j].second << ' ' << name << std::endl;
     }
   }
   else if (argc == 4) {
