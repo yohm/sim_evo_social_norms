@@ -105,8 +105,10 @@ int main(int argc, char* argv[]) {
   GroupedEvo ge(norm_ids, p_fix, self_coop_levels);
 
   if (argc == 3) {
+    // size_t ni = std::stoul(argv[2]);
+    Norm norm = Norm::ParseNormString(argv[2]);
     // print largest
-    size_t ni = std::stoul(argv[2]);
+    size_t ni = norm.ID();
     // find index from norm_ids
     size_t i = 0;
     for (; i < N_NORMS; ++i) {
