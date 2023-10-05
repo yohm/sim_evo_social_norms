@@ -60,5 +60,8 @@ target_link_libraries(inspect_PrivRepGame nlohmann_json::nlohmann_json)
 add_executable(inspect_EvolPrivRepGame inspect_EvolPrivRepGame.cpp EvolPrivRepGame.hpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(inspect_EvolPrivRepGame Eigen3::Eigen OpenMP::OpenMP_CXX nlohmann_json::nlohmann_json)
 
+add_executable(inspect_GroupedEvo inspect_GroupedEvo.cpp Norm.hpp)
+target_link_libraries(inspect_GroupedEvo Eigen3::Eigen nlohmann_json::nlohmann_json)
+
 add_executable(msgpack2json msgpack2json.cpp)
 target_link_libraries(msgpack2json nlohmann_json::nlohmann_json)
