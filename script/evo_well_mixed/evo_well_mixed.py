@@ -18,17 +18,16 @@ def calc_stationary(msgpack_path):
   return a
 
 # %%
-out = calc_stationary(os.path.join(input_dir_path, 'third_order_mu0.1/fixation_probs_23.msgpack'))
-out
+#out = calc_stationary(os.path.join(input_dir_path, 'third_order_mu0.1/fixation_probs_23.msgpack'))
+#out
 
 # %%
 def equilibrium_coop_level(dat):
   return np.dot( dat[:,1], dat[:,2] )
 
 # %%
-pc = equilibrium_coop_level(out)
-pc
-
+#pc = equilibrium_coop_level(out)
+#pc
 
 # %%
 benefit_list = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
@@ -141,5 +140,3 @@ axs[1].text(0.04, 0.95, "(b)", transform=axs[1].transAxes, fontsize=20, va='top'
 
 # %%
 fig.savefig('L1_third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
-
-# %%
