@@ -14,8 +14,8 @@ def calc_payoffs(mu_assess=0.01, mu_impl=0.0, t_measure=10000, t_init=10000, q=1
   return json.loads(out)
 
 # %%
-j = calc_payoffs(n=5, benefit=5.0, sigma_in=1.0, resident='L2')
-j
+# j = calc_payoffs(n=5, benefit=5.0, sigma_in=1.0, resident='L2')
+# j
 
 # %%
 # if thre is a file 'three_species.pickle', load it
@@ -80,8 +80,9 @@ for i, (ax, resident) in enumerate(zip(axs.flat, leading_eight)):
     ax.set_xlim([1.2,5.2])
     ax.set_xticks(custom_x_ticks)
     ax.set_xticklabels(custom_x_ticks, fontsize=16)
+    ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
     ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-    ax.set_ylim([0.0,1.0])
+    ax.set_ylim([-0.02,1.02])
     if i == 3:
       ax.legend(loc='upper right', fontsize=20)
     if i >= 4:
@@ -90,7 +91,7 @@ for i, (ax, resident) in enumerate(zip(axs.flat, leading_eight)):
       ax.set_ylabel('cooperation level', fontsize=24)
 
 # %%
-fig.savefig('three_species.pdf', bbox_inches='tight', pad_inches=0.3)
+fig.savefig('three_species_L8.pdf', bbox_inches='tight', pad_inches=0.3)
 # %%
 
 fig,axs = plt.subplots(4, 4, figsize=(24,24), sharex=True, sharey=True)
@@ -105,8 +106,9 @@ for i, (ax, resident) in enumerate(zip(axs.flat, secondary_sixteen)):
     ax.set_xlim([1.2,5.2])
     ax.set_xticks(custom_x_ticks)
     ax.set_xticklabels(custom_x_ticks, fontsize=16)
+    ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
     ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-    ax.set_ylim([0.0,1.0])
+    ax.set_ylim([-0.02,1.02])
     if i == 3:
       ax.legend(loc='upper right', fontsize=20)
     if i >= 12:
