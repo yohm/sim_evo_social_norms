@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os,sys
+from matplotlib.cm import ScalarMappable
 
 # %%
 script_path = os.path.dirname(os.path.abspath(__file__))
@@ -62,62 +63,35 @@ def get_invadability(norm_id):
     return invadability_sorted, norm_ids_sorted, self_coop_level_sorted
 
 # %%
-alld_invadability_sorted, norm_ids_sorted, self_coop_level_sorted = get_invadability(64704)
-alld_invadability_sorted, norm_ids_sorted, self_coop_level_sorted
-# %%
-from matplotlib.cm import ScalarMappable
+def plot_invadability(norm_id, x_max=81, y_max=0.11, bar_linewidth=0.3):
+    invadability_sorted, norm_ids_sorted, self_coop_level_sorted = get_invadability(norm_id)
+    # plot a bar chart of the fixation probabilities
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(6, 4))
+    colormap = plt.get_cmap('RdYlBu')
+    sm = ScalarMappable(cmap=colormap)
+    cbar = fig.colorbar(sm, ax=ax)
+    cbar.set_label('self-cooperation level\nof mutants', fontsize=12)
 
-# plot a bar chart of the fixation probabilities
-plt.clf()
-fig, ax = plt.subplots(figsize=(6, 4))
-colormap = plt.get_cmap('RdYlBu')
-clormap = colormap
-sm = ScalarMappable(cmap=colormap)
-cbar = plt.colorbar(sm, ax=ax)
-cbar.set_label('self-cooperation level\nof mutants', fontsize=12)
+    ax.set_xlim(-1, x_max)
+    ax.set_ylim(0, y_max)
+    for i in range(x_max):
+        c = colormap(self_coop_level_sorted[i], alpha=0.9)
+        ax.bar(i, invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=bar_linewidth)
+    # plot y = 0.02
+    ax.plot([-1, x_max], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
+    ax.set_xlabel('rank', fontsize=16)
+    ax.set_ylabel('fixation probability', fontsize=16)
+    return fig, ax
 
-ax.set_xlim(-1, 81)
-ax.set_ylim(0, 0.11)
-for i in range(81):
-    c = colormap(self_coop_level_sorted[i], alpha=0.9)
-    ax.bar(i, alld_invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=0.3)
-# plot y = 0.02
-ax.plot([-1, 81], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
-ax.set_xlabel('rank', fontsize=16)
-ax.set_ylabel('fixation probability\nagainst AllD residents', fontsize=16)
 # %%
+fig, ax = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewidth=0.3)
 fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 # %%
-
-l1_invadability_sorted, norm_ids_sorted, self_coop_level_sorted = get_invadability(765131)
-l1_invadability_sorted, norm_ids_sorted, self_coop_level_sorted
-# %%
-import matplotlib.colors as mcolors
-
-plt.clf()
-fig, ax = plt.subplots(figsize=(6, 4))
-colormap = plt.get_cmap('RdYlBu')
-colors_with_alpha = colormap(np.arange(colormap.N))
-colors_with_alpha[:, -1] = 0.9
-custom_cmap = mcolors.ListedColormap(colors_with_alpha)
-
-#clormap = colormap
-sm = ScalarMappable(cmap=custom_cmap)
-sm.set_array([])
-cbar = plt.colorbar(sm, ax=ax)
-cbar.set_label('self-cooperation level\nof mutants', fontsize=12)
-
-xmax = 201
-ax.set_xlim(-1, xmax)
-ax.set_ylim(0, 0.059)
-for i in range(xmax):
-    c = custom_cmap(self_coop_level_sorted[i])
-    ax.bar(i, l1_invadability_sorted[i], color=c, width=1.03) #, edgecolor='#222222', linewidth=0.3)
-# plot y = 0.02
-ax.plot([-1, xmax], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
-ax.set_xlabel('rank', fontsize=16)
-ax.set_ylabel('fixation probability\nagainst L1 residents', fontsize=16)
-
-# %%
+fig, ax = plot_invadability(765131, x_max=201, y_max=0.149, bar_linewidth=0.05)
 fig.savefig('l1_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+
 # %%
+fig, ax = plot_invadability(634059, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig.savefig('l2_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+
