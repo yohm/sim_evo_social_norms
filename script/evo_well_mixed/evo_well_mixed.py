@@ -130,7 +130,7 @@ axs[1].set_xticks([2.0, 3.0, 4.0, 5.0])
 axs[1].set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
 axs[1].set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
 axs[1].set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-axs[1].set_ylim([0.0,1.0])
+axs[1].set_ylim([-0.02,1.02])
 axs[1].legend(loc='upper right', fontsize=16)
 axs[1].set_xlabel('benefit', fontsize=24)
 axs[1].set_title('all third-order', fontsize=24)
@@ -140,3 +140,5 @@ axs[1].text(0.04, 0.95, "(b)", transform=axs[1].transAxes, fontsize=20, va='top'
 
 # %%
 fig.savefig('L1_third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
+
+# %%
