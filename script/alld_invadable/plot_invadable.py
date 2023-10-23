@@ -49,8 +49,6 @@ p_fix = np.array(p_fix)
 
 norm_ids, self_coop_level, p_fix
 # %%
-p_fix[0,:]
-# %%
 def get_invadability(norm_id):
     idx = np.where(norm_ids == norm_id)[0][0]
     invadability = p_fix[idx,:]
@@ -73,25 +71,92 @@ def plot_invadability(norm_id, x_max=81, y_max=0.11, bar_linewidth=0.3):
     cbar = fig.colorbar(sm, ax=ax)
     cbar.set_label('self-cooperation level\nof mutants', fontsize=12)
 
-    ax.set_xlim(-1, x_max)
+    ax.set_xlim(0, x_max)
     ax.set_ylim(0, y_max)
     for i in range(x_max):
         c = colormap(self_coop_level_sorted[i], alpha=0.9)
-        ax.bar(i, invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=bar_linewidth)
+        ax.bar(i+1, invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=bar_linewidth)
     # plot y = 0.02
     ax.plot([-1, x_max], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
     ax.set_xlabel('rank', fontsize=16)
     ax.set_ylabel('fixation probability', fontsize=16)
-    return fig, ax
+    return fig, ax, norm_ids_sorted
 
 # %%
-fig, ax = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewidth=0.3)
+def show_norms(norm_ids_s):
+    norm_names = {
+        765131: "L1",
+        634059: "L2",
+        769226: "L3",
+        761034: "L4",
+        638154: "L5",
+        629962: "L6",
+        859333: "L7",  # or 756938
+        892101: "L8", # or 625866
+        765130: "L1 BBD",
+        765129: "L1 BGD",
+        634058: "L2 BBD",
+        634057: "L2 BGD",
+        634050: "L2 GGD BBD",
+        769227: "L3 BBC",
+        761035: "L4 BBC",
+        638155: "L5 BBC",
+        859341: "L7 BBC",
+        568523: "L2 GBDB"
+    }
+    for i in range(51):
+        name = norm_ids_s[i]
+        if norm_ids_s[i] in norm_names:
+            name = norm_names[norm_ids_s[i]]
+        if (norm_ids_s[i] & 0b1111) == 0:
+            name = "ALLD"
+        if (norm_ids_s[i] & 0b1111) == 0b1111:
+            name = "ALLC"
+        print(name)
+# %%
+fig, ax, norm_ids_s = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewidth=0.3)
 fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
 # %%
-fig, ax = plot_invadability(765131, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(765131, x_max=201, y_max=0.149, bar_linewidth=0.05)
 fig.savefig('l1_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
 
 # %%
-fig, ax = plot_invadability(634059, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(634059, x_max=201, y_max=0.149, bar_linewidth=0.05)
 fig.savefig('l2_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
 
+# %%
+fig, ax, norm_ids_s = plot_invadability(769226, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig.savefig('l3_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
+
+# %%
+fig, ax, norm_ids_s = plot_invadability(761034, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig.savefig('l4_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
+
+# %%
+fig, ax, norm_ids_s = plot_invadability(638154, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig.savefig('l5_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
+
+# %%
+fig, ax, norm_ids_s = plot_invadability(629962, x_max=201, y_max=1.0, bar_linewidth=0.05)
+fig.savefig('l6_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
+
+# %%
+fig, ax, norm_ids_s = plot_invadability(859333, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig.savefig('l7_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
+
+# %%
+fig, ax, norm_ids_s = plot_invadability(892101, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig.savefig('l8_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+show_norms(norm_ids_s)
+
+# %%
+show_norms(norm_ids_s)
+# %%
