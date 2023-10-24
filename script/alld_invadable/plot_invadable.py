@@ -104,17 +104,22 @@ def show_norms(norm_ids_s):
         859341: "L7 BBC",
         568523: "L2 GBDB"
     }
-    for i in range(51):
-        name = norm_ids_s[i]
-        if norm_ids_s[i] in norm_names:
-            name = norm_names[norm_ids_s[i]]
-        if (norm_ids_s[i] & 0b1111) == 0:
+    for i,nid in enumerate(norm_ids_s):
+        if i > 51:
+            break
+        name = nid
+        if nid in norm_names:
+            name = norm_names[nid]
+        if (nid & 0b1111) == 0:
             name = "ALLD"
-        if (norm_ids_s[i] & 0b1111) == 0b1111:
+        if (nid & 0b1111) == 0b1111:
             name = "ALLC"
-        print(name)
+        print(name, i)
 # %%
 fig, ax, norm_ids_s = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewidth=0.3)
+ax.annotate('L1', xy=(1.5, 0.1015), xytext=(15, 0.103), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L2', xy=(10.5, 0.074), xytext=(24, 0.085), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L7', xy=(31.5, 0.049), xytext=(44, 0.06), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 # %%
