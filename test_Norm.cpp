@@ -284,13 +284,23 @@ TEST(Norm, Deterministic2ndOrder) {
 TEST(Norm, Determinisitic3rdOrder) {
   std::vector<Norm> norms = Norm::Deterministic3rdOrderWithoutR2Norms();
   std::set<int> ids;
+  std::vector<Norm> alld_vec, allc_vec;
+
   for (const Norm& n: norms) {
     EXPECT_TRUE(n.IsDeterministic());
     EXPECT_TRUE(n.IsRecipKeep());
     ids.insert(n.ID());
+    if (n.P == ActionRule::ALLC()) {
+      allc_vec.push_back(n);
+    }
+    else if (n.P == ActionRule::ALLD()) {
+      alld_vec.push_back(n);
+    }
   }
-  EXPECT_EQ( norms.size(), 2080 );
+  EXPECT_EQ( norms.size(), 2080 );    // # of self-symmetric = 64, (4096 - 64)/2 + 64 = 2080
   EXPECT_EQ( ids.size(), 2080 );
+  EXPECT_EQ( allc_vec.size(), 136 );  // # of self-symmetric = 16, thus (256-16)/2 + 16 = 136
+  EXPECT_EQ( alld_vec.size(), 136 );
 }
 
 TEST(Norm, Deterministic2ndOrderWithR2) {
