@@ -32,6 +32,11 @@ ax.text(12, -3, 'L1', fontsize=16, color='black', ha='center', va='center')
 ax.text(37, -3, 'L2', fontsize=16, color='black', ha='center', va='center')
 ax.text(-3, 12, 'L1', fontsize=16, color='black', ha='center', va='center', rotation=90)
 ax.text(-3, 37, 'L2', fontsize=16, color='black', ha='center', va='center', rotation=90)
+
+ax.text(20, 2.4, "95.4%", fontsize=12, bbox=dict(facecolor='white', alpha=0.8, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
+ax.text(45, 2.4, "85.9%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
+ax.text(20, 27.4, "84.6%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
+ax.text(45, 27.4, "80.0%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
 # %%
 fig.savefig('L1L2_image.pdf', bbox_inches='tight', pad_inches=0.2)
 
