@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 
   std::queue<std::string> args;
   nlohmann::json params = nlohmann::json::object();
+  bool count_good = false;
   // -j param.json : set parameters by json file or json string
   for (int i = 1; i < argc; ++i) {
     if (std::string(argv[i]) == "-j" && i + 1 < argc) {
@@ -53,6 +54,9 @@ int main(int argc, char *argv[]) {
         std::istringstream iss(argv[i]);
         iss >> params;
       }
+    }
+    else if (std::string(argv[i]) == "-g") {
+      count_good = true;
     }
     else {
       args.emplace(argv[i]);
@@ -106,7 +110,7 @@ int main(int argc, char *argv[]) {
     if (params.at("t_measure").get<size_t>() > 0) {
       prg.ResetCounts();
       prg.Update(params.at("t_measure").get<size_t>(), params.at("q"), params.at("mu_impl"), params.at("mu_percept").get<double>(),
-                 params.at("mu_assess1").get<double>(), params.at("mu_assess2").get<double>(), false);
+                 params.at("mu_assess1").get<double>(), params.at("mu_assess2").get<double>(), count_good);
       std::cout << "SystemWideCooperationLevel: " << prg.SystemWideCooperationLevel() << std::endl;
       auto c_levels = prg.NormCooperationLevels();
       if (c_levels.size() > 1) {
@@ -118,6 +122,22 @@ int main(int argc, char *argv[]) {
           std::cout << "\n";
         }
       }
+      if (count_good) {
+        std::cout << "NormAverageReputation:\n";
+        auto r_levels = prg.NormAverageReputation();
+        for (size_t i = 0; i < r_levels.size(); i++) {
+          for (size_t j = 0; j < r_levels[i].size(); j++) {
+            std::cout << ' ' << r_levels[i][j];
+          }
+          std::cout << "\n";
+        }
+      }
+    }
+
+    if (count_good) {
+      std::ofstream fout("image.txt");
+      prg.PrintImage(fout);
+      std::cerr << "image was written to image.txt" << std::endl;
     }
 
   }
