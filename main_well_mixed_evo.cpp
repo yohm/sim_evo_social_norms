@@ -41,28 +41,41 @@ int main(int argc, char* argv[]) {
 
   using json = nlohmann::json;
 
-  bool three_species = false;
-  std::string msgpack_path;
+  enum class Mode {
+    three_species,
+    eight_species,
+    all_species
+  };
+  Mode mode = Mode::all_species;
+  std::string opt, msgpack_path;
 
   if (argc == 2) {
     msgpack_path = argv[1];
   }
   else if (argc == 3) {
-    if (std::string(argv[1]) == "-3") {
+    if (argv[1][0] == '-') {
+      opt = std::string(argv[1]);
       msgpack_path = argv[2];
     }
-    else if (std::string(argv[2]) == "-3") {
+    else if (argv[2][0] == '-') {
+      opt = std::string(argv[2]);
       msgpack_path = argv[1];
     }
-    else {
-      std::cerr << "Usage: " << argv[0] << " [-3] <input_msgpack_file>" << std::endl;
-      return 1;
-    }
-    three_species = true;
   }
-  else {
+
+  if (msgpack_path.empty()) {
     std::cerr << "Usage: " << argv[0] << " [-3] <input_msgpack_file>" << std::endl;
     return 1;
+  }
+
+  if (!opt.empty()) {
+    if (opt == "-3") { mode = Mode::three_species; }
+    else if (opt == "-8") { mode = Mode::eight_species; }
+    else if (opt == "-a") { mode = Mode::all_species; }
+    else {
+      std::cerr << "unknown option: " << opt << std::endl;
+      return 1;
+    }
   }
 
   // load fixation probabilities from the input file
@@ -89,7 +102,7 @@ int main(int argc, char* argv[]) {
     self_coop_levels[i] = j_in["self_coop_levels"][i].get<double>();
   }
 
-  if (three_species) {
+  if (mode == Mode::three_species) {
     // for each species
     for (size_t i = 0; i < norms.size(); i++) {
       int allc_idx = -1, alld_idx = -1;
@@ -120,6 +133,63 @@ int main(int argc, char* argv[]) {
 
       auto stationary = EvolPrivRepGame::EquilibriumPopulationLowMut(p_fix3);
       std::cout << norms[i].ID() << ' ' << stationary[0] << ' ' << self_coop_levels[i] << std::endl;
+    }
+  }
+  else if (mode == Mode::eight_species) {
+    // we take ALLC, ALLD, L1, L2, L3, L4, L5, L7  (excluding L6 & L8)
+    std::optional<size_t> allc_idx, alld_idx, l1_idx, l2_idx, l3_idx, l4_idx, l5_idx, l7_idx;
+    // int allc_idx = -1, alld_idx = -1, l1_idx = -1, l2_idx = -1, l3_idx = -1, l4_idx = -1, l5_idx = -1, l7_idx = -1;
+    for (size_t i = 0; i < norms.size(); i++) {
+      if (allc_idx < 0 && norms[i].P == ActionRule::ALLC()) {
+        allc_idx = i;
+      }
+      if (alld_idx < 0 && norms[i].P == ActionRule::ALLD()) {
+        alld_idx = i;
+      }
+      if (l1_idx < 0 && (norms[i] == Norm::L1() || norms[i] == Norm::L1().SwapGB())) {
+        l1_idx = i;
+      }
+      if (l2_idx < 0 && (norms[i] == Norm::L2() || norms[i] == Norm::L2().SwapGB())) {
+        l2_idx = i;
+      }
+      if (l3_idx < 0 && (norms[i] == Norm::L3() || norms[i] == Norm::L3().SwapGB())) {
+        l3_idx = i;
+      }
+      if (l4_idx < 0 && (norms[i] == Norm::L4() || norms[i] == Norm::L4().SwapGB())) {
+        l4_idx = i;
+      }
+      if (l5_idx < 0 && (norms[i] == Norm::L5() || norms[i] == Norm::L5().SwapGB())) {
+        l5_idx = i;
+      }
+      if (l7_idx < 0 && (norms[i] == Norm::L7() || norms[i] == Norm::L7().SwapGB())) {
+        l7_idx = i;
+      }
+      if (allc_idx >= 0 && alld_idx >= 0 && l1_idx >= 0 && l2_idx >= 0 && l3_idx >= 0 && l4_idx >= 0 && l5_idx >= 0 && l7_idx >= 0) {
+        break;
+      }
+    }
+
+    std::vector<std::string> norm_names = {"ALLC", "ALLD", "L1", "L2", "L3", "L4", "L5", "L7"};
+    std::vector<size_t> indices = {allc_idx.value(), alld_idx.value(), l1_idx.value(), l2_idx.value(), l3_idx.value(), l4_idx.value(), l5_idx.value(), l7_idx.value()};
+    std::vector<std::vector<double>> p_fix8(8, std::vector<double>(8, 0.0));
+    std::vector<double> self_coop_levels8(8, 0.0);
+    for (size_t i = 0; i < 8; i++) {
+      self_coop_levels8[i] = self_coop_levels[indices[i]];
+      for (size_t j = 0; j < 8; j++) {
+        p_fix8[i][j] = p_fix[indices[i]][indices[j]];
+      }
+    }
+
+    auto stationary8 = EvolPrivRepGame::EquilibriumPopulationLowMutPowerMethod(p_fix8);
+
+    double pc_eq = 0.0;
+    for (size_t i = 0; i < 8; ++i) {
+      pc_eq += stationary8[i] * self_coop_levels8[i];
+    }
+    std::cerr << "equilibrium_coop_level: " << pc_eq << std::endl;
+
+    for (size_t i = 0; i < 8; ++i) {
+      std::cout << norm_names[i] << ' ' << stationary8[i] << ' ' << self_coop_levels8[i] << std::endl;
     }
   }
   else {
