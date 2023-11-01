@@ -8,6 +8,9 @@ matplotlib = "*"
 numpy = "*"
 jupyter = "*"
 msgpack = "*"
+networkx = "*"
+pyvis = "*"
+jinja2 = "*"
 
 [dev-packages]
 
