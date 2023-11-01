@@ -120,6 +120,7 @@ fig, ax, norm_ids_s = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewid
 ax.annotate('L1', xy=(1.5, 0.1015), xytext=(15, 0.103), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L2', xy=(10.5, 0.0745), xytext=(24, 0.085), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L7', xy=(31.5, 0.049), xytext=(44, 0.06), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.text(70, 0.025, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='center')
 fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 # %%
@@ -189,27 +190,30 @@ for ax, norm_id in zip(axs.ravel(), [765131, 634059, 629962, 892101]):
 
 axs[0][0].set_ylabel('fixation probability', fontsize=16)
 axs[0][0].set_title('L1', fontsize=16)
-axs[0][0].text(100, 0.035, 'AllC', fontsize=12, horizontalalignment='center', verticalalignment='center')
+axs[0][0].annotate('L7', xy=(175.5, 0.02), xytext=(150, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+axs[0][0].annotate('L4', xy=(178.5, 0.02), xytext=(168, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+axs[0][0].annotate('L3', xy=(179.5, 0.02), xytext=(186, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+axs[0][0].text(100, 0.035, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
 
 axs[0][1].set_title('L2', fontsize=16)
 axs[0][1].annotate('L1', xy=(1.5, 0.141), xytext=(50, 0.135), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[0][1].annotate('L7', xy=(3.5, 0.138), xytext=(50, 0.125), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[0][1].annotate('L3', xy=(4.5, 0.126), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[0][1].annotate('L4', xy=(7.5, 0.120), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][1].text(100, 0.007, 'AllC', fontsize=12, horizontalalignment='center', verticalalignment='center')
+axs[0][1].text(100, 0.007, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
 
 axs[1][0].set_title('L6', fontsize=16)
 axs[1][0].set_ylabel('fixation probability', fontsize=16)
 axs[1][0].set_ylim(0, 1.0)
 axs[1][0].set_xlabel('rank', fontsize=16)
-axs[1][0].text(100, 0.44, 'AllD', fontsize=12, horizontalalignment='center', verticalalignment='center')
+axs[1][0].text(100, 0.44, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='center')
 
 axs[1][1].set_title('L8', fontsize=16)
 axs[1][1].set_xlabel('rank', fontsize=16)
 axs[1][1].annotate('L1', xy=(2.5, 0.110), xytext=(50, 0.12), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[1][1].annotate('L7', xy=(3.5, 0.107), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[1][1].annotate('L2', xy=(5.5, 0.100), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[1][1].text(100, 0.038, 'AllD', fontsize=12, horizontalalignment='center', verticalalignment='center')
+axs[1][1].text(100, 0.038, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='center')
 
 fig.savefig("L1_L2_L6_L8_invadability.pdf", bbox_inches="tight")
 # %%
