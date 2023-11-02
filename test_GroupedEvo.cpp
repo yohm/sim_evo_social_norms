@@ -80,6 +80,7 @@ TEST(GroupedEvo, RungeKutta) {
   // Lotka-Volterra competition
   // dot{x} = x(3-x-2y)
   // dot{y} = y(2-x-y)
+  // stable fixed points: (0,2), (3,0)
   {
     vd_t init = {1.0, 1.5};
     std::function<void(const vd_t &, vd_t &)> calc_x_dot = [](const std::vector<double> &x,
@@ -96,4 +97,15 @@ TEST(GroupedEvo, RungeKutta) {
     EXPECT_NEAR(x[0], 3.0, 0.002);
     EXPECT_NEAR(x[1], 0.0, 0.002);
   }
+}
+
+TEST(GroupedEvo, SovleSampleSystem) {
+  std::vector<size_t> norm_ids = {0, 1};
+  std::vector<std::vector<double>> p_fix = {{0.0, 0.02}, {0.2, 0.0}};
+  std::vector<double> self_coop_levels = {0.0, 1.0};
+  GroupedEvo ge(norm_ids, p_fix, self_coop_levels);
+  auto out = ge.TimeEvolutionODE(5.0, 1.0, 0.01, 1000, 1.0, std::cerr);
+  IC(out);
+  EXPECT_NEAR(out[0], 0.124, 0.002);
+  EXPECT_NEAR(out[1], 0.876, 0.002);
 }
