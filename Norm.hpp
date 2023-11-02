@@ -480,12 +480,12 @@ public:
   }
   static Norm AllC() {
     return Norm(AssessmentRule{{1, 1, 1, 1, 1, 1, 1, 1}},
-                AssessmentRule{{1, 1, 1, 1, 1, 1, 1, 1}},
+                AssessmentRule::KeepRecipient(),
                 ActionRule{{1, 1, 1, 1}});
   }
   static Norm AllD() {
     return Norm(AssessmentRule{{0, 0, 0, 0, 0, 0, 0, 0}},
-                AssessmentRule{{0, 0, 0, 0, 0, 0, 0, 0}},
+                AssessmentRule::KeepRecipient(),
                 ActionRule{{0, 0, 0, 0}});
   }
   static Norm AllG() {
