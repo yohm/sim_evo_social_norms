@@ -60,3 +60,40 @@ TEST(GroupedEvo, CalcAlpha) {
     EXPECT_NEAR(alpha_inv, -expected, 0.002);  //
   }
 }
+
+TEST(GroupedEvo, RungeKutta) {
+  using vd_t = std::vector<double>;
+  // dot{x} = -x
+  {
+    vd_t init = {1.0};
+    std::function<void(const vd_t &, vd_t &)> calc_x_dot = [](const std::vector<double> &x,
+                                                              std::vector<double> &x_dot) {
+      x_dot[0] = -x[0];
+    };
+    auto x = GroupedEvo::SolveByRungeKutta(calc_x_dot, init, 0.01, 100, 0);
+    // x(t) = 1.0 * exp(-t)
+    EXPECT_NEAR(x[0], std::exp(-1.0), 0.002);
+    x = GroupedEvo::SolveByRungeKutta(calc_x_dot, x, 0.01, 100, 0);
+    EXPECT_NEAR(x[0], std::exp(-2.0), 0.002);
+  }
+
+  // Lotka-Volterra competition
+  // dot{x} = x(3-x-2y)
+  // dot{y} = y(2-x-y)
+  {
+    vd_t init = {1.0, 1.5};
+    std::function<void(const vd_t &, vd_t &)> calc_x_dot = [](const std::vector<double> &x,
+                                                              std::vector<double> &x_dot) {
+      x_dot[0] = x[0] * (3.0 - x[0] - 2.0 * x[1]);
+      x_dot[1] = x[1] * (2.0 - x[0] - x[1]);
+    };
+    auto x = GroupedEvo::SolveByRungeKutta(calc_x_dot, init, 0.1, 300, 0);
+    EXPECT_NEAR(x[0], 0.0, 0.002);
+    EXPECT_NEAR(x[1], 2.0, 0.002);
+
+    init = {1.5, 1.0};
+    x = GroupedEvo::SolveByRungeKutta(calc_x_dot, init, 0.1, 300, 0);
+    EXPECT_NEAR(x[0], 3.0, 0.002);
+    EXPECT_NEAR(x[1], 0.0, 0.002);
+  }
+}

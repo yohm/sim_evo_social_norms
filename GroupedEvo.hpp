@@ -42,6 +42,50 @@ class GroupedEvo {
     }
     return mut_outflow;
   }
+
+  using vd_t = std::vector<double>;
+  static vd_t SolveByRungeKutta(std::function<void(const vd_t&,vd_t&)>& func, const vd_t& init, double dt, size_t n_iter, size_t normalize_interval = 0) {
+    const size_t N = init.size();
+    vd_t ht = init;
+    vd_t k1(N, 0.0), arg2(N, 0.0), k2(N, 0.0), arg3(N, 0.0), k3(N, 0.0), arg4(N, 0.0), k4(N, 0.0);
+    for (size_t t = 0; t < n_iter; t++) {
+#ifdef DEBUG
+      if (t % 10000 == 9999) {
+      std::cerr << t << ' ' << ht[0] << ' ' << ht[1] << ' ' << ht[2] << std::endl;
+    }
+#endif
+      func(ht, k1);
+      for(int i = 0; i < N; i++) {
+        k1[i] *= dt;
+        arg2[i] = ht[i] + 0.5 * k1[i];
+      }
+      func(arg2, k2);
+      for(int i = 0; i < N; i++) {
+        k2[i] *= dt;
+        arg3[i] = ht[i] + 0.5 * k2[i];
+      }
+      func(arg3, k3);
+      for(int i = 0; i < N; i++) {
+        k3[i] *= dt;
+        arg4[i] = ht[i] + k3[i];
+      }
+      func(arg4, k4);
+      for(int i = 0; i < N; i++) {
+        k4[i] *= dt;
+      }
+      double sum = 0.0;
+      for (int i = 0; i < N; i++) {
+        ht[i] += (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]) / 6.0;
+        sum += ht[i];
+      }
+      if (normalize_interval > 0 && t % normalize_interval == normalize_interval-1) {
+        // normalize ht
+        double sum_inv = 1.0 / sum;
+        for (int i = 0; i < N; i++) { ht[i] *= sum_inv; }
+      }
+    }
+    return ht;
+  }
 };
 
 #endif
