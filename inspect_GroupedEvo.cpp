@@ -32,10 +32,20 @@ class GroupedEvo {
   }
 
   double CalcAlpha(size_t i, size_t j, double benefit, double sigma_out) const {
+    // flow from i to j caused by inter-group imitation
     double p_plus = InterGroupImitationProb(self_coop_levels[i], self_coop_levels[j], benefit, sigma_out) * p_fix[i][j];
     double p_minus =
       InterGroupImitationProb(self_coop_levels[j], self_coop_levels[i], benefit, sigma_out) * p_fix[j][i];
     return p_plus - p_minus;
+  }
+
+  double MutationOutFlow(size_t i) {
+    // sum_j p_fix[i][j]
+    double mut_outflow = 0.0;
+    for (size_t j = 0; j < N_NORMS; ++j) {
+      mut_outflow += p_fix[i][j];
+    }
+    return mut_outflow;
   }
 };
 
@@ -108,7 +118,7 @@ int main(int argc, char* argv[]) {
     // size_t ni = std::stoul(argv[2]);
     Norm norm = Norm::ParseNormString(argv[2]);
     // print largest
-    size_t ni = norm.ID();
+    size_t ni = std::max(norm.ID(), norm.SwapGB().ID());
     // find index from norm_ids
     size_t i = 0;
     for (; i < N_NORMS; ++i) {
@@ -131,22 +141,28 @@ int main(int argc, char* argv[]) {
     });
 
     // print out the 10 largest alpha_ji
-    std::cout << "incoming flow from " << ni << " : " << i << std::endl;
+    std::cout << "incoming flow (positive alpha_ji) from " << ni << " : " << i << std::endl;
     for (size_t j = 0; j < 10; ++j) {
-      auto norm = Norm::ConstructFromID(alpha_ji[j].first);
-      std::string name = norm.GetName();
+      if (alpha_ji[j].second < 0.0) { break; }
+      auto norm_j = Norm::ConstructFromID(alpha_ji[j].first);
+      std::string name = norm_j.GetName();
       if (name.empty()) { name = "other";}
       std::cout << alpha_ji[j].first << ' ' << alpha_ji[j].second << ' ' << name << std::endl;
     }
 
     // print out the 10 smallest alpha_ji
-    std::cout << "outgoing flow to " << ni << " : " << i << std::endl;
+    std::cout << "outgoing flow (negative alpha_ji) to " << ni << " : " << i << std::endl;
     for (size_t j = N_NORMS - 10; j < N_NORMS; ++j) {
-      auto norm = Norm::ConstructFromID(alpha_ji[j].first);
-      std::string name = norm.GetName();
+      if (alpha_ji[j].second > 0.0) { break; }
+      auto norm_j = Norm::ConstructFromID(alpha_ji[j].first);
+      std::string name = norm_j.GetName();
       if (name.empty()) { name = "other";}
       std::cout << alpha_ji[j].first << ' ' << alpha_ji[j].second << ' ' << name << std::endl;
     }
+
+    // mutational outflow  \sum_q p_fix[i][j]
+    std::cout << "mutational outflow from " << ni << " : " << i << std::endl;
+    std::cout << ge.MutationOutFlow(i) << std::endl;
   }
   else if (argc == 4) {
     size_t ni = std::stoul(argv[2]);
