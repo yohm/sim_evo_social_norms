@@ -123,7 +123,7 @@ vd_t StationaryGroupedEvo(const std::vector<std::vector<double>>& p_fix, const s
       double dx = 0.0;
       for (size_t j = 0; j < N; j++) {
         if (i == j) continue;
-        dx += (1.0 - r_mut) * x[i] * x[j] * alpha[j][i] - r_mut * x[i] * p_fix[i][j] / N + r_mut * x[j] * p_fix[i][j] / N;
+        dx += (1.0 - r_mut) * x[i] * x[j] * alpha[j][i] - r_mut * x[i] * p_fix[i][j] / N + r_mut * x[j] * p_fix[j][i] / N;
       }
       x_dot[i] = dx;
     }
