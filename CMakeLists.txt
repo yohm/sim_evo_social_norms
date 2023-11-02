@@ -50,6 +50,9 @@ target_link_libraries(test_PrivRepGame GTest::gtest_main)
 add_executable(test_EvolPrivRepGame test_EvolPrivRepGame.cpp EvolPrivRepGame.hpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(test_EvolPrivRepGame OpenMP::OpenMP_CXX Eigen3::Eigen nlohmann_json::nlohmann_json GTest::gtest_main)
 
+add_executable(test_GroupedEvo test_GroupedEvo.cpp GroupedEvo.hpp Norm.hpp)
+target_link_libraries(test_GroupedEvo GTest::gtest_main)
+
 add_executable(inspect_Norm inspect_Norm.cpp Norm.hpp)
 
 add_executable(inspect_PublicRepGame inspect_PublicRepGame.cpp PublicRepGame.hpp Norm.hpp)
@@ -60,7 +63,7 @@ target_link_libraries(inspect_PrivRepGame nlohmann_json::nlohmann_json)
 add_executable(inspect_EvolPrivRepGame inspect_EvolPrivRepGame.cpp EvolPrivRepGame.hpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(inspect_EvolPrivRepGame Eigen3::Eigen OpenMP::OpenMP_CXX nlohmann_json::nlohmann_json)
 
-add_executable(inspect_GroupedEvo inspect_GroupedEvo.cpp Norm.hpp)
+add_executable(inspect_GroupedEvo inspect_GroupedEvo.cpp GroupedEvo.hpp Norm.hpp)
 target_link_libraries(inspect_GroupedEvo Eigen3::Eigen nlohmann_json::nlohmann_json)
 
 add_executable(msgpack2json msgpack2json.cpp)

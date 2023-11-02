@@ -7,47 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <icecream.hpp>
 #include "Norm.hpp"
-
-
-class GroupedEvo {
-  public:
-  GroupedEvo(const std::vector<size_t> &norm_ids, const std::vector<std::vector<double>> &p_fix,
-             const std::vector<double> &self_coop_levels) :
-    norm_ids(norm_ids), p_fix(p_fix), self_coop_levels(self_coop_levels) {
-    N_NORMS = norm_ids.size();
-    assert(p_fix.size() == N_NORMS);
-    assert(self_coop_levels.size() == N_NORMS);
-  }
-
-  size_t N_NORMS;
-  std::vector<size_t> norm_ids;
-  std::vector<std::vector<double>> p_fix;
-  std::vector<double> self_coop_levels;
-
-  static double InterGroupImitationProb(double pc_res, double pc_mut, double benefit, double sigma_out) {
-    double pi_res = (benefit - 1.0) * pc_res;
-    double pi_mut = (benefit - 1.0) * pc_mut;
-    // f_{A\to B} = { 1 + \exp[ \sigma_out (s_A - s_B) ] }^{-1}
-    return 1.0 / (1.0 + std::exp(sigma_out * (pi_res - pi_mut)));
-  }
-
-  double CalcAlpha(size_t i, size_t j, double benefit, double sigma_out) const {
-    // flow from i to j caused by inter-group imitation
-    double p_plus = InterGroupImitationProb(self_coop_levels[i], self_coop_levels[j], benefit, sigma_out) * p_fix[i][j];
-    double p_minus =
-      InterGroupImitationProb(self_coop_levels[j], self_coop_levels[i], benefit, sigma_out) * p_fix[j][i];
-    return p_plus - p_minus;
-  }
-
-  double MutationOutFlow(size_t i) {
-    // sum_j p_fix[i][j]
-    double mut_outflow = 0.0;
-    for (size_t j = 0; j < N_NORMS; ++j) {
-      mut_outflow += p_fix[i][j];
-    }
-    return mut_outflow;
-  }
-};
+#include "GroupedEvo.hpp"
 
 
 nlohmann::json LoadMsgpackFile(const std::string& path) {
@@ -117,8 +77,11 @@ int main(int argc, char* argv[]) {
   if (argc == 3) {
     // size_t ni = std::stoul(argv[2]);
     Norm norm = Norm::ParseNormString(argv[2]);
+    if (norm.IDwithoutR2() < norm.SwapGB().IDwithoutR2()) {
+      norm = norm.SwapGB();
+    }
     // print largest
-    size_t ni = std::max(norm.ID(), norm.SwapGB().ID());
+    size_t ni = norm.ID();
     // find index from norm_ids
     size_t i = 0;
     for (; i < N_NORMS; ++i) {
@@ -165,8 +128,16 @@ int main(int argc, char* argv[]) {
     std::cout << ge.MutationOutFlow(i) << std::endl;
   }
   else if (argc == 4) {
-    size_t ni = std::stoul(argv[2]);
-    size_t nj = std::stoul(argv[3]);
+    Norm norm1 = Norm::ParseNormString(argv[2]);
+    if (norm1.IDwithoutR2() < norm1.SwapGB().IDwithoutR2()) {
+      norm1 = norm1.SwapGB();
+    }
+    Norm norm2 = Norm::ParseNormString(argv[3]);
+    if (norm2.IDwithoutR2() < norm2.SwapGB().IDwithoutR2()) {
+      norm2 = norm2.SwapGB();
+    }
+    size_t ni = norm1.ID();
+    size_t nj = norm2.ID();
     // find index from norm_ids
     size_t i = 0;
     for (; i < N_NORMS; ++i) {
@@ -191,7 +162,8 @@ int main(int argc, char* argv[]) {
 
     std::cout << "flow " << ni << " -> " << nj << " : " << ge.CalcAlpha(i, j, benefit, sigma_out) << std::endl;
     std::cout << "flow " << nj << " -> " << ni << " : " << ge.CalcAlpha(j, i, benefit, sigma_out) << std::endl;
-
+    std::cout << "p_fix " << ni << " -> " << nj << " : " << p_fix[i][j] << std::endl;
+    std::cout << "p_fix " << nj << " -> " << ni << " : " << p_fix[j][i] << std::endl;
   }
 
   return 0;
