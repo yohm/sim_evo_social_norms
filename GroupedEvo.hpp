@@ -142,7 +142,7 @@ class GroupedEvo {
         for (size_t i = 0; i < N; i++) {
           if (x_dot[i] > x_dot_max) { x_dot_max = x_dot[i]; }
         }
-        fout << x_dot_max << ' ';
+        // fout << x_dot_max << ' ';
 
         PrintProgress(static_cast<double>(n) / T_max);
       }
