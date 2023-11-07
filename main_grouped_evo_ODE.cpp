@@ -78,11 +78,16 @@ int main(int argc, char* argv[]) {
   }
   double benefit = j_in["benefit"].get<double>();
 
+  auto start = std::chrono::system_clock::now();
+
   GroupedEvo g_evo{norm_ids, p_fix, self_coop_levels};
   std::ofstream ts_out("timeseries.dat");
   auto stationary = g_evo.TimeEvolutionODE(benefit, sigma_out, relative_mutation_rate, T_max, dt, ts_out);
 
-  // auto stationary = StationaryGroupedEvo(p_fix, self_coop_levels, benefit, sigma_out, relative_mutation_rate, T_max, dt);
+  auto end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end-start;
+  std::cerr << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
 
   // make tuple of norm_id & stationary & coop_level
   std::vector<std::tuple<int, double, double>> norms_to_measure;

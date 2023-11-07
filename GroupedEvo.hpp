@@ -107,6 +107,7 @@ class GroupedEvo {
 
     // x_dot must have size N
     std::function<void(const vd_t&,vd_t&)> calc_x_dot = [this,&alpha,&mu_out,r_mut,N](const vd_t& x, vd_t& x_dot) {
+      #pragma omp parallel for schedule(static) default(none) shared(x, x_dot, alpha, mu_out, r_mut, N)
       for (size_t i = 0; i < N; i++) {
         double dx = 0.0;
         double mut_in = 0.0;
