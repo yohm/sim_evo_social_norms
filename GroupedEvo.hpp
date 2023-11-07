@@ -132,8 +132,18 @@ class GroupedEvo {
         double pc = 0.0;
         for (size_t i = 0; i < N; i++) { pc += x[i] * self_coop_levels[i]; }
         fout << pc << ' ';
+
         for (double xi : x) { fout << xi << ' '; }
         fout << std::endl;
+
+        std::vector<double> x_dot(x.size(), 0.0);
+        calc_x_dot(x, x_dot);
+        double x_dot_max = 0.0;
+        for (size_t i = 0; i < N; i++) {
+          if (x_dot[i] > x_dot_max) { x_dot_max = x_dot[i]; }
+        }
+        fout << x_dot_max << ' ';
+
         PrintProgress(static_cast<double>(n) / T_max);
       }
     }
