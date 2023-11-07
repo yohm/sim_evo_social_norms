@@ -148,12 +148,21 @@ class GroupedEvo {
       }
       fout << i_max << ' ' << x_dot_max << std::endl;
 
-      if (accel==1 && x_dot_max < 1.0e-5) {
-        if (n_interval % 5 == 0) accel = 5;
-        else if (n_interval % 2 == 0) accel = 2;
+      if (accel!=2 && x_dot_max < 1.0e-5 && x_dot_max > 1.0e-7) {
+        if (n_interval % 2 == 0) {
+          accel = 2;
+          std::cerr << "accel: " << accel << std::endl;
+        }
       }
-      if (accel > 1 && x_dot_max > 1.0e-5) {
+      else if (accel != 5 && x_dot_max < 1.0e-7) {
+        if (n_interval % 5 == 0) {
+          accel = 5;
+          std::cerr << "accel: " << accel << std::endl;
+        }
+      }
+      else if (accel != 1 && x_dot_max > 1.0e-5) {
         accel = 1;
+        std::cerr << "accel: " << accel << std::endl;
       }
 
       PrintProgress(static_cast<double>(n) / N_max);
