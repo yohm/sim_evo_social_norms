@@ -100,15 +100,22 @@ class GroupedEvo {
       }
     }
 
+    std::vector<double> mu_out(N, 0.0);
+    for (size_t i = 0; i < N; i++) {
+      mu_out[i] = MutationOutFlow(i);
+    }
+
     // x_dot must have size N
-    std::function<void(const vd_t&,vd_t&)> calc_x_dot = [this,&alpha,r_mut,N](const vd_t& x, vd_t& x_dot) {
+    std::function<void(const vd_t&,vd_t&)> calc_x_dot = [this,&alpha,&mu_out,r_mut,N](const vd_t& x, vd_t& x_dot) {
       for (size_t i = 0; i < N; i++) {
         double dx = 0.0;
+        double mut_in = 0.0;
         for (size_t j = 0; j < N; j++) {
           if (i == j) continue;
-          dx += (1.0 - r_mut) * x[i] * x[j] * alpha[j][i] - r_mut * x[i] * p_fix[i][j] / static_cast<double>(N-1) + r_mut * x[j] * p_fix[j][i] / static_cast<double>(N-1);
+          dx += (1.0 - r_mut) * x[i] * x[j] * alpha[j][i];  // - r_mut * x[i] * p_fix[i][j] / static_cast<double>(N-1) + r_mut * x[j] * p_fix[j][i] / static_cast<double>(N-1);
+          mut_in += x[j] * p_fix[j][i];
         }
-        x_dot[i] = dx;
+        x_dot[i] = dx + r_mut * ( mut_in - x[i] * mu_out[i] ) / static_cast<double>(N-1);
       }
     };
 
