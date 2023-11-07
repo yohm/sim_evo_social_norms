@@ -121,46 +121,42 @@ class GroupedEvo {
     };
 
     vd_t x(N, 0.0);
-    size_t n_iter = 100;
-    double accel_factor = 1.0;
-    const auto N_max = static_cast<size_t>( std::round((double)T_max / (dt*accel_factor*n_iter)) );
+    const auto N_max = static_cast<int>( std::round((double)T_max / dt) );
+    if (N_max >= 500 && N_max % 500 != 0) {
+      throw std::runtime_error("N_max must be a multiple of 500");
+    }
+
+    int n_interval = N_max / 500;
+    int accel = 1;
+
     for (double& xi : x) { xi = 1.0 / static_cast<double>(N); }
-    size_t n_interval = N_max / 500;
-    if (n_interval == 0) { n_interval = 1; }
-    for (size_t n = 0; n < N_max; n++) {
-      x = SolveByRungeKutta(calc_x_dot, x, dt*accel_factor, n_iter, n_iter);
-      if (n % n_interval == 0) {
-        fout << n*dt*accel_factor*n_iter << ' ';
-        double pc = 0.0;
-        for (size_t i = 0; i < N; i++) { pc += x[i] * self_coop_levels[i]; }
-        fout << pc << ' ';
+    for (int n = 0; n < N_max; n+=n_interval) {
+      x = SolveByRungeKutta(calc_x_dot, x, dt*accel, n_interval/accel, n_interval/accel);
+      fout << n*dt << ' ';
+      double pc = 0.0;
+      for (size_t i = 0; i < N; i++) { pc += x[i] * self_coop_levels[i]; }
+      fout << pc << ' ';
 
-        for (double xi : x) { fout << xi << ' '; }
+      for (double xi : x) { fout << xi << ' '; }
 
-        std::vector<double> x_dot(x.size(), 0.0);
-        calc_x_dot(x, x_dot);
-        double x_dot_max = 0.0;
-        size_t i_max = 0;
-        for (size_t i = 0; i < N; i++) {
-          if (x_dot[i] > x_dot_max) { x_dot_max = x_dot[i]; i_max = i; }
-        }
-        fout << i_max << ' ' << x_dot_max << std::endl;
-
-        if (x_dot_max >= 1.0e-5) {
-          accel_factor = 1.0;
-          n_iter = 100;
-        }
-        else if (x_dot_max >= 1.0e-7) {
-          accel_factor = 5.0;
-          n_iter = 20;
-        }
-        else {
-          accel_factor = 10.0;
-          n_iter = 10;
-        }
-
-        PrintProgress(static_cast<double>(n) / N_max);
+      std::vector<double> x_dot(x.size(), 0.0);
+      calc_x_dot(x, x_dot);
+      double x_dot_max = 0.0;
+      size_t i_max = 0;
+      for (size_t i = 0; i < N; i++) {
+        if (x_dot[i] > x_dot_max) { x_dot_max = x_dot[i]; i_max = i; }
       }
+      fout << i_max << ' ' << x_dot_max << std::endl;
+
+      if (accel==1 && x_dot_max < 1.0e-5) {
+        if (n_interval % 5 == 0) accel = 5;
+        else if (n_interval % 2 == 0) accel = 2;
+      }
+      if (accel > 1 && x_dot_max > 1.0e-5) {
+        accel = 1;
+      }
+
+      PrintProgress(static_cast<double>(n) / N_max);
     }
     return x;
   }
