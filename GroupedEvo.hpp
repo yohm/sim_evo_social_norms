@@ -127,6 +127,9 @@ class GroupedEvo {
     }
 
     int n_interval = N_max / 500;
+    if (n_interval == 0) {
+      n_interval = 1;
+    }
     int accel = 1;
 
     for (double& xi : x) { xi = 1.0 / static_cast<double>(N); }
