@@ -5,7 +5,7 @@ import os
 # %%
 
 # load file from fix_prob_results/path_to_param.json
-json_path = os.path.dirname(__file__) + '/fix_prob_results/path_to_param.json'
+json_path = os.path.dirname(__file__) + '/../fix_prob_results/path_to_param.json'
 json_path
 #%%
 with open(json_path) as f:

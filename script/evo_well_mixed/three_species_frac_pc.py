@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # %%
 # run in advance
-# ../../cmake-build-release/main_well_mixed_evo -3 fix_prob_results/third_order_mu0.01/fixation_probs_15.msgpack > frac_pc.dat
+# ../../cmake-build-release/main_well_mixed_evo -3 ../fix_prob_results/third_order_mu0.01/fixation_probs_15.msgpack > frac_pc.dat
 dat = np.loadtxt('frac_pc.dat')
 
 # %%

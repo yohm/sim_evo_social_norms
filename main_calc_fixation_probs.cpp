@@ -124,6 +124,7 @@ int main(int argc, char* argv[]) {
   using namespace nlohmann;
   enum NormSet {
     LeadingEight,
+    SecondOrder,
     ThirdOrder,
     DualSecondOrder
   };
@@ -150,6 +151,9 @@ int main(int argc, char* argv[]) {
       std::string set_name = argv[++i];
       if (set_name == "leading_eight") {
         norm_set = LeadingEight;
+      }
+      else if (set_name == "second_order") {
+        norm_set = SecondOrder;
       }
       else if (set_name == "third_order") {
         norm_set = ThirdOrder;
@@ -192,6 +196,10 @@ int main(int argc, char* argv[]) {
   if (norm_set == LeadingEight) {
     norms = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD()};
     norm_set_name = "leading_eight";
+  }
+  else if (norm_set == SecondOrder) {
+    norms = Norm::Deterministic2ndOrderWithoutR2Norms();
+    norm_set_name = "second_order";
   }
   else if (norm_set == ThirdOrder) {
     norms = Norm::Deterministic3rdOrderWithoutR2Norms();

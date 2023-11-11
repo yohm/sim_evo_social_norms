@@ -17,7 +17,7 @@ fig.savefig('timeseries.png')
 # %%
 # import msgpack
 # 
-# norm_ids = msgpack.load(open('fix_prob_results/third_order_mu0.01/fixation_probs_15.msgpack', 'rb'))['norm_ids']
+# norm_ids = msgpack.load(open('../fix_prob_results/third_order_mu0.01/fixation_probs_15.msgpack', 'rb'))['norm_ids']
 # norm_names = {
 #   765131: "L1",
 #   634059: "L2",

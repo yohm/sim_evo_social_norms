@@ -8,7 +8,7 @@ from matplotlib.cm import ScalarMappable
 script_path = os.path.dirname(os.path.abspath(__file__))
 if 'ipykernel' in sys.modules:
     # we are in a jupyter notebook
-    input_file = os.path.join(script_path, '../../script_grouped/fix_prob_results/third_order_mu0.01/fixation_probs_15.dat')
+    input_file = os.path.join(script_path, '../fix_prob_results/third_order_mu0.01/fixation_probs_15.dat')
 else:
     # we are in a python script
     # input file is specified as a command line argument

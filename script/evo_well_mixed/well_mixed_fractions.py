@@ -7,7 +7,7 @@ import os,subprocess
 # %%
 script_path = os.path.dirname(os.path.abspath(__file__))
 exe_path = os.path.join(script_path, '..', '..', 'cmake-build-release', 'main_well_mixed_evo')
-input_dir_path = os.path.join(script_path, 'fix_prob_results')
+input_dir_path = os.path.join(script_path, '..', 'fix_prob_results')
 
 # %%
 def calc_stationary(msgpack_path):
