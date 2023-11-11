@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
   using namespace nlohmann;
   enum NormSet {
     LeadingEight,
-    ThridOrder,
+    ThirdOrder,
     DualSecondOrder
   };
 
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
         norm_set = LeadingEight;
       }
       else if (set_name == "third_order") {
-        norm_set = ThridOrder;
+        norm_set = ThirdOrder;
       }
       else if (set_name == "dual_second_order") {
         norm_set = DualSecondOrder;
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
     norms = {Norm::L1(), Norm::L2(), Norm::L3(), Norm::L4(), Norm::L5(), Norm::L6(), Norm::L7(), Norm::L8(), Norm::AllC(), Norm::AllD()};
     norm_set_name = "leading_eight";
   }
-  else if (norm_set == ThridOrder) {
+  else if (norm_set == ThirdOrder) {
     norms = Norm::Deterministic3rdOrderWithoutR2Norms();
     norm_set_name = "third_order";
   }
