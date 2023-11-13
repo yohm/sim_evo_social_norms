@@ -60,7 +60,8 @@ plt.clf()
 fig, ax = plt.subplots(figsize=(6,4))
 ax.plot(dat[:,0], dat[:,1], label='Cooperation Level')
 for name,idx in name_index.items():
-  ax.plot(dat[:,0], dat[:,idx+2], label=name)
+  if idx+2 < dat.shape[1]:
+    ax.plot(dat[:,0], dat[:,idx+2], label=name)
 ax.set_xlabel('time', fontsize=18)
 ax.set_ylabel('cooperation level', fontsize=18)
 ax.set_ylim(-0.03,1.03)

@@ -22,7 +22,7 @@ fix_prob_path = ""
 for k,v in fix_param.items():
     p2 = [v[k] for k in comp_keys]
     if p1 == p2:
-        fix_prob_path = f"{os.path.dirname(__file__)}/fix_prob_results/{k}"
+        fix_prob_path = f"{os.path.dirname(__file__)}/../fix_prob_results/{k}"
         break
 p1,p2,fix_prob_path
 # %%
