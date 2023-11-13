@@ -1,6 +1,7 @@
 #%%
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 # %%
 # Load data
 dat = np.loadtxt('timeseries.dat')
@@ -14,6 +15,11 @@ ax.set_ylim(-0.03,1.03)
 
 # %%
 fig.savefig('timeseries.png')
+
+# %%
+with open('_output.json', 'w') as f:
+  output = {"cooperation_level": dat[-1,1]}
+  json.dump(output, f)
 # %%
 # import msgpack
 # 
