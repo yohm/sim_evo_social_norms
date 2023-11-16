@@ -81,20 +81,17 @@ non_dat2.shape, l8_dat2.shape
 # %%
 plt.clf()
 fig, ax = plt.subplots(figsize=(6, 4), ncols=1)
-ax.plot(non_dat[:,2], non_dat[:,1], '.', color='#6883BA')
+ax.plot(non_dat2[:,2], non_dat2[:,1], '.', color='#6883BA')
 ax.set_xlim(-0.02,1.02)
 ax.set_ylim(-0.02,1.02)
 ax.set_xlabel('self-cooperation level', fontsize=12)
 ax.set_ylabel('equilibrium fraction', fontsize=12)
 
-ax.plot(s16_dat[:,2], s16_dat[:,1], 's', color='#3D3B8E')
-ax.plot(l8_dat[:,2], l8_dat[:,1], 'o', color='#E072A4')
+#ax.plot(s16_dat[:,2], s16_dat[:,1], 's', color='#3D3B8E')
+ax.plot(l8_dat2[:,2], l8_dat2[:,1], 'o', color='#E072A4')
 
-ax.text(0.97, 0.76, 'L1', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.86, 0.97, 'L2', fontsize=12, color='#222222', horizontalalignment='left', verticalalignment='top')
 ax.text(0.97, 0.07, 'L3', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.97, 0.05, 'L4', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='center')
-ax.text(0.87, 0.15, 'L5', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
 ax.text(0.49, 0.01, 'L6', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.97, 0.61, 'L7', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.10, 0.09, 'L8', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+# %%
+fig.savefig("three_species_frac_pc_2nd.pdf", bbox_inches="tight", pad_inches=0.05)
+# %%
