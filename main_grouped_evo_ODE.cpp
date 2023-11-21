@@ -65,6 +65,14 @@ int main(int argc, char* argv[]) {
   }
   std::cerr << "  # of norms: " << norms.size() << std::endl;
 
+  std::ofstream norm_out("norms.txt");
+  for (auto& n : norms) {
+    std::string name = n.GetName();
+    if (name.empty()) { name = '-'; }
+    norm_out << n.ID() << ' ' << name << std::endl;
+  }
+  norm_out.close();
+
   const size_t N_NORMS = norms.size();
   std::vector<std::vector<double>> p_fix(N_NORMS, std::vector<double>(N_NORMS, 0.0));
   std::vector<double> self_coop_levels(N_NORMS, 0.0);
