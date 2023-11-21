@@ -117,6 +117,7 @@ def show_norms(norm_ids_s):
         print(name, i)
 # %%
 fig, ax, norm_ids_s = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewidth=0.3)
+#ax.set_ylabel(r"fixation probability, $\rho_{\rm{ALLD} \to X}$", fontsize=16)
 ax.annotate('L1', xy=(1.5, 0.1015), xytext=(15, 0.103), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L2', xy=(10.5, 0.0745), xytext=(24, 0.085), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L7', xy=(31.5, 0.049), xytext=(44, 0.06), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
@@ -125,11 +126,21 @@ fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 # %%
 fig, ax, norm_ids_s = plot_invadability(765131, x_max=201, y_max=0.149, bar_linewidth=0.05)
+ax.annotate('L7', xy=(175.5, 0.02), xytext=(150, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L4', xy=(178.5, 0.02), xytext=(168, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L3', xy=(179.5, 0.02), xytext=(186, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.text(100, 0.035, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
 fig.savefig('l1_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
 fig, ax, norm_ids_s = plot_invadability(634059, x_max=201, y_max=0.149, bar_linewidth=0.05)
+ax.annotate('L1', xy=(1.5, 0.141), xytext=(50, 0.135), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L7', xy=(3.5, 0.138), xytext=(50, 0.125), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L3', xy=(4.5, 0.126), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L4', xy=(7.5, 0.120), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L5', xy=(36.5, 0.0180), xytext=(65, 0.04), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.text(100, 0.007, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
 fig.savefig('l2_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
@@ -200,6 +211,7 @@ axs[0][1].annotate('L1', xy=(1.5, 0.141), xytext=(50, 0.135), fontsize=12, arrow
 axs[0][1].annotate('L7', xy=(3.5, 0.138), xytext=(50, 0.125), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[0][1].annotate('L3', xy=(4.5, 0.126), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[0][1].annotate('L4', xy=(7.5, 0.120), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+axs[0][1].annotate('L5', xy=(37.5, 0.0195), xytext=(65, 0.04), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 axs[0][1].text(100, 0.007, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
 
 axs[1][0].set_title('L6', fontsize=16)

@@ -39,15 +39,22 @@ pixels
 
 # %%
 # Display the image using matplotlib
-fig, (ax0,ax1) = plt.subplots(figsize=(8.0, 3.4), ncols=2)
+plt.clf()
+fig, ax = plt.subplots(figsize=(6, 4))
 
-ax0.plot(dat[:, 0], dat[:, 1], label=f"L1")
-ax0.plot(dat[:, 0], dat[:, 2], label=f"L2")
-ax0.set_xlabel('# of L2 players', fontsize=12)
-ax0.set_ylabel('payoffs', fontsize=14)
-ax0.set_ylim(-1,benefit)
-ax0.legend()
-ax0.text(-0.12, 1.12, 'a', transform=ax0.transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+ax.plot(dat[:, 0], dat[:, 1], label=f"L1")
+ax.plot(dat[:, 0], dat[:, 2], label=f"L2")
+ax.set_xlabel('# of L2 players', fontsize=18)
+ax.set_ylabel('payoffs', fontsize=18)
+ax.set_ylim(-1,benefit)
+ax.legend()
+#ax.text(-0.12, 1.12, 'a', transform=ax.transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+
+fig.savefig('L1L2_payoff.pdf', bbox_inches='tight', pad_inches=0.2)
+
+# %%
+plt.clf()
+fig, ax1 = plt.subplots(figsize=(4, 4))
 
 ax1.imshow(pixels)
 ax1.axis('on')  # Turn off axis for better visualization
@@ -64,7 +71,7 @@ ax1.text(20, 2.4, "95.4%", fontsize=12, bbox=dict(facecolor='white', alpha=0.8, 
 ax1.text(45, 2.4, "85.9%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
 ax1.text(20, 27.4, "84.6%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
 ax1.text(45, 27.4, "80.0%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9, edgecolor='black', boxstyle='round,pad=0.3'), ha='center', va='center')
-ax1.text(-0.12, 1.12, 'b', transform=ax1.transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
+#ax1.text(-0.12, 1.12, 'b', transform=ax1.transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
 
 # ticks off
 ax1.set_xticks([])
