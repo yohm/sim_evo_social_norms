@@ -61,7 +61,7 @@ for mu_i,mu in enumerate(mu_list):
 fig.savefig("grouped_second_order_pc_r0.05.pdf", bbox_inches="tight", pad_inches=0.3)
 
 # %%
-# third-order strategies, mut_r = 0.01
+# third-order strategies, mut_r = 0.05
 plt.clf()
 fig,ax = plt.subplots(1,1,figsize=(8,6))
 
