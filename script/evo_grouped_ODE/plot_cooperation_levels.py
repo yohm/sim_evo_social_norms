@@ -51,16 +51,16 @@ for mu_i,mu in enumerate(mu_list):
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
 ax.set_ylim([0.0,1.0])
-ax.legend(loc='upper left', fontsize=14)
+ax.legend(loc='upper left', fontsize=12)
 ax.set_xlabel('benefit', fontsize=18)
 ax.set_ylabel('cooperation level', fontsize=18)
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 # %%
-fig.savefig("grouped_second_order_pc_r0.05.pdf", bbox_inches="tight", pad_inches=0.3)
+fig.savefig("grouped_second_order_pc_r0.05.pdf", bbox_inches="tight")
 
 # %%
 # third-order strategies, mut_r = 0.05
@@ -82,17 +82,17 @@ for mu_i,mu in enumerate(mu_list):
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
 ax.set_ylim([0.0,1.0])
-ax.legend(loc='lower right', fontsize=14)
+ax.legend(loc='lower right', fontsize=12)
 ax.set_xlabel('benefit', fontsize=18)
 ax.set_ylabel('cooperation level', fontsize=18)
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 
 # %%
-fig.savefig("grouped_third_order_pc_r0.05.pdf", bbox_inches="tight", pad_inches=0.3)
+fig.savefig("grouped_third_order_pc_r0.05.pdf", bbox_inches="tight")
 
 # %%
 plt.clf()

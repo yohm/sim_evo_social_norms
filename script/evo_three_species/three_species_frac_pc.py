@@ -50,8 +50,8 @@ fig, ax = plt.subplots(figsize=(4, 4), ncols=1)
 ax.plot(non_dat[:,2], non_dat[:,1], '.', color='#6883BA')
 ax.set_xlim(-0.02,1.02)
 ax.set_ylim(-0.02,1.02)
-ax.set_xlabel('self-cooperation level', fontsize=12)
-ax.set_ylabel('equilibrium fraction', fontsize=12)
+ax.set_xlabel('self-cooperation level', fontsize=18)
+ax.set_ylabel('equilibrium fraction', fontsize=18)
 
 ax.plot(s16_dat[:,2], s16_dat[:,1], 's', color='#3D3B8E')
 ax.plot(l8_dat[:,2], l8_dat[:,1], 'o', color='#E072A4')
@@ -70,7 +70,7 @@ ax.yaxis.set_ticks_position('both')
 
 
 # %%
-fig.savefig('three_species_frac_pc.pdf', bbox_inches='tight', pad_inches=0.05)
+fig.savefig('three_species_frac_pc.pdf', bbox_inches='tight')
 
 # %%
 # run in advance
@@ -88,8 +88,8 @@ fig, ax = plt.subplots(figsize=(4, 4), ncols=1)
 ax.plot(non_dat2[:,2], non_dat2[:,1], '.', color='#6883BA')
 ax.set_xlim(-0.02,1.02)
 ax.set_ylim(-0.02,1.02)
-ax.set_xlabel('self-cooperation level', fontsize=12)
-ax.set_ylabel('equilibrium fraction', fontsize=12)
+ax.set_xlabel('self-cooperation level', fontsize=18)
+ax.set_ylabel('equilibrium fraction', fontsize=18)
 
 #ax.plot(s16_dat[:,2], s16_dat[:,1], 's', color='#3D3B8E')
 ax.plot(l8_dat2[:,2], l8_dat2[:,1], 'o', color='#E072A4')
@@ -101,5 +101,5 @@ ax.xaxis.set_ticks_position('both')
 ax.yaxis.set_ticks_position('both')
 
 # %%
-fig.savefig("three_species_frac_pc_2nd.pdf", bbox_inches="tight", pad_inches=0.05)
+fig.savefig("three_species_frac_pc_2nd.pdf", bbox_inches="tight")
 # %%

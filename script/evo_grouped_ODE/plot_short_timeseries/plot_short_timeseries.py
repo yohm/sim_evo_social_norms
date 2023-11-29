@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 # %%
 # Load data
-dat = np.loadtxt('3rd_mu0.02_b3_timeseries.dat')
+dat = np.loadtxt('result/3rd_mu0.02_b3_timeseries.dat')
 
 plt.clf()
 fig, ax = plt.subplots(figsize=(6,4))
@@ -73,18 +73,26 @@ for idx in allc_idxs_3rd:
 if np.max(alld) > 0.05:
   ax.plot(dat[:,0], alld, label='ALLD')
 
-ax.set_xlim(0,400)
-ax.set_xticks([0,100,200,300,400])
-ax.set_xticklabels(['0','100','200','300','400'])
+ax.set_xlim(0,1000)
+ax.set_xticks([0,500,1000])
+ax.set_xticklabels(['0','500','1000'])
+#ax.set_xticklabels(['0','100','200','300','400'])
 ax.set_xlabel('time', fontsize=18)
 ax.set_ylabel('fractions', fontsize=18)
 ax.set_ylim(-0.005,1.005)
-ax.legend()
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+cmap = plt.get_cmap("tab10")
+ax.text(990, 0.93, 'Cooperation Level', fontsize=12, color=cmap(0), ha='right', va='top')
+ax.text(990, 0.58, r"L1 with $P(B,B)=D$", fontsize=12, color=cmap(1), ha='right', va='bottom')
+ax.text(990, 0.40, "L1", fontsize=12, color=cmap(2), ha='right', va='bottom')
+ax.text(990, 0.01, "ALLD", fontsize=12, color=cmap(3), ha='right', va='bottom')
+#ax.legend()
 
 # %%
 fig.savefig('3rd_timeseries.pdf', bbox_inches='tight')
 # %%
-dat = np.loadtxt('2nd_mu0.02_b3_timeseries.dat')
+dat = np.loadtxt('result/2nd_mu0.02_b3_timeseries.dat')
 
 plt.clf()
 fig, ax = plt.subplots(figsize=(6,4))
@@ -153,13 +161,19 @@ if np.max(alld) > 0.05:
   # using 3rd color in the palette
   ax.plot(dat[:,0], alld, label='ALLD', color=cmap(3))
 
-ax.set_xlim(0,400)
-ax.set_xticks([0,100,200,300,400])
-ax.set_xticklabels(['0','100','200','300','400'])
+ax.set_xlim(0,1000)
+ax.set_xticks([0,500,1000])
+ax.set_xticklabels(['0','500','1000'])
 ax.set_xlabel('time', fontsize=18)
 ax.set_ylabel('fractions', fontsize=18)
 ax.set_ylim(-0.005,1.005)
-ax.legend()
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+cmap = plt.get_cmap("tab10")
+ax.text(990, 0.16, 'Cooperation Level', fontsize=12, color=cmap(0), ha='right', va='top')
+ax.text(990, 0.82, "ALLD", fontsize=12, color=cmap(3), ha='right', va='bottom')
+ax.text(990, 0.195, "L3", fontsize=12, color=cmap(4), ha='right', va='bottom')
+#ax.legend()
 # %%
 fig.savefig('2nd_timeseries.pdf', bbox_inches='tight')
 # %%
@@ -234,7 +248,7 @@ def plot_3rd_timeseries(ax, datpath):
   if np.max(alld) > 0.05:
     ax.plot(dat[:,0], alld, label='ALLD', color=cmap(3))
   ax.set_ylim(-0.005,1.005)
-  ax.legend()
+  #ax.legend()
 
 # %%
 fig, axs = plt.subplots(4,4,figsize=(12,12), sharex=False, sharey=True)
@@ -264,6 +278,16 @@ for i, mu in enumerate(reversed(['0.01','0.02','0.05','0.1'])):
       #axs[i][j].legend()
 #handles, labels = axs[0, 0].get_legend_handles_labels()
 #fig.legend(handles, labels, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12)
+handles, labels = [], []
+for ax in fig.axes:
+  for handle, label in zip(*ax.get_legend_handles_labels()):
+    if label not in labels:  # To avoid duplicate labels
+      handles.append(handle)
+      labels.append(label)
+# rearrange the order
+handles[1], handles[2], handles[3] = handles[2], handles[3], handles[1]
+labels[1], labels[2], labels[3] = labels[2], labels[3], labels[1]
+fig.legend(handles, labels, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=12)
 plt.tight_layout()
 fig.savefig("3rd_all_short_timeseries.pdf", bbox_inches="tight", pad_inches=0.2)
 

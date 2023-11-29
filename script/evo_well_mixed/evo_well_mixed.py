@@ -68,7 +68,7 @@ numpy_pc3
 
 # %%
 plt.clf()
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 color_map = plt.get_cmap('viridis')
 for mu_i,mu in enumerate(mu_list):
@@ -76,17 +76,17 @@ for mu_i,mu in enumerate(mu_list):
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
 ax.set_ylim([0.0,1.0])
-ax.legend(loc='upper right', fontsize=20)
-ax.set_xlabel('benefit', fontsize=24)
-ax.set_ylabel('cooperation level', fontsize=24)
+ax.legend(loc='upper right', fontsize=12)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 # %%
-fig.savefig('third_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
+fig.savefig('third_order_evo.pdf', bbox_inches='tight')
 
 # %%
 # second-order social norms
@@ -119,7 +119,7 @@ numpy_pc2
 
 # %%
 plt.clf()
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 color_map = plt.get_cmap('viridis')
 for mu_i,mu in enumerate(mu_list):
@@ -127,18 +127,18 @@ for mu_i,mu in enumerate(mu_list):
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
 ax.set_ylim([0.0,1.0])
-ax.legend(loc='upper right', fontsize=20)
-ax.set_xlabel('benefit', fontsize=24)
-ax.set_ylabel('cooperation level', fontsize=24)
+ax.legend(loc='upper right', fontsize=12)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 
 # %%
-fig.savefig('second_order_evo.pdf', bbox_inches='tight', pad_inches=0.3)
+fig.savefig('second_order_evo.pdf', bbox_inches='tight')
 
 # %%
 dat = {}
