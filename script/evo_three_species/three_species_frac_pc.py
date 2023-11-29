@@ -46,7 +46,7 @@ non_dat.shape, l8_dat.shape, s16_dat.shape
 
 # %%
 plt.clf()
-fig, ax = plt.subplots(figsize=(6, 4), ncols=1)
+fig, ax = plt.subplots(figsize=(4, 4), ncols=1)
 ax.plot(non_dat[:,2], non_dat[:,1], '.', color='#6883BA')
 ax.set_xlim(-0.02,1.02)
 ax.set_ylim(-0.02,1.02)
@@ -65,6 +65,10 @@ ax.text(0.49, 0.01, 'L6', fontsize=12, color='#222222', horizontalalignment='rig
 ax.text(0.97, 0.61, 'L7', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
 ax.text(0.10, 0.09, 'L8', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
 
+ax.xaxis.set_ticks_position('both')
+ax.yaxis.set_ticks_position('both')
+
+
 # %%
 fig.savefig('three_species_frac_pc.pdf', bbox_inches='tight', pad_inches=0.05)
 
@@ -80,7 +84,7 @@ l8_dat2 = dat2[np.isin(dat2[:,0], leading_eight)]
 non_dat2.shape, l8_dat2.shape
 # %%
 plt.clf()
-fig, ax = plt.subplots(figsize=(6, 4), ncols=1)
+fig, ax = plt.subplots(figsize=(4, 4), ncols=1)
 ax.plot(non_dat2[:,2], non_dat2[:,1], '.', color='#6883BA')
 ax.set_xlim(-0.02,1.02)
 ax.set_ylim(-0.02,1.02)
@@ -92,6 +96,10 @@ ax.plot(l8_dat2[:,2], l8_dat2[:,1], 'o', color='#E072A4')
 
 ax.text(0.97, 0.07, 'L3', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
 ax.text(0.49, 0.01, 'L6', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+
+ax.xaxis.set_ticks_position('both')
+ax.yaxis.set_ticks_position('both')
+
 # %%
 fig.savefig("three_species_frac_pc_2nd.pdf", bbox_inches="tight", pad_inches=0.05)
 # %%

@@ -42,16 +42,16 @@ norm_names = {
   629962: "L6",
   859333: "L7",  # or 756938
   892101: "L8", # or 625866
-  765130: "L1 BBD",
-  765129: "L1 BGD",
-  634058: "L2 BBD",
-  634057: "L2 BGD",
-  634050: "L2 GGD BBD",
-  769227: "L3 BBC",
-  761035: "L4 BBC",
-  638155: "L5 BBC",
-  859341: "L7 BBC",
-  568523: "L2 GBDB"
+  765130: "L1' L1 BBD",
+  765129: "L1'' L1 BGD",
+  634058: "L2' BBD",
+  634057: "L2'' BGD",
+  634050: "- L2 GGD BBD",
+  769227: "L3' L3 BBC",
+  761035: "L4' BBC",
+  638155: "L5' BBC",
+  859341: "L7' BBC",
+  568523: "- L2 GBDB"
 }
 for i in range(31):
   name = names_sorted[i]
@@ -88,14 +88,16 @@ for i in range(26):
         # ax.text(i+o1, fracs_sorted[i]+o2, "L2 without justified punishment", fontsize=8, rotation=90, ha='center', va='bottom')
         pass
       elif len(name) > 2 and name.startswith("L"):
-        name = name[:2] + "'"
-        ax.text(i+o1, fracs_sorted[i]+o2, name, fontsize=10, rotation=90, ha='center', va='bottom')
+        display_name = name.split()[0]
+        ax.text(i+o1, fracs_sorted[i]+o2, display_name, fontsize=10, rotation=90, ha='center', va='bottom')
 # plot y = 0.02
 ax.plot([-1, 81], [1.0/2080, 1.0/2080], color='#666666', linestyle='--', linewidth=1.4)
 ax.set_xticks([1, 5, 10, 15, 20, 25])
 ax.set_xticklabels([1, 5, 10, 15, 20, 25])
 ax.set_xlabel('rank', fontsize=16)
 ax.set_ylabel('fraction', fontsize=16)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 
 ax.text(22, 0.003, 'ALLD', fontsize=10, rotation=0, ha='center', va='bottom')
 
@@ -123,6 +125,8 @@ ax.plot([-1, 501], [1.0/2080, 1.0/2080], color='#666666', linestyle='--', linewi
 ax.text(100, 0.003, 'ALLD', fontsize=10, rotation=0, ha='center', va='bottom')
 ax.set_xlabel('rank', fontsize=16)
 ax.set_ylabel('fraction', fontsize=16)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 
 
 # %%
@@ -181,6 +185,8 @@ ax.set_xticks([1, 5, 10, 15, 20, 25])
 ax.set_xticklabels([1, 5, 10, 15, 20, 25])
 ax.set_xlabel('rank', fontsize=16)
 ax.set_ylabel('fraction', fontsize=16)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 
 ax.text(5.5, 0.087, 'ALLD', fontsize=10, rotation=0, ha='center', va='bottom')
 # %%

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # %%
 # second-order strategies, mut_r = 0.01
 plt.clf()
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 benefit_list = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
 mu_list = np.array([0.01, 0.02, 0.05, 0.1])
@@ -34,7 +34,7 @@ fig.savefig("grouped_second_order_pc_r0.01.pdf", bbox_inches="tight", pad_inches
 # %%
 # second-order strategies, mut_r = 0.05
 plt.clf()
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 benefit_list = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
 mu_list = np.array([0.01, 0.02, 0.05, 0.1])
@@ -48,22 +48,24 @@ pc2 = np.array([
 color_map = plt.get_cmap('viridis')
 for mu_i,mu in enumerate(mu_list):
   ax.plot(benefit_list, pc2[mu_i,:], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
-  ax.set_xlim([1.2,5.2])
-  ax.set_xticks([2.0, 3.0, 4.0, 5.0])
-  ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-  ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-  ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-  ax.set_ylim([0.0,1.0])
-  ax.legend(loc='upper left', fontsize=18)
-  ax.set_xlabel('benefit', fontsize=24)
-  ax.set_ylabel('cooperation level', fontsize=24)
+ax.set_xlim([1.2,5.2])
+ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='upper left', fontsize=14)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 # %%
 fig.savefig("grouped_second_order_pc_r0.05.pdf", bbox_inches="tight", pad_inches=0.3)
 
 # %%
 # third-order strategies, mut_r = 0.05
 plt.clf()
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 benefit_list = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
 mu_list = np.array([0.01, 0.02, 0.05, 0.1])
@@ -77,39 +79,44 @@ pc3 = np.array([
 color_map = plt.get_cmap('viridis')
 for mu_i,mu in enumerate(mu_list):
   ax.plot(benefit_list, pc3[mu_i,:], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
-  ax.set_xlim([1.2,5.2])
-  ax.set_xticks([2.0, 3.0, 4.0, 5.0])
-  ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-  ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-  ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-  ax.set_ylim([0.0,1.0])
-  ax.legend(loc='lower right', fontsize=18)
-  ax.set_xlabel('benefit', fontsize=24)
-  ax.set_ylabel('cooperation level', fontsize=24)
+ax.set_xlim([1.2,5.2])
+ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='lower right', fontsize=14)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 
 # %%
 fig.savefig("grouped_third_order_pc_r0.05.pdf", bbox_inches="tight", pad_inches=0.3)
 
 # %%
 plt.clf()
-fig, axs = plt.subplots(1,2,figsize=(16,6))
+fig, axs = plt.subplots(1,2,figsize=(12,4))
 
 for ax,pc in zip(axs, [pc2, pc3]):
   color_map = plt.get_cmap('viridis')
   for mu_i,mu in enumerate(mu_list):
     ax.plot(benefit_list, pc[mu_i,:], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
-    ax.set_xlim([1.2,5.2])
-    ax.set_xticks([2.0, 3.0, 4.0, 5.0])
-    ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-    ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
-    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
-    ax.set_ylim([0.0,1.0])
-    ax.set_xlabel('benefit', fontsize=24)
+  ax.set_xlim([1.2,5.2])
+  ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+  ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+  ax.set_xticklabels([2.0, 3.0, 4.0, 5.0], fontsize=16)
+  ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+  ax.set_ylim([0.0,1.0])
+  ax.set_xlabel('benefit', fontsize=24)
+  ax.spines['right'].set_visible(False)
+  ax.spines['top'].set_visible(False)
 
-axs[0].set_ylabel('cooperation level', fontsize=24)
-axs[1].legend(loc='lower right', fontsize=18)
-axs[0].set_title('second-order strategies', fontsize=24)
-axs[1].set_title('third-order strategies', fontsize=24)
+axs[0].set_ylabel('cooperation level', fontsize=18)
+axs[1].legend(loc='lower right', fontsize=14)
+axs[0].set_title('second-order strategies', fontsize=18)
+axs[1].set_title('third-order strategies', fontsize=18)
+axs[1].set_yticklabels([])
 # %%
 fig.savefig("grouped_second_third_r0.05.pdf", bbox_inches="tight", pad_inches=0.3)
 

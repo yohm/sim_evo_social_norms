@@ -80,6 +80,9 @@ def plot_invadability(norm_id, x_max=81, y_max=0.11, bar_linewidth=0.3):
     ax.plot([-1, x_max], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
     ax.set_xlabel('rank', fontsize=16)
     ax.set_ylabel('fixation probability', fontsize=16)
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     return fig, ax, norm_ids_sorted
 
 # %%
