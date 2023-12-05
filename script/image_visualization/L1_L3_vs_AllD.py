@@ -97,3 +97,68 @@ ax3.text(15, 1.0, 'ALLD', fontsize=12, color=cmap(1), ha='center', va='bottom')
 # %%
 fig.savefig('L1_L3_vs_AllD.pdf', bbox_inches='tight', pad_inches=0.2)
 # %%
+plt.clf()
+fig, ax = plt.subplots(figsize=(6, 4))
+
+ax.imshow(pixel1[0:25])
+ax.set_xticks([])
+ax.set_yticks([])
+ax.axvline(x=24.5, color='y', linewidth=2, linestyle='--')
+ax.text(-3, 12, "L1's opinion", fontsize=18, color='black', ha='center', va='center', rotation=90)
+ax.text(12, -3, 'L1', fontsize=18, color='black', ha='center', va='center')
+ax.text(37, -3, 'ALLD', fontsize=18, color='black', ha='center', va='center')
+ax.set_ylim(24.5,-0.5)
+
+# %%
+fig.savefig('L1_vs_AllD_image.pdf', bbox_inches='tight')
+
+# %%
+plt.clf()
+fig, ax = plt.subplots(figsize=(6, 4))
+
+ax.imshow(pixel2[0:25])
+ax.set_xticks([])
+ax.set_yticks([])
+ax.axvline(x=24.5, color='y', linewidth=2, linestyle='--')
+ax.text(-3, 12, "L3's opinion", fontsize=18, color='black', ha='center', va='center', rotation=90)
+ax.text(12, -3, 'L3', fontsize=18, color='black', ha='center', va='center')
+ax.text(37, -3, 'ALLD', fontsize=18, color='black', ha='center', va='center')
+ax.set_ylim(24.5,-0.5)
+# %%
+fig.savefig('L3_vs_AllD_image.pdf', bbox_inches='tight')
+# %%
+plt.clf()
+fig, ax = plt.subplots(figsize=(6, 4))
+
+cmap = plt.get_cmap('tab10')
+ax.plot(dat1[:, 0], dat1[:, 1], label=f"L1")
+ax.plot(dat1[:, 0], dat1[:, 2], label=f"ALLD")
+ax.set_xlabel('# of ALLD players', fontsize=18)
+ax.set_ylabel('payoffs', fontsize=18)
+ax.set_ylim(-1,benefit)
+ax.set_xlim(0,50)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.text(15, 2.75, 'L1', fontsize=18, color=cmap(0), ha='center', va='bottom')
+ax.text(15, 0.2, 'ALLD', fontsize=18, color=cmap(1), ha='center', va='bottom')
+#ax2.legend()
+# %%
+fig.savefig('L1_vs_AllD_payoff.pdf', bbox_inches='tight')
+
+# %%
+plt.clf()
+fig, ax = plt.subplots(figsize=(6, 4))
+
+ax.plot(dat2[:, 0], dat2[:, 1], label=f"L3")
+ax.plot(dat2[:, 0], dat2[:, 2], label=f"ALLD")
+ax.set_xlabel('# of ALLD players', fontsize=18)
+ax.set_ylabel('payoffs', fontsize=18)
+ax.set_ylim(-1,benefit)
+ax.set_xlim(0,50)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.text(15, 2.75, 'L3', fontsize=18, color=cmap(0), ha='center', va='bottom')
+ax.text(15, 1.0, 'ALLD', fontsize=18, color=cmap(1), ha='center', va='bottom')
+# %%
+fig.savefig("L3_vs_AllD_payoff.pdf", bbox_inches="tight")
+# %%

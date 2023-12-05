@@ -83,13 +83,13 @@ for i in range(26):
       o1 = 1.1
       o2 = 0.0004
       if len(name) == 2:
-        ax.text(i+o1, fracs_sorted[i]+o2, name, fontsize=10, rotation=90, ha='center', va='bottom')
+        ax.text(i+o1, fracs_sorted[i]+o2, name, fontsize=13, rotation=90, ha='center', va='bottom')
       elif name == "L2 GBDB":
         # ax.text(i+o1, fracs_sorted[i]+o2, "L2 without justified punishment", fontsize=8, rotation=90, ha='center', va='bottom')
         pass
       elif len(name) > 2 and name.startswith("L"):
         display_name = name.split()[0]
-        ax.text(i+o1, fracs_sorted[i]+o2, display_name, fontsize=10, rotation=90, ha='center', va='bottom')
+        ax.text(i+o1, fracs_sorted[i]+o2, display_name, fontsize=13, rotation=90, ha='center', va='bottom')
 # plot y = 0.02
 ax.plot([-1, 81], [1.0/2080, 1.0/2080], color='#666666', linestyle='--', linewidth=1.4)
 ax.set_xticks([1, 5, 10, 15, 20, 25])
@@ -99,7 +99,7 @@ ax.set_ylabel('fraction', fontsize=16)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
-ax.text(22, 0.003, 'ALLD', fontsize=10, rotation=0, ha='center', va='bottom')
+ax.text(22, 0.003, 'ALLD', fontsize=13, rotation=0, ha='center', va='bottom')
 
 # %%
 fig.savefig('well_mixed_fractions.pdf', bbox_inches='tight', pad_inches=0.15)
@@ -117,12 +117,12 @@ ax.set_xlim(-1, 501)
 ax.set_ylim(0, 0.025)
 for i in range(501):
     c = colormap(c_levels_sorted[i], alpha=0.9)
-    ax.bar(i, fracs_sorted[i], color=c, width=1, linewidth=0.0)
+    ax.bar(i, fracs_sorted[i], color=c, width=1.0, linewidth=0.0)
 # plot y = 0.02
 ax.set_xticks([1, 100, 200, 300, 400, 500])
 ax.set_xticklabels([1, 100, 200, 300, 400, 500])
 ax.plot([-1, 501], [1.0/2080, 1.0/2080], color='#666666', linestyle='--', linewidth=1.4)
-ax.text(100, 0.003, 'ALLD', fontsize=10, rotation=0, ha='center', va='bottom')
+ax.text(100, 0.003, 'ALLD', fontsize=13, rotation=0, ha='center', va='bottom')
 ax.set_xlabel('rank', fontsize=16)
 ax.set_ylabel('fraction', fontsize=16)
 ax.spines['top'].set_visible(False)

@@ -78,8 +78,8 @@ def plot_invadability(norm_id, x_max=81, y_max=0.11, bar_linewidth=0.3):
         ax.bar(i+1, invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=bar_linewidth)
     # plot y = 0.02
     ax.plot([-1, x_max], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
-    ax.set_xlabel('rank', fontsize=16)
-    ax.set_ylabel('fixation probability', fontsize=16)
+    ax.set_xlabel('rank', fontsize=18)
+    ax.set_ylabel('fixation probability', fontsize=18)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -105,7 +105,8 @@ def show_norms(norm_ids_s):
         761035: "L4 BBC",
         638155: "L5 BBC",
         859341: "L7 BBC",
-        568523: "L2 GBDB"
+        568523: "L2 GBDB",
+        699594: "IS"
     }
     for i,nid in enumerate(norm_ids_s):
         if i > 201:
@@ -124,27 +125,28 @@ fig, ax, norm_ids_s = plot_invadability(64704, x_max=81, y_max=0.11, bar_linewid
 ax.annotate('L1', xy=(1.5, 0.1015), xytext=(15, 0.103), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L2', xy=(10.5, 0.0745), xytext=(24, 0.085), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L7', xy=(31.5, 0.049), xytext=(44, 0.06), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('IS', xy=(40.5, 0.026), xytext=(52, 0.04), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.text(70, 0.025, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='center')
-fig.savefig('alld_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+fig.savefig('alld_invadability.pdf', bbox_inches='tight')
 show_norms(norm_ids_s)
 # %%
-fig, ax, norm_ids_s = plot_invadability(765131, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(765131, x_max=201, y_max=0.149, bar_linewidth=0.0)
 ax.annotate('L7', xy=(175.5, 0.02), xytext=(150, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L4', xy=(178.5, 0.02), xytext=(168, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L3', xy=(179.5, 0.02), xytext=(186, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.text(100, 0.035, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
-fig.savefig('l1_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+fig.savefig('l1_invadability.pdf', bbox_inches='tight')
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(634059, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(634059, x_max=201, y_max=0.149, bar_linewidth=0.0)
 ax.annotate('L1', xy=(1.5, 0.141), xytext=(50, 0.135), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L7', xy=(3.5, 0.138), xytext=(50, 0.125), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L3', xy=(4.5, 0.126), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L4', xy=(7.5, 0.120), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.annotate('L5', xy=(36.5, 0.0180), xytext=(65, 0.04), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
 ax.text(100, 0.007, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
-fig.savefig('l2_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
+fig.savefig('l2_invadability.pdf', bbox_inches='tight')
 show_norms(norm_ids_s)
 
 # %%
@@ -178,57 +180,42 @@ fig.savefig('l8_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
-# make subplots for L1, L2, L6, L8
+# %%
+input_file = os.path.join(script_path, '../fix_prob_results/second_order_mu0.01/fixation_probs_7.dat')
+input_file
 
-plt.clf()
-#fig, (ax0,ax1) = plt.subplots(figsize=(10,4), nrows=1, ncols=2, sharex=False, sharey=False)
-fig, axs = plt.subplots(figsize=(12,8), nrows=2, ncols=2, sharex=False, sharey=False)
-colormap = plt.get_cmap('RdYlBu')
-sm = ScalarMappable(cmap=colormap)
-cbar = fig.colorbar(sm, ax=axs.ravel().tolist(), pad=0.025)
-cbar.set_label('self-cooperation level of mutants', fontsize=16)
+norm_ids = []
+self_coop_level = []
+p_fix = []
 
-x_max=201
-y_max=0.149
-for ax, norm_id in zip(axs.ravel(), [765131, 634059, 629962, 892101]):
-#for ax, norm_id in zip([ax0,ax1], [765131, 634059]):
-    invadability_sorted, norm_ids_sorted, self_coop_level_sorted = get_invadability(norm_id)
-    # plot a bar chart of the fixation probabilities
-    ax.set_xlim(0, x_max)
-    ax.set_ylim(0, y_max)
-    for i in range(x_max):
-        c = colormap(self_coop_level_sorted[i], alpha=0.9)
-        ax.bar(i+1, invadability_sorted[i], color=c, width=1, edgecolor='#222222', linewidth=0.05)
-    # plot y = 0.02
-    ax.plot([-1, x_max], [0.02, 0.02], color='#666666', linestyle='--', linewidth=1.4)
 
-axs[0][0].set_ylabel('fixation probability', fontsize=16)
-axs[0][0].set_title('L1', fontsize=16)
-axs[0][0].annotate('L7', xy=(175.5, 0.02), xytext=(150, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][0].annotate('L4', xy=(178.5, 0.02), xytext=(168, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][0].annotate('L3', xy=(179.5, 0.02), xytext=(186, 0.045), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][0].text(100, 0.035, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
+with open(input_file, 'r') as file:
+    # Iterate through each line in the file
+    for line in file:
+        if line.startswith('#'):
+            continue
+        # Split the line into individual values
+        values = line.split()
 
-axs[0][1].set_title('L2', fontsize=16)
-axs[0][1].annotate('L1', xy=(1.5, 0.141), xytext=(50, 0.135), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][1].annotate('L7', xy=(3.5, 0.138), xytext=(50, 0.125), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][1].annotate('L3', xy=(4.5, 0.126), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][1].annotate('L4', xy=(7.5, 0.120), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][1].annotate('L5', xy=(37.5, 0.0195), xytext=(65, 0.04), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[0][1].text(100, 0.007, 'ALLC', fontsize=12, horizontalalignment='center', verticalalignment='center')
+        # Parse the first two values and append them to the respective lists
+        norm_ids.append(int(values[0]))
+        self_coop_level.append(float(values[1]))
 
-axs[1][0].set_title('L6', fontsize=16)
-axs[1][0].set_ylabel('fixation probability', fontsize=16)
-axs[1][0].set_ylim(0, 1.0)
-axs[1][0].set_xlabel('rank', fontsize=16)
-axs[1][0].text(100, 0.44, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='center')
+        # Parse the remaining values and append them to the data_matrix list
+        p_fix.append([float(val) for val in values[2:]])
 
-axs[1][1].set_title('L8', fontsize=16)
-axs[1][1].set_xlabel('rank', fontsize=16)
-axs[1][1].annotate('L1', xy=(2.5, 0.110), xytext=(50, 0.12), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[1][1].annotate('L7', xy=(3.5, 0.107), xytext=(50, 0.11), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[1][1].annotate('L2', xy=(5.5, 0.100), xytext=(50, 0.10), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
-axs[1][1].text(100, 0.038, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='center')
+norm_ids = np.array(norm_ids)
+self_coop_level = np.array(self_coop_level)
+p_fix = np.array(p_fix)
 
-fig.savefig("L1_L2_L6_L8_invadability.pdf", bbox_inches="tight")
+norm_ids, self_coop_level, p_fix
+# %%
+fig, ax, norm_ids_s = plot_invadability(212160, x_max=36, y_max=0.11, bar_linewidth=0.3)
+#ax.set_ylabel(r"fixation probability, $\rho_{\rm{ALLD} \to X}$", fontsize=16)
+ax.annotate('IS', xy=(1, 0.026), xytext=(3, 0.06), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L3', xy=(15, 0.0016), xytext=(20, 0.04), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.annotate('L6', xy=(17, 0.0), xytext=(24, 0.03), fontsize=12, arrowprops=dict(arrowstyle='-', color='#222222'))
+ax.text(8, 0.02, 'ALLD', fontsize=12, horizontalalignment='center', verticalalignment='bottom')
+show_norms(norm_ids_s)
+fig.savefig('alld_invadability_second.pdf', bbox_inches='tight')
 # %%
