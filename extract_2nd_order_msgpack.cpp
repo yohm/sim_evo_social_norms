@@ -70,27 +70,26 @@ int main(int argc, char* argv[]) {
   std::cerr << "  # of norms: " << indices.size() << std::endl;
 
   const size_t N_NORMS = j_in["norm_ids"].size();
-  std::vector<std::vector<double>> p_fix;
+
+  std::vector<double> p_fix_flattened;
   std::vector<double> self_coop_levels;
 
   for (size_t i = 0; i < N_NORMS; ++i) {
     // if i is included in indices
     if (std::find(indices.begin(), indices.end(), i) != indices.end()) {
-      std::vector<double> row;
       for (size_t j = 0; j < N_NORMS; ++j) {
         // if j is included in indices
         if (std::find(indices.begin(), indices.end(), j) != indices.end()) {
-          row.push_back( j_in["p_fix"][i * N_NORMS + j].get<double>() );
+          p_fix_flattened.push_back( j_in["p_fix"][i * N_NORMS + j].get<double>() );
         }
       }
-      p_fix.push_back(row);
       self_coop_levels.push_back( j_in["self_coop_levels"][i].get<double>() );
     }
   }
 
   j_out["norm_set"] = "second_order";
   j_out["norm_ids"] = new_norm_ids;
-  j_out["p_fix"] = p_fix;
+  j_out["p_fix"] = p_fix_flattened;
   j_out["self_coop_levels"] = self_coop_levels;
 
   // write file
