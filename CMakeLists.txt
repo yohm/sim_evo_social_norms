@@ -68,3 +68,6 @@ target_link_libraries(inspect_GroupedEvo Eigen3::Eigen nlohmann_json::nlohmann_j
 
 add_executable(msgpack2json msgpack2json.cpp)
 target_link_libraries(msgpack2json nlohmann_json::nlohmann_json)
+
+add_executable(extract_2nd_order_msgpack extract_2nd_order_msgpack.cpp)
+target_link_libraries(extract_2nd_order_msgpack nlohmann_json::nlohmann_json)
