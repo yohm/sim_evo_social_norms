@@ -35,11 +35,11 @@ nlohmann::json LoadMsgpackFile(const std::string& path) {
   return j;
 }
 
-class GroupedEvoGame {
+class GroupedEvoMC {
 public:
   class Parameters {
     public:
-    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(5.0), mut_r(0.1) {}
+    Parameters() : M(100), T_init(1e6), T_measure(1e7), seed(123456789ull), benefit(5.0), sigma_out(1.0), mut_r(0.05) {}
     size_t M;   // number of groups
     size_t T_init;
     size_t T_measure;
@@ -48,10 +48,10 @@ public:
     double sigma_out;
     double mut_r;   // relative mutation rate
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoGame::Parameters, M, T_init, T_measure, seed, benefit, sigma_out, mut_r)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(GroupedEvoMC::Parameters, M, T_init, T_measure, seed, benefit, sigma_out, mut_r)
   };
 
-  explicit GroupedEvoGame(const Parameters& _prm, const std::vector<Norm>& _norms) :
+  explicit GroupedEvoMC(const Parameters& _prm, const std::vector<Norm>& _norms) :
     prm(_prm), norms(_norms)
   {
     if (_norms.empty()) {
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
       args.emplace_back(argv[i]);  // for backward compatibility (do nothing
     }
   }
-  GroupedEvoGame::Parameters params = j.get<GroupedEvoGame::Parameters>();
+  GroupedEvoMC::Parameters params = j.get<GroupedEvoMC::Parameters>();
   std::cerr << "parameters:" << std::endl;
   std::cerr << nlohmann::json(params) << std::endl;
 
@@ -220,7 +220,6 @@ int main(int argc, char* argv[]) {
     std::cerr << "Usage: " << argv[0] << " <input_msgpack_file> -j [parameter.json]" << std::endl;
     return 1;
   }
-
 
   // load fixation probabilities from the input file
   json j_in = LoadMsgpackFile(argv[1]);
@@ -252,13 +251,13 @@ int main(int argc, char* argv[]) {
   }
   // IC(p_fix._data, self_coop_levels);
 
-  GroupedEvoGame evo(params, norms);
+  GroupedEvoMC evo(params, norms);
   evo.SetFixationProbsCache(p_fix);
   evo.SetSelfCoopLevelCache(self_coop_levels);
 
   std::ofstream tout("timeseries.dat");
   std::vector<Norm> norms_to_measure = {Norm::L1(), Norm::ConstructFromID(765130), Norm::L3(), Norm::ConstructFromID(769227)};
-  auto plot_time_series = [&tout,&norms_to_measure](size_t t, const GroupedEvoGame& evo) {
+  auto plot_time_series = [&tout,&norms_to_measure](size_t t, const GroupedEvoMC& evo) {
     tout << t << ' ' << evo.CurrentCooperationLevel();
     for (const auto& n: norms_to_measure) {
       tout << ' ' << static_cast<double>(evo.NumGroupsOf(n)) / static_cast<double>(evo.prm.M);
