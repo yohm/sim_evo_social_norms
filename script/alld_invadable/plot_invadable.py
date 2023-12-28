@@ -150,32 +150,32 @@ fig.savefig('l2_invadability.pdf', bbox_inches='tight')
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(769226, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(769226, x_max=201, y_max=0.149, bar_linewidth=0.0)
 fig.savefig('l3_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(761034, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(761034, x_max=201, y_max=0.149, bar_linewidth=0.0)
 fig.savefig('l4_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(638154, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(638154, x_max=201, y_max=0.149, bar_linewidth=0.0)
 fig.savefig('l5_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(629962, x_max=201, y_max=1.0, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(629962, x_max=201, y_max=1.0, bar_linewidth=0.0)
 fig.savefig('l6_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(859333, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(859333, x_max=201, y_max=0.149, bar_linewidth=0.0)
 fig.savefig('l7_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
 # %%
-fig, ax, norm_ids_s = plot_invadability(892101, x_max=201, y_max=0.149, bar_linewidth=0.05)
+fig, ax, norm_ids_s = plot_invadability(892101, x_max=201, y_max=0.149, bar_linewidth=0.0)
 fig.savefig('l8_invadability.pdf', bbox_inches='tight', pad_inches=0.05)
 show_norms(norm_ids_s)
 
