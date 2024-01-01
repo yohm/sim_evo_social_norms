@@ -119,3 +119,14 @@ ax.spines['top'].set_visible(False)
 # %%
 fig.savefig("grouped_third_order_pc_r0.05.pdf", bbox_inches="tight")
 
+# %%
+# plot N-dependency
+pc_all_n = []
+n_list = [30, 50, 70, 100]
+for n in n_list:
+  pc_benefit = []
+  for i,benefit in enumerate(benefit_list):
+    path = os.path.join(input_dir_path, f'third_order_N{n}_mu0.02', f"well_mixed_evo_{i}.dat")
+    dat = np.loadtxt(path)
+    pc = dat[-1,1]
+    pc_benefit.append([benefit, pc])
