@@ -1,6 +1,6 @@
 # %%
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import numpy as np
 import subprocess
 import os
@@ -14,7 +14,7 @@ t_measure = 100000
 
 def calc_payoffs(resident, mutant):
   exe_path = os.path.join(script_path, '..', '..', 'cmake-build-release', 'inspect_EvolPrivRepGame')
-  out = subprocess.check_output([exe_path, '-j', f'{{"N":50,"q":1,"mu_assess1":0.01,"t_measure":{t_measure},"benefit":{benefit}}}', resident, mutant], universal_newlines=True)
+  out = subprocess.check_output([exe_path, '-j', f'{{"N":50,"q":1,"mu_assess1":0.02,"t_measure":{t_measure},"benefit":{benefit}}}', resident, mutant], universal_newlines=True)
 
   dat = np.loadtxt(out.splitlines(), delimiter=' ', skiprows=0)
   return dat
@@ -40,17 +40,23 @@ pixels
 # %%
 # Display the image using matplotlib
 plt.clf()
-fig, ax = plt.subplots(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(4, 4))
 
 ax.plot(dat[:, 0], dat[:, 1], label=f"L1")
 ax.plot(dat[:, 0], dat[:, 2], label=f"L2")
 ax.set_xlabel('# of L2 players', fontsize=18)
 ax.set_ylabel('payoffs', fontsize=18)
 ax.set_ylim(-1,benefit)
-ax.legend()
+# show text
+colors = mpl.cm.get_cmap('tab10').colors
+ax.text(40.5, 3.8, "L1", fontsize=16, color=colors[0], ha='center', va='center')
+ax.text(40.5, 2.8, "L2", fontsize=16, color=colors[1], ha='center', va='center')
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 #ax.text(-0.12, 1.12, 'a', transform=ax.transAxes, fontsize=16, fontweight='bold', va='top', ha='right')
 
-fig.savefig('L1L2_payoff.pdf', bbox_inches='tight', pad_inches=0.2)
+# %%
+fig.savefig('L1L2_payoff.pdf', bbox_inches='tight')
 
 # %%
 plt.clf()
@@ -77,6 +83,6 @@ ax1.text(45, 27.4, "80.0%", fontsize=12, bbox=dict(facecolor='white', alpha=0.9,
 ax1.set_xticks([])
 ax1.set_yticks([])
 # %%
-fig.savefig('L1L2_image.pdf', bbox_inches='tight', pad_inches=0.2)
+fig.savefig('L1L2_image.pdf', bbox_inches='tight')
 
 # %%
