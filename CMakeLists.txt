@@ -40,18 +40,25 @@ target_link_libraries(main_grouped_evo_MC Eigen3::Eigen nlohmann_json::nlohmann_
 
 add_executable(test_Norm test_Norm.cpp Norm.hpp)
 target_link_libraries(test_Norm GTest::gtest_main)
+add_test(NAME test_Norm COMMAND test_Norm)
 
 add_executable(test_PublicRepGame test_PublicRepGame.cpp PublicRepGame.hpp Norm.hpp)
 target_link_libraries(test_PublicRepGame GTest::gtest_main)
+add_test(NAME test_PublicRepGame COMMAND test_PublicRepGame)
 
 add_executable(test_PrivRepGame test_PrivRepGame.cpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(test_PrivRepGame GTest::gtest_main)
+add_test(NAME test_PrivRepGame COMMAND test_PrivRepGame)
 
 add_executable(test_EvolPrivRepGame test_EvolPrivRepGame.cpp EvolPrivRepGame.hpp PrivRepGame.hpp Norm.hpp)
 target_link_libraries(test_EvolPrivRepGame OpenMP::OpenMP_CXX Eigen3::Eigen nlohmann_json::nlohmann_json GTest::gtest_main)
+add_test(NAME test_EvolPrivRepGame COMMAND test_EvolPrivRepGame)
 
 add_executable(test_GroupedEvo test_GroupedEvo.cpp GroupedEvo.hpp Norm.hpp)
 target_link_libraries(test_GroupedEvo GTest::gtest_main)
+add_test(NAME test_GroupedEvo COMMAND test_GroupedEvo)
+
+enable_testing()
 
 add_executable(inspect_Norm inspect_Norm.cpp Norm.hpp)
 
