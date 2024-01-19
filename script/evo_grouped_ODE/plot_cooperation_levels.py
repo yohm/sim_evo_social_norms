@@ -157,3 +157,40 @@ ax.spines['top'].set_visible(False)
 fig.savefig("grouped_third_order_pc_mu0.02_N_dependency.pdf", bbox_inches="tight")
 
 # %%
+# plot mue-dependency
+pc_all_mue = []
+mue_list = [0, 0.01, 0.02, 0.05]
+for mue in mue_list:
+  pc_benefit = []
+  for i,benefit in enumerate(benefit_list):
+    path = os.path.join(input_dir_path, f'third_order_mu0.02_mue{mue}', f"grouped_timeseries_{i}.dat")
+    dat = np.loadtxt(path)
+    pc = dat[-1,1]
+    pc_benefit.append([benefit, pc])
+  pc_all_mue.append(pc_benefit)
+pc_all_mue = np.array(pc_all_mue)
+pc_all_mue, pc_all_mue.shape
+
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('inferno')
+for mue_i,mue in enumerate(mue_list):
+  ax.plot(pc_all_mue[mue_i,:,0], pc_all_mue[mue_i,:,1], label=f'$\mu_e={mue}$', marker='o', color=color_map(mue_i/len(mue_list)))
+ax.set_xlim([1.2,5.2])
+ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='lower right', fontsize=12)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+
+# %%
+fig.savefig("grouped_third_order_pc_mu0.02_mue_dependency.pdf", bbox_inches="tight")
+
+# %%
