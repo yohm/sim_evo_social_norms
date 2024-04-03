@@ -206,7 +206,7 @@ for i, mu in enumerate(reversed(['0.01','0.02','0.05','0.1'])):
       axs[i][j].set_title(r'$b={}$'.format(b), fontsize=18)
     if j == 0:
       axs[i][j].set_ylabel('fractions', fontsize=18)
-      axs[i][j].text(-0.4, 0.5, r'$\mu_a={}$'.format(mu), ha='center', va='center', transform=axs[i][j].transAxes, rotation=90, fontsize=18)
+      axs[i][j].text(-0.4, 0.5, r'$\epsilon={}$'.format(mu), ha='center', va='center', transform=axs[i][j].transAxes, rotation=90, fontsize=18)
     if i == 3:
       axs[i][j].set_xlabel('time', fontsize=18)
     #if i == 0 and j == 3:
@@ -271,7 +271,7 @@ for i, mu in enumerate(reversed(['0.01','0.02','0.05','0.1'])):
       axs[i][j].set_xticklabels(['0','500','1000','1500'])
     if j == 0:
       axs[i][j].set_ylabel('fractions', fontsize=18)
-      axs[i][j].text(-0.4, 0.5, r'$\mu_a={}$'.format(mu), ha='center', va='center', transform=axs[i][j].transAxes, rotation=90, fontsize=18)
+      axs[i][j].text(-0.4, 0.5, r'$\epsilon={}$'.format(mu), ha='center', va='center', transform=axs[i][j].transAxes, rotation=90, fontsize=18)
     if i == 3:
       axs[i][j].set_xlabel('time', fontsize=18)
     #if i == 0 and j == 3:

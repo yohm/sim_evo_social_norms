@@ -76,7 +76,7 @@ for i, (ax, resident) in enumerate(zip(axs.flat, leading_eight)):
   ax.set_title(resident, fontsize=26)
   for mu_i,mu in enumerate(mu_list):
     key = (N,mu,resident)
-    ax.plot(benefit_list, dat[key], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+    ax.plot(benefit_list, dat[key], label=f'$\epsilon={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
     ax.set_xlim([1.2,5.2])
     ax.set_xticks(custom_x_ticks)
     ax.set_xticklabels(custom_x_ticks, fontsize=16)
@@ -102,7 +102,7 @@ for i, (ax, resident) in enumerate(zip(axs.flat, secondary_sixteen)):
   ax.set_title(resident, fontsize=26)
   for mu_i,mu in enumerate(mu_list):
     key = (N,mu,resident)
-    ax.plot(benefit_list, dat[key], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+    ax.plot(benefit_list, dat[key], label=f'$\epsilon={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
     ax.set_xlim([1.2,5.2])
     ax.set_xticks(custom_x_ticks)
     ax.set_xticklabels(custom_x_ticks, fontsize=16)

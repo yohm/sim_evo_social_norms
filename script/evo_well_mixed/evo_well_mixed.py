@@ -39,7 +39,7 @@ fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 color_map = plt.get_cmap('viridis')
 for mu_i,mu in enumerate(mu_list):
-  ax.errorbar(pc_all3[mu_i,:,0], pc_all3[mu_i,:,1], yerr=pc_all3[mu_i,:,2], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+  ax.errorbar(pc_all3[mu_i,:,0], pc_all3[mu_i,:,1], yerr=pc_all3[mu_i,:,2], label=f'$\epsilon={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
   #ax.plot(pc_all3[mu_i,:,0], pc_all3[mu_i,:,1], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
@@ -79,7 +79,7 @@ fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 color_map = plt.get_cmap('viridis')
 for mu_i,mu in enumerate(mu_list):
-  ax.errorbar(pc_all2[mu_i,:,0], pc_all2[mu_i,:,1], yerr=pc_all2[mu_i,:,2], label=f'$\mu_a={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
+  ax.errorbar(pc_all2[mu_i,:,0], pc_all2[mu_i,:,1], yerr=pc_all2[mu_i,:,2], label=f'$\epsilon={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
@@ -154,7 +154,7 @@ fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 color_map = plt.get_cmap('plasma')
 for mue_i,mue in enumerate(mue_list):
-  ax.plot(pc_all_n[mue_i,:,0], pc_all_n[mue_i,:,1], label=f'$\mu_e={mue}$', marker='o', color=color_map(mue_i/len(mue_list)))
+  ax.plot(pc_all_n[mue_i,:,0], pc_all_n[mue_i,:,1], label=f'$\epsilon_I={mue}$', marker='o', color=color_map(mue_i/len(mue_list)))
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
