@@ -79,9 +79,9 @@ for i, (ax, resident) in enumerate(zip(axs.flat, leading_eight)):
     ax.plot(benefit_list, dat[key], label=f'$\epsilon={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
     ax.set_xlim([1.2,5.2])
     ax.set_xticks(custom_x_ticks)
-    ax.set_xticklabels(custom_x_ticks, fontsize=16)
+    ax.set_xticklabels(custom_x_ticks, fontsize=18)
     ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=18)
     ax.set_ylim([-0.02,1.02])
     if i == 3:
       ax.legend(loc='upper right', fontsize=20)
@@ -105,9 +105,9 @@ for i, (ax, resident) in enumerate(zip(axs.flat, secondary_sixteen)):
     ax.plot(benefit_list, dat[key], label=f'$\epsilon={mu}$', marker='o', color=color_map(mu_i/len(mu_list)))
     ax.set_xlim([1.2,5.2])
     ax.set_xticks(custom_x_ticks)
-    ax.set_xticklabels(custom_x_ticks, fontsize=16)
+    ax.set_xticklabels(custom_x_ticks, fontsize=18)
     ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
-    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=16)
+    ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0], fontsize=18)
     ax.set_ylim([-0.02,1.02])
     if i == 3:
       ax.legend(loc='upper right', fontsize=20)

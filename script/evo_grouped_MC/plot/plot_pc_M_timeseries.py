@@ -25,8 +25,9 @@ ax.errorbar(x, y, yerr=yerr, marker='o', label="cooperation level")
 ax.errorbar(x, l1_frac, yerr=l1_frac_err, marker='o', label="L1 fraction")
 
 cmap = plt.get_cmap("tab10")
-ax.text(95, 0.94, 'Cooperation Level', fontsize=12, color=cmap(0), ha='right', va='bottom')
-ax.text(95, 0.77, 'L1 fraction', fontsize=12, color=cmap(1), ha='right', va='top')
+ax.text(95, 0.94, 'Cooperation Level', fontsize=14, color=cmap(0), ha='right', va='bottom')
+ax.text(95, 0.77, 'L1 fraction', fontsize=14, color=cmap(1), ha='right', va='top')
+ax.tick_params(axis='both', which='major', labelsize=14)
 
 # %%
 fig.savefig("pc_M_dep.pdf", bbox_inches="tight")
@@ -35,9 +36,10 @@ fig.savefig("pc_M_dep.pdf", bbox_inches="tight")
 plt.clf()
 fig,ax = plt.subplots(1,1,figsize=(6,4))
 
-ax.set_xlabel("time", fontsize=18)
+ax.set_xlabel("time ($\\times 10^7$ steps)", fontsize=18)
 ax.set_ylabel("fraction", fontsize=18)
 
+ax.set_xlim([-0.01, 1.1])
 ax.set_ylim([-0.02, 1.02])
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
@@ -45,10 +47,11 @@ ax.spines['top'].set_visible(False)
 # load file from timeseries_M100.dat
 dat = np.loadtxt("timeseries_M100.dat")
 
-ax.plot(dat[:,0], dat[:,1], label="cooperation level")
-ax.plot(dat[:,0], dat[:,2], label="L1 fraction")
+ax.plot(dat[:,0]/1e7, dat[:,1], label="cooperation level")
+ax.plot(dat[:,0]/1e7, dat[:,2], label="L1 fraction")
 
-ax.legend(loc='lower left', fontsize=12)
+ax.legend(loc='lower left', fontsize=14)
+ax.tick_params(axis='both', which='major', labelsize=14)
 # %%
 fig.savefig("timeseries_M100.pdf", bbox_inches="tight")
 # %%
