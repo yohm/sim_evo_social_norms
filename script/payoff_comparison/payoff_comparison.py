@@ -6,7 +6,7 @@ import os
 
 # %%
 script_path = os.path.dirname(os.path.abspath(__file__))
-exe_path = os.path.join(script_path, '..', 'cmake-build-release', 'inspect_EvolPrivRepGame')
+exe_path = os.path.join(script_path, '..', '..', 'cmake-build-release', 'inspect_EvolPrivRepGame')
 print(exe_path)
 
 # %%

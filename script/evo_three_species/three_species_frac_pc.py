@@ -56,18 +56,21 @@ ax.set_ylabel('equilibrium fraction', fontsize=18)
 ax.plot(s16_dat[:,2], s16_dat[:,1], 's', color='#3D3B8E')
 ax.plot(l8_dat[:,2], l8_dat[:,1], 'o', color='#E072A4')
 
-ax.text(0.97, 0.76, 'L1', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.86, 0.97, 'L2', fontsize=12, color='#222222', horizontalalignment='left', verticalalignment='top')
-ax.text(0.97, 0.07, 'L3', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.97, 0.05, 'L4', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='center')
-ax.text(0.87, 0.15, 'L5', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.49, 0.01, 'L6', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.97, 0.61, 'L7', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.10, 0.09, 'L8', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.97, 0.76, 'L1', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.86, 0.97, 'L2', fontsize=14, color='#222222', horizontalalignment='left', verticalalignment='top')
+ax.text(0.97, 0.07, 'L3', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.97, 0.05, 'L4', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='center')
+ax.text(0.87, 0.15, 'L5', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.49, 0.01, 'L6', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.97, 0.61, 'L7', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.14, 0.10, 'L8', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
 
 ax.xaxis.set_ticks_position('both')
 ax.yaxis.set_ticks_position('both')
 
+ax.tick_params(axis='both', which='major', labelsize=14)
+ax.set_xticks([0, 0.25, 0.5, 0.75, 1])
+ax.set_xticklabels(['0', '0.25', '0.5', '0.75', '1'])
 
 # %%
 fig.savefig('three_species_frac_pc.pdf', bbox_inches='tight')
@@ -94,11 +97,15 @@ ax.set_ylabel('equilibrium fraction', fontsize=18)
 #ax.plot(s16_dat[:,2], s16_dat[:,1], 's', color='#3D3B8E')
 ax.plot(l8_dat2[:,2], l8_dat2[:,1], 'o', color='#E072A4')
 
-ax.text(0.97, 0.07, 'L3', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
-ax.text(0.49, 0.01, 'L6', fontsize=12, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.97, 0.07, 'L3', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
+ax.text(0.49, 0.01, 'L6', fontsize=14, color='#222222', horizontalalignment='right', verticalalignment='bottom')
 
 ax.xaxis.set_ticks_position('both')
 ax.yaxis.set_ticks_position('both')
+
+ax.tick_params(axis='both', which='major', labelsize=14)
+ax.set_xticks([0, 0.25, 0.5, 0.75, 1])
+ax.set_xticklabels(['0', '0.25', '0.5', '0.75', '1'])
 
 # %%
 fig.savefig("three_species_frac_pc_2nd.pdf", bbox_inches="tight")
