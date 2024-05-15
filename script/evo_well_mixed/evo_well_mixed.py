@@ -138,7 +138,7 @@ fig.savefig('third_order_N_dep.pdf', bbox_inches='tight')
 # %%
 # mu_e-dependency
 
-pc_all_n = []
+pc_all_mue = []
 mue_list = [0, 0.01, 0.02, 0.05]
 for mue in mue_list:
   pc_benefit = []
@@ -148,16 +148,16 @@ for mue in mue_list:
     dat = np.loadtxt(path)
     pc = equilibrium_coop_level(dat)
     pc_benefit.append([benefit, pc])
-  pc_all_n.append(pc_benefit)
-pc_all_n = np.array(pc_all_n)
-pc_all_n, pc_all_n.shape
+  pc_all_mue.append(pc_benefit)
+pc_all_mue = np.array(pc_all_mue)
+pc_all_mue, pc_all_mue.shape
 # %%
 plt.clf()
 fig,ax = plt.subplots(1,1,figsize=(6,4))
 
 color_map = plt.get_cmap('plasma')
 for mue_i,mue in enumerate(mue_list):
-  ax.plot(pc_all_n[mue_i,:,0], pc_all_n[mue_i,:,1], label=f'$\epsilon_I={mue}$', marker='o', color=color_map(mue_i/len(mue_list)))
+  ax.plot(pc_all_mue[mue_i,:,0], pc_all_mue[mue_i,:,1], label=f'$\epsilon_I={mue}$', marker='o', color=color_map(mue_i/len(mue_list)))
 ax.set_xlim([1.2,5.2])
 ax.set_xticks([2.0, 3.0, 4.0, 5.0])
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
@@ -172,4 +172,51 @@ ax.spines['right'].set_visible(False)
 ax.tick_params(axis='both', which='major', labelsize=14)
 # %%
 fig.savefig('third_order_mue_dep.pdf', bbox_inches='tight')
+# %%
+# sigma-dependency
+
+pc_all_sigma = []
+sigma_list = [0.1, 0.3, 1.0, 3.0]
+for sigma in sigma_list:
+  pc_benefit = []
+  for i,benefit in enumerate(benefit_list):
+    # 0-7: sigma = 1, 8-15: sigma = 0.1, 16-23: sigma = 0.3, 24-31: sigma = 3.0
+    offset = 0
+    if sigma == 0.1:
+      offset = 8
+    elif sigma == 0.3:
+      offset = 16
+    elif sigma == 3.0:
+      offset = 24
+    path = os.path.join(input_dir_path, f'third_order_sigma_mu0.02', "well_mixed", f"well_mixed_evo_{i+offset}.dat")
+    print(path)
+    dat = np.loadtxt(path)
+    pc = equilibrium_coop_level(dat)
+    pc_benefit.append([benefit, pc])
+  pc_all_sigma.append(pc_benefit)
+pc_all_sigma = np.array(pc_all_sigma)
+pc_all_sigma, pc_all_sigma.shape
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('plasma')
+for sigma_i,sigma in enumerate(sigma_list):
+  ax.plot(pc_all_sigma[sigma_i,:,0], pc_all_sigma[sigma_i,:,1], label=f'$\sigma={sigma}$', marker='o', color=color_map(sigma_i/len(sigma_list)))
+ax.set_xlim([1.2,5.2])
+ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='upper right', fontsize=14)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.tick_params(axis='both', which='major', labelsize=14)
+
+# %%
+fig.savefig('third_order_sigma_dep.pdf', bbox_inches='tight')
+
 # %%

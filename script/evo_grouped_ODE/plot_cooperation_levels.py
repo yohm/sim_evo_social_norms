@@ -199,3 +199,39 @@ ax.spines['top'].set_visible(False)
 fig.savefig("grouped_third_order_pc_mu0.02_mue_dependency.pdf", bbox_inches="tight")
 
 # %%
+# plot sigma-dependency
+pc_all_sigma = []
+sigma_list = [0.1, 0.3, 1.0, 3.0]
+for sigma in sigma_list:
+  pc_benefit = []
+  for i,benefit in enumerate(benefit_list):
+    path = os.path.join(input_dir_path, f'third_order_sigma_mu0.02', f"grouped_sigma{sigma}_b{benefit}", "timeseries.dat")
+    dat = np.loadtxt(path)
+    pc = dat[-1,1]
+    pc_benefit.append([benefit, pc])
+  pc_all_sigma.append(pc_benefit)
+pc_all_sigma = np.array(pc_all_sigma)
+pc_all_sigma, pc_all_sigma.shape
+
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('inferno')
+for sigma_i,sigma in enumerate(sigma_list):
+  ax.plot(pc_all_sigma[sigma_i,:,0], pc_all_sigma[sigma_i,:,1], label=f'$\sigma={sigma}$', marker='o', color=color_map(sigma_i/len(sigma_list)))
+ax.set_xlim([1.2,5.2])
+ax.tick_params(axis='both', which='major', labelsize=16)
+ax.set_xticks([2.0, 3.0, 4.0, 5.0])
+ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_xticklabels([2, 3, 4, 5])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='lower right', fontsize=14)
+ax.set_xlabel('benefit', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+
+# %%
+fig.savefig("grouped_third_order_pc_mu0.02_sigma_dependency.pdf", bbox_inches="tight")
