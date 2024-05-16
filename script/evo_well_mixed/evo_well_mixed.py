@@ -136,6 +136,24 @@ ax.tick_params(axis='both', which='major', labelsize=14)
 # %%
 fig.savefig('third_order_N_dep.pdf', bbox_inches='tight')
 # %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('plasma')
+for b_i,benefit in enumerate(benefit_list[1::2]):
+  ax.plot(n_list, pc_all_n[:,2*b_i+1,1], label=f'$b={benefit}$', marker='o', color=color_map(b_i/len(benefit_list[1::2])))
+ax.set_xticks([30, 50, 70, 100])
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='upper right', fontsize=14)
+ax.set_xlabel('N', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.tick_params(axis='both', which='major', labelsize=14)
+# %%
+fig.savefig('third_order_N_dep2.pdf', bbox_inches='tight')
+# %%
 # mu_e-dependency
 
 pc_all_mue = []
@@ -172,6 +190,23 @@ ax.spines['right'].set_visible(False)
 ax.tick_params(axis='both', which='major', labelsize=14)
 # %%
 fig.savefig('third_order_mue_dep.pdf', bbox_inches='tight')
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('plasma')
+for b_i,benefit in enumerate(benefit_list[1::2]):
+  ax.plot(mue_list, pc_all_mue[:,2*b_i+1,1], label=f'$b={benefit}$', marker='o', color=color_map(b_i/len(benefit_list[1::2])))
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='upper right', fontsize=14)
+ax.set_xlabel(r'$\epsilon_I$', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.tick_params(axis='both', which='major', labelsize=14)
+# %%
+fig.savefig('third_order_mue_dep2.pdf', bbox_inches='tight')
 # %%
 # sigma-dependency
 
@@ -218,6 +253,25 @@ ax.tick_params(axis='both', which='major', labelsize=14)
 
 # %%
 fig.savefig('third_order_sigma_dep.pdf', bbox_inches='tight')
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('plasma')
+for b_i,benefit in enumerate(benefit_list[1::2]):
+  ax.plot(sigma_list, pc_all_sigma[:,2*b_i+1,1], label=f'$b={benefit}$', marker='o', color=color_map(b_i/len(benefit_list[1::2])))
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='upper right', fontsize=14)
+ax.set_xscale('log')
+ax.set_xlabel(r'$\sigma$', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.tick_params(axis='both', which='major', labelsize=14)
+
+# %%
+fig.savefig('third_order_sigma_dep2.pdf', bbox_inches='tight')
 
 # %%
 # q-dependency
@@ -256,5 +310,24 @@ ax.tick_params(axis='both', which='major', labelsize=14)
 
 # %%
 fig.savefig('third_order_q_dep.pdf', bbox_inches='tight')
+
+# %%
+plt.clf()
+fig,ax = plt.subplots(1,1,figsize=(6,4))
+
+color_map = plt.get_cmap('plasma')
+for b_i,benefit in enumerate(benefit_list[1::2]):
+  ax.plot(q_list, pc_all_q[:,2*b_i+1,1], label=f'$b={benefit}$', marker='o', color=color_map(b_i/len(benefit_list[1::2])))
+ax.set_yticklabels([0.0,0.2,0.4,0.6,0.8,1.0])
+ax.set_ylim([0.0,1.0])
+ax.legend(loc='upper right', fontsize=14)
+ax.set_xlabel(r'$q$', fontsize=18)
+ax.set_ylabel('cooperation level', fontsize=18)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.tick_params(axis='both', which='major', labelsize=14)
+
+# %%
+fig.savefig('third_order_q_dep2.pdf', bbox_inches='tight')
 
 # %%
