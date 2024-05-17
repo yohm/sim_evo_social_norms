@@ -211,18 +211,11 @@ fig.savefig('third_order_mue_dep2.pdf', bbox_inches='tight')
 # sigma-dependency
 
 pc_all_sigma = []
-sigma_list = [0.1, 0.3, 1.0, 3.0]
-for sigma in sigma_list:
+sigma_list = [0.001, 0.01, 0.1, 0.3, 1.0, 3.0]
+for sigma_i,sigma in enumerate(sigma_list):
   pc_benefit = []
   for i,benefit in enumerate(benefit_list):
-    # 0-7: sigma = 1, 8-15: sigma = 0.1, 16-23: sigma = 0.3, 24-31: sigma = 3.0
-    offset = 0
-    if sigma == 0.1:
-      offset = 8
-    elif sigma == 0.3:
-      offset = 16
-    elif sigma == 3.0:
-      offset = 24
+    offset = sigma_i*8
     path = os.path.join(input_dir_path, f'third_order_sigma_mu0.02', "well_mixed", f"well_mixed_evo_{i+offset}.dat")
     print(path)
     dat = np.loadtxt(path)

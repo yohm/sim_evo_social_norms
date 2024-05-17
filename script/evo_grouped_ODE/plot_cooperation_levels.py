@@ -236,7 +236,7 @@ fig.savefig("grouped_third_order_pc_mu0.02_mue_dependency2.pdf", bbox_inches="ti
 # %%
 # plot sigma-dependency
 pc_all_sigma = []
-sigma_list = [0.1, 0.3, 1.0, 3.0]
+sigma_list = [0.001, 0.01, 0.1, 0.3, 1.0, 3.0]
 for sigma in sigma_list:
   pc_benefit = []
   for i,benefit in enumerate(benefit_list):
